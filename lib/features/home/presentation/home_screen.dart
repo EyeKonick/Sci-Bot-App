@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import 'package:go_router/go_router.dart';
+import '../../../services/preferences/shared_prefs_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -116,6 +117,53 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+          // Testing Tools (Remove before production)
+Card(
+  color: AppColors.warning.withOpacity(0.1),
+  child: Padding(
+    padding: const EdgeInsets.all(AppSizes.s16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '🛠️ Development Tools',
+          style: AppTextStyles.headingSmall,
+        ),
+        const SizedBox(height: AppSizes.s12),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () async {
+                  await SharedPrefsService.resetFirstLaunch();
+                  if (context.mounted) {
+                    context.go('/');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                ),
+                child: const Text('Test First Launch'),
+              ),
+            ),
+            const SizedBox(width: AppSizes.s8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => context.go('/onboarding'),
+                child: const Text('View Onboarding'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.s8),
+        Text(
+          'These buttons are for testing only. Remove before production.',
+          style: AppTextStyles.caption,
+        ),
+      ],
+    ),
+  ),
+),
         ],
       ),
     );
