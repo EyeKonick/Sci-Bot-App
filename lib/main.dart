@@ -4,10 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'services/preferences/shared_prefs_service.dart';
+// import 'shared/models/test_models.dart';
 
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // testModels();
   
   // Initialize SharedPreferences
   await SharedPrefsService.init();
