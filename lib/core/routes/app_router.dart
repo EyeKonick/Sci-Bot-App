@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/home/presentation/home_screen.dart';
+import '../../features/chat/presentation/chat_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/error/presentation/not_found_screen.dart';
+import 'app_routes.dart';
+import 'bottom_nav_shell.dart';
+
+/// GoRouter Configuration for SCI-Bot
+class AppRouter {
+  AppRouter._();
+
+  static final GoRouter router = GoRouter(
+    initialLocation: AppRoutes.splash,
+    debugLogDiagnostics: true,
+    
+    // ERROR HANDLING
+    errorBuilder: (context, state) => const NotFoundScreen(),
+    
+    // ROUTE DEFINITIONS
+    routes: [
+      // SPLASH SCREEN (Initial route)
+      GoRoute(
+        path: AppRoutes.splash,
+        name: AppRoutes.splashName,
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      // ONBOARDING SCREEN
+      GoRoute(
+        path: AppRoutes.onboarding,
+        name: AppRoutes.onboardingName,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return BottomNavShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // BRANCH 1: HOME TAB
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                name: AppRoutes.homeName,
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: const HomeScreen(),
+                ),
+              ),
+            ],
+          ),
+
+          // BRANCH 2: CHAT TAB
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.chat,
+                name: AppRoutes.chatName,
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: const ChatScreen(),
+                ),
+              ),
+            ],
+          ),
+
+          // BRANCH 3: MORE TAB
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.more,
+                name: AppRoutes.moreName,
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: const SettingsScreen(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // NOT FOUND ROUTE
+      GoRoute(
+        path: AppRoutes.notFound,
+        builder: (context, state) => const NotFoundScreen(),
+      ),
+    ],
+  );
+}
