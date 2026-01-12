@@ -4,25 +4,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'services/preferences/shared_prefs_service.dart';
-import 'services/storage/hive_service.dart'; 
-import 'services/storage/test_hive.dart';
+import 'services/storage/hive_service.dart';
+import 'services/data/data_seeder_service.dart'; 
+import 'services/data/test_data_seeding.dart';
 
 void main() async {
-  // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
-
   
   // Initialize SharedPreferences
   await SharedPrefsService.init();
-
+  
   // Initialize Hive
   await HiveService.init();
   
-  testHiveStorage();
+  // Seed data on first launch - CORRECTED
+  final isDataSeeded = DataSeederService.isDataSeeded; // ← NO await, NO ()
+  if (!isDataSeeded) {
+    print('📦 First launch detected - seeding data...');
+    final seeder = DataSeederService();
+    await seeder.seedAllData();
 
-
+    testDataSeeding();
+    
+    // Print stats
+    final stats = await seeder.getSeedingStats();
+    print('📊 Seeding complete:');
+    print('   Topics: ${stats['topics']}');
+    print('   Lessons: ${stats['lessons']}');
+  } else {
+    print('✅ Data already seeded, skipping...');
+  }
   
-  // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -30,7 +42,6 @@ void main() async {
     ),
   );
   
-  // Lock to portrait orientation
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -51,13 +62,9 @@ class SCIBotApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'SCI-Bot',
       debugShowCheckedModeBanner: false,
-      
-      // Theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      
-      // Router Configuration
       routerConfig: AppRouter.router,
     );
   }

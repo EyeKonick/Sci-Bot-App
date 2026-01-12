@@ -61,6 +61,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/data/
+    - assets/data/lessons/
 
   # Fonts
   fonts:
