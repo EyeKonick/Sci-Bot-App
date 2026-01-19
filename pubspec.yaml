@@ -61,8 +61,10 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/data/
-    - assets/data/lessons/
-
+    - assets/data/topics.json           
+    - assets/data/lessons/             
+    - assets/data/lessons/topic_body_systems/  
+    
   # Fonts
   fonts:
     - family: Poppins

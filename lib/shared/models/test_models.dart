@@ -6,17 +6,17 @@ void testModels() {
 
   // Test 1: ModuleType Enum
   print('Test 1: ModuleType Enum');
-  final moduleType = ModuleType.preScintation;
+  final moduleType = ModuleType.pre_scintation;
   print('Display Name: ${moduleType.displayName}');
-  print('JSON Key: ${moduleType.jsonKey}');
-  print('From JSON: ${ModuleType.fromJson('fa_scinate').displayName}');
+  print('JSON Key: ${moduleType.toJson()}');
+  print('From JSON: ${ModuleType.fromString('fa_scinate').displayName}');
   print('✅ ModuleType works!\n');
 
   // Test 2: ModuleModel
   print('Test 2: ModuleModel');
   final module = ModuleModel(
     id: 'module_1',
-    type: ModuleType.faScinate,
+    type: ModuleType.fa_scinate,
     title: 'Introduction to DNA',
     content: 'DNA is the molecule that contains genetic information...',
     order: 1,

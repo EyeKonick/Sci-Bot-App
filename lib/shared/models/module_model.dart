@@ -23,7 +23,7 @@ class ModuleModel {
   factory ModuleModel.fromJson(Map<String, dynamic> json) {
     return ModuleModel(
       id: json['id'] as String,
-      type: ModuleType.fromJson(json['type'] as String),
+      type: ModuleType.fromString(json['type'] as String),
       title: json['title'] as String,
       content: json['content'] as String,
       order: json['order'] as int,

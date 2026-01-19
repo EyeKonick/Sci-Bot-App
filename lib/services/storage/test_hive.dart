@@ -45,7 +45,7 @@ void testHiveStorage() {
   print('─' * 40);
   final testModule = ModuleModel(
     id: 'test_module_1',
-    type: ModuleType.preScintation,
+    type: ModuleType.fa_scinate,
     title: 'Test Module',
     content: 'Test content for module',
     order: 1,

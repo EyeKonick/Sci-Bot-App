@@ -1,0 +1,15 @@
+{
+  "topics": [
+    {
+      "id": "topic_body_systems",
+      "name": "Circulation and Gas Exchange",
+      "description": "Understand how the circulatory and respiratory systems work together to transport oxygen, nutrients, and waste throughout the body while maintaining homeostasis.",
+      "icon_name": "favorite",
+      "color_hex": "#E91E63",
+      "lesson_ids": [
+        "lesson_circulation_001"
+      ],
+      "order": 1
+    }
+  ]
+}

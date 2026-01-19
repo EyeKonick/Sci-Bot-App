@@ -1,37 +1,83 @@
-/// The six types of modules in each lesson
-/// Based on SCI-Bot educational philosophy
+import 'package:flutter/material.dart';
+
+/// Module types for the 6-module lesson structure
 enum ModuleType {
-  /// Pre-SCI-ntation: Pre-assessment and prior knowledge
-  preScintation('Pre-SCI-ntation', 'pre_scintation'),
+  /// Module 1: Pre-assessment (Pre-SCI-ntation)
+  pre_scintation,
   
-  /// Fa-SCI-nate: Engage students with interesting content
-  faScinate('Fa-SCI-nate', 'fa_scinate'),
+  /// Module 2: Hook/Fascination (Fa-SCI-nate)
+  fa_scinate,
   
-  /// Inve-SCI-tigation: Deep dive into the topic
-  inveScitigation('Inve-SCI-tigation', 'inve_scitigation'),
+  /// Module 3: Main content (Inve-SCI-tigation)
+  inve_scitigation,
   
-  /// Goal SCI-tting: Learning objectives and targets
-  goalScitting('Goal SCI-tting', 'goal_scitting'),
+  /// Module 4: Goal setting (Goal SCI-tting)
+  goal_scitting,
   
-  /// Self-A-SCI-ssment: Check understanding
-  selfAScissment('Self-A-SCI-ssment', 'self_a_scissment'),
+  /// Module 5: Self-assessment (Self-A-SCI-ssment)
+  self_a_scissment,
   
-  /// SCI-pplementary: Additional resources and practice
-  scipplementary('SCI-pplementary', 'scipplementary');
+  /// Module 6: Supplementary resources (SCI-pplementary)
+  scipplementary;
 
-  const ModuleType(this.displayName, this.jsonKey);
-
-  final String displayName;
-  final String jsonKey;
-
-  /// Convert from JSON string to enum
-  static ModuleType fromJson(String json) {
-    return ModuleType.values.firstWhere(
-      (type) => type.jsonKey == json,
-      orElse: () => ModuleType.preScintation,
-    );
+  /// Get display name for the module type
+  String get displayName {
+    switch (this) {
+      case ModuleType.pre_scintation:
+        return 'Pre-SCI-ntation';
+      case ModuleType.fa_scinate:
+        return 'Fa-SCI-nate';
+      case ModuleType.inve_scitigation:
+        return 'Inve-SCI-tigation';
+      case ModuleType.goal_scitting:
+        return 'Goal SCI-tting';
+      case ModuleType.self_a_scissment:
+        return 'Self-A-SCI-ssment';
+      case ModuleType.scipplementary:
+        return 'SCI-pplementary';
+    }
   }
 
-  /// Convert enum to JSON string
-  String toJson() => jsonKey;
+  /// Get icon for the module type
+  IconData get icon {
+    switch (this) {
+      case ModuleType.pre_scintation:
+        return Icons.assignment;
+      case ModuleType.fa_scinate:
+        return Icons.lightbulb;
+      case ModuleType.inve_scitigation:
+        return Icons.science;
+      case ModuleType.goal_scitting:
+        return Icons.flag;
+      case ModuleType.self_a_scissment:
+        return Icons.quiz;
+      case ModuleType.scipplementary:
+        return Icons.library_books;
+    }
+  }
+
+  /// Parse from JSON string
+  static ModuleType fromString(String type) {
+    switch (type.toLowerCase()) {
+      case 'pre_scintation':
+        return ModuleType.pre_scintation;
+      case 'fa_scinate':
+        return ModuleType.fa_scinate;
+      case 'inve_scitigation':
+        return ModuleType.inve_scitigation;
+      case 'goal_scitting':
+        return ModuleType.goal_scitting;
+      case 'self_a_scissment':
+        return ModuleType.self_a_scissment;
+      case 'scipplementary':
+        return ModuleType.scipplementary;
+      default:
+        throw ArgumentError('Unknown module type: $type');
+    }
+  }
+
+  /// Convert to JSON string
+  String toJson() {
+    return toString().split('.').last;
+  }
 }
