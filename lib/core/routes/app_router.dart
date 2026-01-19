@@ -5,6 +5,7 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/topics/presentation/topics_screen.dart';
 import '../../features/error/presentation/not_found_screen.dart';
 import 'app_routes.dart';
 import 'bottom_nav_shell.dart';
@@ -34,6 +35,23 @@ class AppRouter {
         path: AppRoutes.onboarding,
         name: AppRoutes.onboardingName,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+
+      // TOPICS SCREEN (Full-screen topic browsing)
+      GoRoute(
+        path: '/topics',
+        name: 'topics',
+        builder: (context, state) => const TopicsScreen(),
+      ),
+
+      // LESSONS SCREEN (Placeholder for Day 3)
+      GoRoute(
+        path: '/topics/:topicId/lessons',
+        name: 'lessons',
+        builder: (context, state) {
+          final topicId = state.pathParameters['topicId'] ?? '';
+          return _PlaceholderLessonsScreen(topicId: topicId);
+        },
       ),
 
       // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)
@@ -90,4 +108,77 @@ class AppRouter {
       ),
     ],
   );
+}
+
+/// Placeholder screen for lesson list (Week 2 Day 3)
+class _PlaceholderLessonsScreen extends StatelessWidget {
+  final String topicId;
+
+  const _PlaceholderLessonsScreen({required this.topicId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Lessons'),
+        backgroundColor: const Color(0xFF4DB8C4), // AppColors.primary
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.construction,
+                size: 80,
+                color: Color(0xFFE0E0E0), // AppColors.grey300
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Lesson List Coming Soon!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This screen will be built in Week 2, Day 3',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Topic ID: $topicId',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Topics'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4DB8C4),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

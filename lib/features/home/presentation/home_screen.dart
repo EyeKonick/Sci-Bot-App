@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -74,9 +75,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Topics',
                     style: AppTextStyles.headingMedium,
                   ),
-                  Text(
-                    '${topics.length} available',
-                    style: AppTextStyles.bodySmall,
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to Topics screen
+                      context.push('/topics');
+                    },
+                    child: Text(
+                      'See All',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -117,8 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       lessonCount: topic.lessonIds.length,
                       progress: progress,
                       onTap: () {
-                        // TODO: Navigate to topic lessons
-                        print('Tapped: ${topic.name}');
+                        // Navigate to topic lessons
+                        context.push('/topics/${topic.id}/lessons');
                       },
                     ),
                   );
