@@ -7,6 +7,7 @@ import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/topics/presentation/topics_screen.dart';
 import '../../features/lessons/presentation/lessons_screen.dart';
+import '../../features/lessons/presentation/module_viewer_screen.dart';
 import '../../features/error/presentation/not_found_screen.dart';
 import 'app_routes.dart';
 import 'bottom_nav_shell.dart';
@@ -52,6 +53,22 @@ class AppRouter {
         builder: (context, state) {
           final topicId = state.pathParameters['topicId'] ?? '';
           return LessonsScreen(topicId: topicId);
+        },
+      ),
+
+      // MODULE VIEWER SCREEN (Week 2 Day 4)
+      GoRoute(
+        path: '/lessons/:lessonId/module/:moduleIndex',
+        name: 'module_viewer',
+        builder: (context, state) {
+          final lessonId = state.pathParameters['lessonId'] ?? '';
+          final moduleIndexStr = state.pathParameters['moduleIndex'] ?? '0';
+          final moduleIndex = int.tryParse(moduleIndexStr) ?? 0;
+          
+          return ModuleViewerScreen(
+            lessonId: lessonId,
+            moduleIndex: moduleIndex,
+          );
         },
       ),
 

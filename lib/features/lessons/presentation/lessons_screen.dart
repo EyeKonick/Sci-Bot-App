@@ -214,8 +214,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
                 onTap: () {
-                  // TODO: Navigate to first module (Week 2 Day 4)
-                  _showComingSoonDialog(lesson.title);
+                  // Navigate to first module (Module 0)
+                  context.push('/lessons/${lesson.id}/module/0');
                 },
               ),
             );
@@ -300,34 +300,6 @@ class _LessonsScreenState extends State<LessonsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Coming Soon Dialog
-  void _showComingSoonDialog(String lessonTitle) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Coming Soon!',
-          style: AppTextStyles.headingSmall,
-        ),
-        content: Text(
-          'The module viewer for "$lessonTitle" will be available in Week 2 Day 4.',
-          style: AppTextStyles.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
