@@ -199,9 +199,8 @@ class _LessonsScreenState extends State<LessonsScreen> {
             final lesson = _lessons[index];
             final isCompleted = _progressRepo.isLessonCompleted(lesson.id);
             
-            // NOTE: Module-level progress tracking will be added in Week 2 Day 4-5
-            // For now, just show 0% progress (foundation only)
-            final progress = 0.0;
+            // Get actual progress percentage from repository
+            final progress = _progressRepo.getCompletionPercentage(lesson.id);
 
             return Padding(
               padding: EdgeInsets.only(
@@ -214,8 +213,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
                 onTap: () {
-                  // Navigate to first module (Module 0)
-                  context.push('/lessons/${lesson.id}/module/0');
+                  // Resume from last incomplete module or start from beginning
+                  final startIndex = _getStartingModuleIndex(lesson);
+                  context.push('/lessons/${lesson.id}/module/$startIndex');
                 },
               ),
             );
@@ -314,6 +314,28 @@ class _LessonsScreenState extends State<LessonsScreen> {
     } catch (e) {
       return AppColors.primary;
     }
+  }
+
+  /// Calculate which module index to start from based on progress
+  /// Returns 0 for new lessons or completed lessons (restart)
+  /// Returns index of first incomplete module for in-progress lessons
+  int _getStartingModuleIndex(LessonModel lesson) {
+    final progress = _progressRepo.getProgress(lesson.id);
+    
+    // If no progress or lesson is completed, start from beginning
+    if (progress == null || progress.isCompleted) {
+      return 0;
+    }
+    
+    // Find first incomplete module
+    for (int i = 0; i < lesson.modules.length; i++) {
+      if (!progress.isModuleCompleted(lesson.modules[i].id)) {
+        return i;
+      }
+    }
+    
+    // Fallback to first module (shouldn't happen)
+    return 0;
   }
 }
 

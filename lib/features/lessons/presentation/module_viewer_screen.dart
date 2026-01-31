@@ -44,6 +44,11 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
     
     _lesson = _lessonRepo.getLessonById(widget.lessonId);
     
+    // Update last accessed time
+    if (_lesson != null) {
+      await _progressRepo.updateLastAccessed(widget.lessonId);
+    }
+    
     await Future.delayed(const Duration(milliseconds: 300));
     
     if (mounted) {
@@ -60,6 +65,17 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
 
   bool get _isFirstModule => _currentModuleIndex == 0;
   bool get _isLastModule => _currentModuleIndex == (_lesson?.modules.length ?? 0) - 1;
+
+  double get _currentProgress {
+    if (_lesson == null) return 0.0;
+    final progress = _progressRepo.getProgress(widget.lessonId);
+    return progress?.completionPercentage ?? 0.0;
+  }
+
+  bool _isModuleCompleted(String moduleId) {
+    final progress = _progressRepo.getProgress(widget.lessonId);
+    return progress?.isModuleCompleted(moduleId) ?? false;
+  }
 
   // Helper to get module color
   Color _getModuleColor(ModuleModel module) {
@@ -87,7 +103,15 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
     }
   }
 
-  void _goToNextModule() {
+  Future<void> _goToNextModule() async {
+    // Mark current module as completed
+    if (_currentModule != null) {
+      await _progressRepo.markModuleCompleted(
+        widget.lessonId,
+        _currentModule!.id,
+      );
+    }
+
     if (!_isLastModule) {
       setState(() {
         _currentModuleIndex++;
@@ -98,16 +122,76 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
   }
 
   void _showLessonCompleteDialog() {
+    final progress = _progressRepo.getProgress(widget.lessonId);
+    final completedModules = progress?.completedModuleIds.length ?? 0;
+    final totalModules = _lesson?.modules.length ?? 6;
+    
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(
-          '🎉 Lesson Complete!',
-          style: AppTextStyles.headingSmall,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
-        content: Text(
-          'Congratulations! You\'ve finished all modules for "${_lesson?.title}".',
-          style: AppTextStyles.bodyMedium,
+        title: Column(
+          children: [
+            // Celebration Icon
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.celebration,
+                color: AppColors.success,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: AppSizes.s16),
+            Text(
+              '🎉 Lesson Complete!',
+              style: AppTextStyles.headingMedium.copyWith(
+                color: AppColors.success,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Congratulations! You\'ve finished all modules for "${_lesson?.title}".',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSizes.s16),
+            // Stats Card
+            Container(
+              padding: const EdgeInsets.all(AppSizes.s16),
+              decoration: BoxDecoration(
+                color: AppColors.grey100,
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+              child: Column(
+                children: [
+                  _buildStatRow(
+                    Icons.check_circle,
+                    'Modules Completed',
+                    '$completedModules/$totalModules',
+                  ),
+                  const SizedBox(height: AppSizes.s8),
+                  _buildStatRow(
+                    Icons.access_time,
+                    'Time Invested',
+                    '~${_lesson?.estimatedMinutes ?? 0} min',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -122,8 +206,45 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
               ),
             ),
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              context.pop(); // Go back to lessons list
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: AppColors.white,
+              elevation: 0,
+            ),
+            child: const Text('Continue Learning'),
+          ),
         ],
+        actionsPadding: const EdgeInsets.all(AppSizes.s16),
       ),
+    );
+  }
+
+  Widget _buildStatRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.success),
+        const SizedBox(width: AppSizes.s8),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.grey600,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodySmall.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.grey900,
+          ),
+        ),
+      ],
     );
   }
 
@@ -310,6 +431,20 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
                     color: AppColors.white.withValues(alpha: 0.9),
                   ),
                 ),
+                const SizedBox(width: AppSizes.s16),
+                // Progress indicator
+                Icon(
+                  Icons.pending_actions,
+                  size: 16,
+                  color: AppColors.white.withValues(alpha: 0.9),
+                ),
+                const SizedBox(width: AppSizes.s4),
+                Text(
+                  '${(_currentProgress * 100).toInt()}% Complete',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.white.withValues(alpha: 0.9),
+                  ),
+                ),
               ],
             ),
           ],
@@ -376,42 +511,86 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Previous Button
-            if (!_isFirstModule)
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _goToPreviousModule,
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Previous'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: AppSizes.s16),
+            // Module Progress Dots
+            _buildModuleProgressDots(),
+            const SizedBox(height: AppSizes.s16),
+            
+            // Navigation Buttons Row
+            Row(
+              children: [
+                // Previous Button
+                if (!_isFirstModule)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _goToPreviousModule,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Previous'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: AppSizes.s16),
+                      ),
+                    ),
+                  ),
+                
+                if (!_isFirstModule) const SizedBox(width: AppSizes.s12),
+                
+                // Next Button
+                Expanded(
+                  flex: _isFirstModule ? 1 : 1,
+                  child: ElevatedButton.icon(
+                    onPressed: _goToNextModule,
+                    icon: Icon(_isLastModule ? Icons.check : Icons.arrow_forward),
+                    label: Text(_isLastModule ? 'Complete' : 'Next'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: moduleColor,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.s16),
+                      elevation: 0,
+                    ),
                   ),
                 ),
-              ),
-            
-            if (!_isFirstModule) const SizedBox(width: AppSizes.s12),
-            
-            // Next Button
-            Expanded(
-              flex: _isFirstModule ? 1 : 1,
-              child: ElevatedButton.icon(
-                onPressed: _goToNextModule,
-                icon: Icon(_isLastModule ? Icons.check : Icons.arrow_forward),
-                label: Text(_isLastModule ? 'Complete' : 'Next'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: moduleColor,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: AppSizes.s16),
-                  elevation: 0,
-                ),
-              ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Module Progress Dots - Shows completion status of all modules
+  Widget _buildModuleProgressDots() {
+    if (_lesson == null) return const SizedBox.shrink();
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        _lesson!.modules.length,
+        (index) {
+          final module = _lesson!.modules[index];
+          final isCurrent = index == _currentModuleIndex;
+          final isCompleted = _isModuleCompleted(module.id);
+          
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: isCurrent ? 32 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isCompleted
+                    ? AppColors.success
+                    : isCurrent
+                        ? _getModuleColor(module)
+                        : AppColors.grey300,
+                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -18,6 +18,10 @@ class QuickStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final completionPercentage = totalLessons > 0 
+        ? (lessonsCompleted / totalLessons) 
+        : 0.0;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.s16),
@@ -29,6 +33,71 @@ class QuickStatsCard extends StatelessWidget {
               style: AppTextStyles.headingSmall,
             ),
             const SizedBox(height: AppSizes.s16),
+            
+            // Circular Progress Indicator
+            Center(
+              child: SizedBox(
+                width: 120,
+                height: 120,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Background Circle
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: CircularProgressIndicator(
+                        value: 1.0,
+                        strokeWidth: 12,
+                        backgroundColor: AppColors.grey300,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppColors.grey300,
+                        ),
+                      ),
+                    ),
+                    // Progress Circle
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: CircularProgressIndicator(
+                        value: completionPercentage,
+                        strokeWidth: 12,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          completionPercentage == 1.0 
+                              ? AppColors.success 
+                              : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    // Percentage Text
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${(completionPercentage * 100).toInt()}%',
+                          style: AppTextStyles.headingLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: completionPercentage == 1.0 
+                                ? AppColors.success 
+                                : AppColors.primary,
+                          ),
+                        ),
+                        Text(
+                          'Complete',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: AppSizes.s20),
+            
             Row(
               children: [
                 Expanded(

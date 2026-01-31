@@ -110,8 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   }
                   
+                  // Progress as decimal (0.0 to 1.0) for TopicCard
                   final progress = totalCount > 0 
-                      ? (completedCount / totalCount * 100)
+                      ? (completedCount / totalCount)
                       : 0.0;
                   
                   return Padding(
