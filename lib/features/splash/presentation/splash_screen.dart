@@ -93,37 +93,17 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       // App Icon/Logo
                       Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.science,
-                          size: 80,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.s32),
-                      
-                      // App Name
-                      Text(
-                        'SCI-Bot',
-                        style: AppTextStyles.displayLarge.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w700,
+                        width: 300,
+                        height: 300,
+                        child: Image.asset(
+                          'assets/icons/scibot-icon.png',
+                          width: 150,
+                          height: 150,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: AppSizes.s8),
-                      
+                    
                       // Tagline
                       Text(
                         'Your AI Science Learning Companion',

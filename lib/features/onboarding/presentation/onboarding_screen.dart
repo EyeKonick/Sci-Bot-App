@@ -27,6 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Your personal AI-powered companion for mastering Grade 9 Science. Learn at your own pace, anytime, anywhere.',
       icon: Icons.science,
       iconColor: AppColors.primary,
+      isCustomIcon: true,
     ),
     OnboardingPage(
       title: 'Learn Offline 📚',
@@ -173,11 +174,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: page.iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusXL),
             ),
-            child: Icon(
-              page.icon,
-              size: 100,
-              color: page.iconColor,
-            ),
+            child: page.isCustomIcon == true
+                ? Image.asset(
+                    'assets/icons/scibot-icon.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
+                  )
+                : Icon(
+                    page.icon,
+                    size: 100,
+                    color: page.iconColor,
+                  ),
           ),
           const SizedBox(height: AppSizes.s48),
 
