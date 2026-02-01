@@ -7,6 +7,7 @@ import 'services/preferences/shared_prefs_service.dart';
 import 'services/storage/hive_service.dart';
 import 'services/data/data_seeder_service.dart'; 
 import 'services/data/test_data_seeding.dart';
+import 'services/ai/openai_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,15 @@ void main() async {
   
   // Initialize Hive
   await HiveService.init();
+  
+  // Initialize OpenAI Service
+  try {
+    await OpenAIService().initialize();
+    print('✅ OpenAI service initialized');
+  } catch (e) {
+    print('⚠️ OpenAI initialization failed: $e');
+    print('💡 Make sure to add your API key to .env file');
+  }
   
   // Seed data on first launch - CORRECTED
   final isDataSeeded = DataSeederService.isDataSeeded; // ← NO await, NO ()

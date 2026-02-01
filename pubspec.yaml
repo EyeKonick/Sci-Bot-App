@@ -26,6 +26,13 @@ dependencies:
   dio: ^5.4.0
   retrofit: ^4.0.3
   json_annotation: ^4.8.1
+  http: ^1.1.0
+  
+  # OpenAI
+  dart_openai: ^5.1.0
+  
+  # Environment variables
+  flutter_dotenv: ^5.1.0
 
   # UI Components
   google_fonts: ^6.1.0
@@ -59,6 +66,7 @@ flutter:
 
   # Assets will be added as we create content
   assets:
+    - .env
     - assets/images/
     - assets/icons/
     - assets/data/

@@ -92,6 +92,9 @@ class HiveService {
     return _chatHistoryBox!;
   }
 
+  /// Alias for chatHistoryBox (for consistency)
+  static Box<ChatMessageModel> get chatBox => chatHistoryBox;
+
   /// Get Bookmarks Box
   static Box<BookmarkModel> get bookmarksBox {
     if (_bookmarksBox == null || !_bookmarksBox!.isOpen) {

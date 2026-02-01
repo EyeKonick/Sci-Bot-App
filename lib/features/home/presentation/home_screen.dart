@@ -15,6 +15,7 @@ import 'widgets/quick_stats_card.dart';
 import 'widgets/inline_search_suggestions.dart';
 import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
+import '../../chat/presentation/widgets/floating_chat_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -139,7 +140,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _clearSearch();
         }
       },
-      child: Scaffold(
+      child: Stack(
+        children: [
+          Scaffold(
       backgroundColor: AppColors.grey50,
       body: CustomScrollView(
        slivers: [
@@ -148,11 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: GreetingHeader(),  // ✅ CORRECT - no parameters
           ),
 
-          // Spacing between greeting and search
-          const SliverToBoxAdapter(
-          child: SizedBox(height: AppSizes.s16),
-          ),
-          
           // Search Bar
           SliverToBoxAdapter(
             child: Padding(
@@ -368,8 +366,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      ), // Close GestureDetector
-    );
+          ), // Close Scaffold
+          
+          // Floating Aristotle Button
+          const FloatingChatButton(),
+        ], // Close Stack children
+      ), // Close Stack
+    ); // Close GestureDetector
   }
 
   /// Parse hex color string to Color
