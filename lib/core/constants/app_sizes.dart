@@ -14,6 +14,7 @@ class AppSizes {
   static const double s40 = 40.0; // 5x
   static const double s48 = 48.0; // 6x - large spacing
   static const double s64 = 64.0; // 8x - extra large
+  static const double s100 = 100.0; // 12.5x - extra large
 
   // ICON SIZES
   static const double iconXS = 16.0;

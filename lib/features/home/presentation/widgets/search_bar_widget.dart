@@ -8,12 +8,18 @@ class SearchBarWidget extends StatelessWidget {
   final VoidCallback? onTap;
   final Function(String)? onChanged;
   final TextEditingController? controller;
+  final bool readOnly;
+  final FocusNode? focusNode;
+  final VoidCallback? onClear;
 
   const SearchBarWidget({
     super.key,
     this.onTap,
     this.onChanged,
     this.controller,
+    this.readOnly = true,
+    this.focusNode,
+    this.onClear,
   });
 
   @override
@@ -32,9 +38,11 @@ class SearchBarWidget extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         onChanged: onChanged,
         onTap: onTap,
-        readOnly: onTap != null,
+        readOnly: readOnly,
+        style: AppTextStyles.bodyMedium,
         decoration: InputDecoration(
           hintText: 'Search lessons and topics...',
           hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -44,6 +52,15 @@ class SearchBarWidget extends StatelessWidget {
             Icons.search,
             color: AppColors.primary,
           ),
+          suffixIcon: controller != null && controller!.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear,
+                    color: AppColors.grey600,
+                  ),
+                  onPressed: onClear,
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSizes.s16,

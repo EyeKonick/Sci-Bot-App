@@ -7,10 +7,12 @@ import '../../../features/topics/data/repositories/topic_repository.dart';
 import '../../../features/lessons/data/repositories/lesson_repository.dart';
 import '../../../features/lessons/data/repositories/progress_repository.dart';
 import '../../../features/lessons/data/repositories/bookmark_repository.dart';
+import '../../../shared/models/models.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
 import 'widgets/quick_stats_card.dart';
+import 'widgets/inline_search_suggestions.dart';
 import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
 
@@ -26,6 +28,103 @@ class _HomeScreenState extends State<HomeScreen> {
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
   final _bookmarkRepo = BookmarkRepository();
+  
+  // Search functionality
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  bool _isSearchActive = false;
+  List<LessonModel> _searchSuggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+    _searchFocusNode.addListener(_onSearchFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text;
+    
+    if (query.length >= 3) {
+      // Perform search
+      setState(() {
+        _isSearchActive = true;
+        _searchSuggestions = _searchLessons(query);
+      });
+    } else {
+      // Clear suggestions
+      setState(() {
+        _searchSuggestions = [];
+        if (query.isEmpty) {
+          _isSearchActive = false;
+        }
+      });
+    }
+  }
+
+  void _onSearchFocusChanged() {
+    if (!_searchFocusNode.hasFocus && _searchController.text.isEmpty) {
+      setState(() {
+        _isSearchActive = false;
+      });
+    }
+  }
+
+  List<LessonModel> _searchLessons(String query) {
+    final allLessons = _lessonRepo.getAllLessons();
+    final lowerQuery = query.toLowerCase();
+    final results = <LessonModel>[];
+
+    for (final lesson in allLessons) {
+      // Check title match
+      if (lesson.title.toLowerCase().contains(lowerQuery)) {
+        results.add(lesson);
+      }
+      // Check description match
+      else if (lesson.description.toLowerCase().contains(lowerQuery)) {
+        results.add(lesson);
+      }
+    }
+
+    // Return top 3 results
+    return results.take(3).toList();
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _searchSuggestions = [];
+      _isSearchActive = false;
+    });
+    _searchFocusNode.unfocus();
+  }
+
+  void _onSuggestionTap(LessonModel lesson) {
+    // Clear search
+    _clearSearch();
+    
+    // Navigate to lesson
+    final startIndex = _getStartingModuleIndex(lesson.id);
+    context.push('/lessons/${lesson.id}/module/$startIndex');
+  }
+
+  int _getStartingModuleIndex(String lessonId) {
+    final progress = _progressRepo.getProgress(lessonId);
+    if (progress == null || progress.isCompleted) {
+      return 0;
+    }
+    
+    // Find first incomplete module
+    // Simplified - in real implementation would check actual modules
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +132,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final topics = _topicRepo.getAllTopics();
     final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
     
-    return Scaffold(
+    return GestureDetector(
+      onTap: () {
+        // Dismiss search when tapping outside
+        if (_isSearchActive) {
+          _clearSearch();
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.grey50,
       body: CustomScrollView(
        slivers: [
@@ -42,14 +148,43 @@ class _HomeScreenState extends State<HomeScreen> {
             child: GreetingHeader(),  // ✅ CORRECT - no parameters
           ),
 
+          // Spacing between greeting and search
+          const SliverToBoxAdapter(
+          child: SizedBox(height: AppSizes.s16),
+          ),
+          
           // Search Bar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s20),
-              child: SearchBarWidget(
-                onTap: () {
-                  // TODO: Navigate to search
-                },
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, 0),
+              child: Column(
+                children: [
+                  // Search Bar
+                  SearchBarWidget(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    readOnly: false,
+                    onChanged: (_) {}, // Handled by controller listener
+                    onClear: _clearSearch,
+                  ),
+                  
+                  // Inline Search Suggestions
+                  if (_isSearchActive && _searchController.text.length >= 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.s8),
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: InlineSearchSuggestions(
+                          suggestions: _searchSuggestions,
+                          query: _searchController.text,
+                          onTap: _onSuggestionTap,
+                        ),
+                      ),
+                    ),
+                  
+                  const SizedBox(height: AppSizes.s20),
+                ],
               ),
             ),
           ),
@@ -233,6 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      ), // Close GestureDetector
     );
   }
 

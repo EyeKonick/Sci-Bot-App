@@ -80,6 +80,7 @@ class AppRouter {
         builder: (context, state) => const BookmarksScreen(),
       ),
 
+
       // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
