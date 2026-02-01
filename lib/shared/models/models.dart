@@ -6,3 +6,4 @@ export 'lesson_model.dart';
 export 'topic_model.dart';
 export 'progress_model.dart';
 export 'chat_message_model.dart';
+export 'bookmark_model.dart';

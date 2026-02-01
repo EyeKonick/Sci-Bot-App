@@ -8,6 +8,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/topics/presentation/topics_screen.dart';
 import '../../features/lessons/presentation/lessons_screen.dart';
 import '../../features/lessons/presentation/module_viewer_screen.dart';
+import '../../features/lessons/presentation/bookmarks_screen.dart';
 import '../../features/error/presentation/not_found_screen.dart';
 import 'app_routes.dart';
 import 'bottom_nav_shell.dart';
@@ -70,6 +71,13 @@ class AppRouter {
             moduleIndex: moduleIndex,
           );
         },
+      ),
+
+      // BOOKMARKS SCREEN (Week 2 Day 6)
+      GoRoute(
+        path: '/bookmarks',
+        name: 'bookmarks',
+        builder: (context, state) => const BookmarksScreen(),
       ),
 
       // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)

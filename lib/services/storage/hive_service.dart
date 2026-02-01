@@ -6,6 +6,7 @@ import 'adapters/lesson_adapter.dart';
 import 'adapters/topic_adapter.dart';
 import 'adapters/progress_adapter.dart';
 import 'adapters/chat_message_adapter.dart';
+import 'adapters/bookmark_adapter.dart';
 
 /// Central Hive database service
 /// Handles initialization and box management
@@ -24,7 +25,7 @@ class HiveService {
   static Box<LessonModel>? _lessonsBox;
   static Box<ProgressModel>? _progressBox;
   static Box<ChatMessageModel>? _chatHistoryBox;
-  static Box<String>? _bookmarksBox; // Stores lesson IDs
+  static Box<BookmarkModel>? _bookmarksBox; // Stores BookmarkModel objects
 
   /// Initialize Hive and open all boxes
   static Future<void> init() async {
@@ -47,13 +48,16 @@ class HiveService {
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(ChatMessageAdapter());
     }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(BookmarkAdapter());
+    }
 
     // Open all boxes
     _topicsBox = await Hive.openBox<TopicModel>(topicsBoxName);
     _lessonsBox = await Hive.openBox<LessonModel>(lessonsBoxName);
     _progressBox = await Hive.openBox<ProgressModel>(progressBoxName);
     _chatHistoryBox = await Hive.openBox<ChatMessageModel>(chatHistoryBoxName);
-    _bookmarksBox = await Hive.openBox<String>(bookmarksBoxName);
+    _bookmarksBox = await Hive.openBox<BookmarkModel>(bookmarksBoxName);
   }
 
   /// Get Topics Box
@@ -89,7 +93,7 @@ class HiveService {
   }
 
   /// Get Bookmarks Box
-  static Box<String> get bookmarksBox {
+  static Box<BookmarkModel> get bookmarksBox {
     if (_bookmarksBox == null || !_bookmarksBox!.isOpen) {
       throw Exception('Bookmarks box not initialized. Call HiveService.init() first.');
     }

@@ -8,6 +8,7 @@ class TopicCard extends StatelessWidget {
   final String title;
   final String description;
   final IconData icon;
+  final String? imageAsset; // Optional custom image
   final Color iconColor;
   final int lessonCount;
   final double progress; // 0.0 to 1.0
@@ -18,6 +19,7 @@ class TopicCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.icon,
+    this.imageAsset,
     required this.iconColor,
     required this.lessonCount,
     this.progress = 0.0,
@@ -41,7 +43,7 @@ class TopicCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // Icon Container
+                  // Icon/Image Container
                   Container(
                     width: 56,
                     height: 56,
@@ -49,11 +51,21 @@ class TopicCard extends StatelessWidget {
                       color: iconColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
-                    child: Icon(
-                      icon,
-                      size: AppSizes.iconL,
-                      color: iconColor,
-                    ),
+                    child: imageAsset != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                            child: Image.asset(
+                              imageAsset!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Icon(
+                            icon,
+                            size: AppSizes.iconL,
+                            color: iconColor,
+                          ),
                   ),
                   const SizedBox(width: AppSizes.s12),
                   

@@ -6,6 +6,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../features/topics/data/repositories/topic_repository.dart';
 import '../../../features/lessons/data/repositories/lesson_repository.dart';
 import '../../../features/lessons/data/repositories/progress_repository.dart';
+import '../../../features/lessons/data/repositories/bookmark_repository.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _topicRepo = TopicRepository();
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
+  final _bookmarkRepo = BookmarkRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -55,11 +57,71 @@ class _HomeScreenState extends State<HomeScreen> {
           // Quick Stats
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s24),
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
               child: QuickStatsCard(
                 lessonsCompleted: completedLessonsCount,
                 totalLessons: _lessonRepo.getLessonsCount(),
                 currentStreak: 0, // TODO: Calculate streak
+              ),
+            ),
+          ),
+
+          // My Bookmarks Quick Access
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s24),
+              child: Card(
+                elevation: AppSizes.cardElevation,
+                color: AppColors.surface,
+                child: InkWell(
+                  onTap: () => context.push('/bookmarks'),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.s16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                          ),
+                          child: const Icon(
+                            Icons.bookmark,
+                            color: AppColors.warning,
+                            size: AppSizes.iconM,
+                          ),
+                        ),
+                        const SizedBox(width: AppSizes.s12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'My Bookmarks',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: AppSizes.s4),
+                              Text(
+                                '${_bookmarkRepo.getBookmarksCount()} saved lessons',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.grey600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.grey600,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -123,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: topic.name,
                       description: topic.description,
                       icon: Icons.school,
+                      imageAsset: topic.imageAsset,
                       iconColor: _parseColor(topic.colorHex),
                       lessonCount: topic.lessonIds.length,
                       progress: progress,

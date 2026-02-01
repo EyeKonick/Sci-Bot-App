@@ -5,6 +5,7 @@ class TopicModel {
   final String name;
   final String description;
   final String iconName; // Store as string, convert to IconData in UI
+  final String? imageAsset; // Optional custom image asset path
   final String colorHex; // Store as hex string like "#4DB8C4"
   final List<String> lessonIds; // IDs of lessons in this topic
   final int order; // Display order
@@ -14,6 +15,7 @@ class TopicModel {
     required this.name,
     required this.description,
     required this.iconName,
+    this.imageAsset,
     required this.colorHex,
     required this.lessonIds,
     required this.order,
@@ -26,6 +28,7 @@ class TopicModel {
       name: json['name'] as String,
       description: json['description'] as String,
       iconName: json['icon_name'] as String,
+      imageAsset: json['image_asset'] as String?,
       colorHex: json['color_hex'] as String,
       lessonIds: (json['lesson_ids'] as List<dynamic>)
           .map((id) => id as String)
@@ -41,6 +44,7 @@ class TopicModel {
       'name': name,
       'description': description,
       'icon_name': iconName,
+      'image_asset': imageAsset,
       'color_hex': colorHex,
       'lesson_ids': lessonIds,
       'order': order,
@@ -56,6 +60,7 @@ class TopicModel {
     String? name,
     String? description,
     String? iconName,
+    String? imageAsset,
     String? colorHex,
     List<String>? lessonIds,
     int? order,
@@ -65,6 +70,7 @@ class TopicModel {
       name: name ?? this.name,
       description: description ?? this.description,
       iconName: iconName ?? this.iconName,
+      imageAsset: imageAsset ?? this.imageAsset,
       colorHex: colorHex ?? this.colorHex,
       lessonIds: lessonIds ?? this.lessonIds,
       order: order ?? this.order,

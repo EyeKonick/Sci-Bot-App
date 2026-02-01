@@ -22,13 +22,14 @@ class TopicAdapter extends TypeAdapter<TopicModel> {
       colorHex: fields[4] as String,
       lessonIds: (fields[5] as List).cast<String>(),
       order: fields[6] as int,
+      imageAsset: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TopicModel obj) {
     writer
-      ..writeByte(7) // number of fields
+      ..writeByte(8) // number of fields
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -42,6 +43,8 @@ class TopicAdapter extends TypeAdapter<TopicModel> {
       ..writeByte(5)
       ..write(obj.lessonIds)
       ..writeByte(6)
-      ..write(obj.order);
+      ..write(obj.order)
+      ..writeByte(7)
+      ..write(obj.imageAsset);
   }
 }

@@ -225,7 +225,7 @@ class _TopicListCard extends StatelessWidget {
               // Header Row
               Row(
                 children: [
-                  // Icon
+                  // Icon/Image
                   Container(
                     width: 64,
                     height: 64,
@@ -233,11 +233,21 @@ class _TopicListCard extends StatelessWidget {
                       color: iconColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 36,
-                      color: iconColor,
-                    ),
+                    child: topic.imageAsset != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                            child: Image.asset(
+                              topic.imageAsset!,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Icon(
+                            icon,
+                            size: 36,
+                            color: iconColor,
+                          ),
                   ),
                   const SizedBox(width: AppSizes.s16),
 

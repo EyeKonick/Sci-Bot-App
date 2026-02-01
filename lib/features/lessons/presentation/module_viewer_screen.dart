@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../shared/models/models.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
+import '../data/repositories/bookmark_repository.dart';
 
 /// Module Viewer Screen - Displays individual module content
 /// Week 2 Day 4 Implementation
@@ -27,6 +28,7 @@ class ModuleViewerScreen extends StatefulWidget {
 class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
+  final _bookmarkRepo = BookmarkRepository();
   
   LessonModel? _lesson;
   late int _currentModuleIndex;
@@ -337,6 +339,41 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
             ),
           ],
         ),
+        actions: [
+          // Bookmark button
+          IconButton(
+            icon: Icon(
+              _bookmarkRepo.isBookmarked(widget.lessonId)
+                  ? Icons.bookmark
+                  : Icons.bookmark_border,
+              color: AppColors.white,
+            ),
+            onPressed: () async {
+              final topicId = _lesson!.topicId;
+              await _bookmarkRepo.toggleBookmark(
+                lessonId: widget.lessonId,
+                topicId: topicId,
+              );
+              setState(() {}); // Refresh to update bookmark icon
+              
+              // Show feedback
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _bookmarkRepo.isBookmarked(widget.lessonId)
+                          ? 'Lesson bookmarked!'
+                          : 'Bookmark removed',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
