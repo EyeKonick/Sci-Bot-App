@@ -4,14 +4,16 @@ import '../../../../shared/models/models.dart';
 import '../../../../services/storage/hive_service.dart';
 import '../../../../services/ai/openai_service.dart';
 import '../../../../services/ai/prompts/aristotle_prompts.dart';
+import '../services/context_service.dart';
 
 /// Chat Repository
 /// Manages chat messages, AI interactions, and message history
 /// 
-/// Week 3 Day 1 Implementation
+/// Week 3 Day 1-2 Implementation
 class ChatRepository {
   final _openAI = OpenAIService();
   final _conversationHistory = <ChatMessage>[];
+  final _contextService = ContextService();
   
   // Character context
   String _currentCharacter = 'Aristotle';
@@ -19,8 +21,14 @@ class ChatRepository {
   
   /// Initialize repository
   Future<void> initialize() async {
-    await _openAI.initialize();
-    await _loadHistory();
+    try {
+      // OpenAI service is already initialized in main.dart
+      // So we just need to load history here
+      await _loadHistory();
+    } catch (e) {
+      print('Error loading chat history: $e');
+      // Don't throw error, just log it - we can still chat without history
+    }
   }
 
   /// Load chat history from Hive
@@ -53,12 +61,24 @@ class ChatRepository {
   Stream<ChatMessage> sendMessageStream(String userMessage, {
     String? context,
     int? progressPercentage,
+    String? lessonId,
+    int? moduleIndex,
   }) async* {
     // Update context
     if (context != null) _currentContext = context;
 
+    // Get current context from service
+    ChatContext appContext;
+    if (lessonId != null && moduleIndex != null) {
+      appContext = await _contextService.getModuleContext(lessonId, moduleIndex);
+    } else if (lessonId != null) {
+      appContext = await _contextService.getLessonContext(lessonId);
+    } else {
+      appContext = await _contextService.getCurrentContext();
+    }
+
     // Create user message
-    final userMsg = ChatMessage.user(userMessage, context: _currentContext);
+    final userMsg = ChatMessage.user(userMessage, context: appContext.location);
     _conversationHistory.add(userMsg);
     await _saveMessage(userMsg);
     
@@ -66,8 +86,9 @@ class ChatRepository {
 
     // Prepare messages for API
     final apiMessages = _prepareAPIMessages(
-      context: _currentContext,
-      progressPercentage: progressPercentage,
+      context: appContext.location,
+      progressPercentage: appContext.progressPercentage,
+      contextDetails: appContext.toPromptContext(),
     );
 
     // Stream response from OpenAI
@@ -81,7 +102,7 @@ class ChatRepository {
         yield ChatMessage.assistant(
           fullResponse,
           characterName: _currentCharacter,
-          context: _currentContext,
+          context: appContext.location,
           isStreaming: true,
         );
       }
@@ -90,7 +111,7 @@ class ChatRepository {
       final finalMsg = ChatMessage.assistant(
         fullResponse,
         characterName: _currentCharacter,
-        context: _currentContext,
+        context: appContext.location,
         isStreaming: false,
       );
       
@@ -104,7 +125,7 @@ class ChatRepository {
       final errorMsg = ChatMessage.assistant(
         "I'm having trouble connecting right now. Please check your internet connection and try again. 🔌",
         characterName: _currentCharacter,
-        context: _currentContext,
+        context: appContext.location,
       );
       
       yield errorMsg;
@@ -115,15 +136,22 @@ class ChatRepository {
   List<Map<String, dynamic>> _prepareAPIMessages({
     required String context,
     int? progressPercentage,
+    String? contextDetails,
   }) {
     final messages = <Map<String, dynamic>>[];
 
-    // Add system prompt
+    // Add system prompt with context
     final systemPrompt = AristotlePrompts.getContextPrompt(
       context: context,
       progressPercentage: progressPercentage,
     );
-    messages.add({'role': 'system', 'content': systemPrompt});
+    
+    // Append additional context details if provided
+    final fullPrompt = contextDetails != null
+        ? '$systemPrompt\n\nADDITIONAL CONTEXT:\n$contextDetails'
+        : systemPrompt;
+    
+    messages.add({'role': 'system', 'content': fullPrompt});
 
     // Add conversation history (last 10 messages for context)
     final recentHistory = _conversationHistory.length > 10

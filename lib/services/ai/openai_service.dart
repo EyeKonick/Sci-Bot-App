@@ -16,9 +16,16 @@ class OpenAIService {
   late final String _model;
   late final double _temperature;
   late final int _maxTokens;
+  bool _isInitialized = false;
 
   /// Initialize service with API key from .env
   Future<void> initialize() async {
+    // Skip if already initialized
+    if (_isInitialized) {
+      print('OpenAI service already initialized');
+      return;
+    }
+
     await dotenv.load(fileName: ".env");
     
     _apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
@@ -29,6 +36,9 @@ class OpenAIService {
     if (_apiKey.isEmpty || _apiKey == 'your_api_key_here') {
       throw Exception('OpenAI API key not configured. Please update .env file.');
     }
+
+    _isInitialized = true;
+    print('✅ OpenAI service initialized successfully');
   }
 
   /// Send chat completion request with streaming

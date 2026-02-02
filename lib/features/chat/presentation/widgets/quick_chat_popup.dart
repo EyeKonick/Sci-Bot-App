@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -34,25 +35,42 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
   }
 
   Future<void> _initialize() async {
-    await _chatRepo.initialize();
-    
-    setState(() {
-      // Show greeting if no history
-      if (_chatRepo.conversationHistory.isEmpty) {
-        _messages.add(_chatRepo.getGreeting());
-      } else {
-        // Show last 3 messages
-        final history = _chatRepo.conversationHistory;
-        if (history.length > 3) {
-          _messages.addAll(history.sublist(history.length - 3));
+    try {
+      await _chatRepo.initialize();
+      
+      if (!mounted) return;
+      
+      setState(() {
+        // Show greeting if no history
+        if (_chatRepo.conversationHistory.isEmpty) {
+          _messages.add(_chatRepo.getGreeting());
         } else {
-          _messages.addAll(history);
+          // Show last 3 messages
+          final history = _chatRepo.conversationHistory;
+          if (history.length > 3) {
+            _messages.addAll(history.sublist(history.length - 3));
+          } else {
+            _messages.addAll(history);
+          }
         }
-      }
-      _isLoading = false;
-    });
+        _isLoading = false;
+      });
 
-    _scrollToBottom();
+      _scrollToBottom();
+    } catch (e) {
+      // If initialization fails, still show greeting
+      print('⚠️ Error initializing chat: $e');
+      
+      if (!mounted) return;
+      
+      setState(() {
+        // Show greeting anyway
+        _messages.add(_chatRepo.getGreeting());
+        _isLoading = false;
+      });
+      
+      _scrollToBottom();
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -60,20 +78,39 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
     if (text.isEmpty || _isStreaming) return;
 
     _controller.clear();
+    
+    // Add user message immediately
+    final userMsg = ChatMessage.user(text);
     setState(() {
+      _messages.add(userMsg);
       _isStreaming = true;
     });
+    
+    _scrollToBottom();
 
+    // Create placeholder for AI response
+    ChatMessage? aiMessage;
+    
+    // Get context - will detect based on current screen in future
     await for (final message in _chatRepo.sendMessageStream(text)) {
       setState(() {
-        // Update or add message
-        final index = _messages.indexWhere((m) => 
-          m.role == message.role && m.timestamp == message.timestamp);
+        if (message.role == 'user') {
+          // Skip user messages (already added above)
+          return;
+        }
         
-        if (index != -1) {
-          _messages[index] = message;
-        } else {
+        // Find or create AI message
+        if (aiMessage == null) {
+          // First chunk - add new message
+          aiMessage = message;
           _messages.add(message);
+        } else if (aiMessage != null) {
+          // Update existing message
+          final index = _messages.indexOf(aiMessage!);
+          if (index != -1) {
+            _messages[index] = message;
+            aiMessage = message;
+          }
         }
       });
       
