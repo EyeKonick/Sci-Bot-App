@@ -79,21 +79,21 @@ class _ModuleViewerScreenState extends State<ModuleViewerScreen> {
     return progress?.isModuleCompleted(moduleId) ?? false;
   }
 
-  // Helper to get module color
+  // Helper to get module color (matches lesson indicator colors)
   Color _getModuleColor(ModuleModel module) {
     switch (module.type) {
       case ModuleType.pre_scintation:
         return const Color(0xFF2196F3); // Blue
       case ModuleType.fa_scinate:
-        return const Color(0xFFFFA726); // Orange
+        return const Color(0xFF9C27B0); // Purple  
       case ModuleType.inve_scitigation:
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFFFF9800); // Orange
       case ModuleType.goal_scitting:
-        return const Color(0xFF9C27B0); // Purple
+        return const Color(0xFF4CAF50); // Green
       case ModuleType.self_a_scissment:
-        return const Color(0xFFE91E63); // Pink
+        return const Color(0xFFF44336); // Red
       case ModuleType.scipplementary:
-        return const Color(0xFF00BCD4); // Cyan
+        return AppColors.primary; // Teal
     }
   }
 

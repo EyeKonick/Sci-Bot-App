@@ -4,12 +4,14 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 
 /// Card displaying a science topic with progress
+/// Updated with gradient backgrounds (Batch 1)
 class TopicCard extends StatelessWidget {
   final String title;
   final String description;
   final IconData icon;
   final String? imageAsset; // Optional custom image
   final Color iconColor;
+  final List<Color> gradientColors; // NEW: Gradient colors
   final int lessonCount;
   final double progress; // 0.0 to 1.0
   final VoidCallback? onTap;
@@ -21,6 +23,7 @@ class TopicCard extends StatelessWidget {
     required this.icon,
     this.imageAsset,
     required this.iconColor,
+    this.gradientColors = const [Color(0xFF4DB8C4), Color(0xFF7BC9A4)], // Default gradient
     required this.lessonCount,
     this.progress = 0.0,
     this.onTap,
@@ -29,15 +32,23 @@ class TopicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 4, // Increased elevation
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.s16),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
+            ),
+            borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          ),
+          padding: const EdgeInsets.all(AppSizes.s20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -45,10 +56,10 @@ class TopicCard extends StatelessWidget {
                 children: [
                   // Icon/Image Container
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
-                      color: iconColor.withOpacity(0.1),
+                      color: Colors.white.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
                     child: imageAsset != null
@@ -56,15 +67,15 @@ class TopicCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(AppSizes.radiusM),
                             child: Image.asset(
                               imageAsset!,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.contain,
                             ),
                           )
                         : Icon(
                             icon,
-                            size: AppSizes.iconL,
-                            color: iconColor,
+                            size: 36,
+                            color: Colors.white,
                           ),
                   ),
                   const SizedBox(width: AppSizes.s12),
@@ -76,76 +87,38 @@ class TopicCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: AppTextStyles.lessonCardTitle,
+                          style: AppTextStyles.headingSmall.copyWith(
+                            color: Colors.white,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSizes.s4),
                         Text(
-                          '$lessonCount ${lessonCount == 1 ? 'lesson' : 'lessons'}',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.grey600,
+                          '$lessonCount ${lessonCount == 1 ? 'lesson' : 'lessons'} • ${(progress * 100).toInt()}% complete',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.white.withOpacity(0.9),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  // Arrow Icon
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.grey600,
-                  ),
                 ],
               ),
               
-              const SizedBox(height: AppSizes.s12),
-              
-              // Description
-              Text(
-                description,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.grey600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-              const SizedBox(height: AppSizes.s12),
+              const SizedBox(height: AppSizes.s16),
               
               // Progress Bar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Progress',
-                        style: AppTextStyles.caption,
-                      ),
-                      Text(
-                        '${(progress * 100).toInt()}%',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.white.withOpacity(0.3),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Colors.white,
                   ),
-                  const SizedBox(height: AppSizes.s4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: AppColors.grey300,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        iconColor,
-                      ),
-                      minHeight: 6,
-                    ),
-                  ),
-                ],
+                  minHeight: 8,
+                ),
               ),
             ],
           ),

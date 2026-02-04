@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/models/module_type.dart';
 import '../../topics/data/repositories/topic_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
@@ -212,6 +213,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 isCompleted: isCompleted,
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
+                progressRepo: _progressRepo,
                 onTap: () {
                   // Resume from last incomplete module or start from beginning
                   final startIndex = _getStartingModuleIndex(lesson);
@@ -346,6 +348,7 @@ class _LessonCard extends StatelessWidget {
   final bool isCompleted;
   final double progress; // 0.0 to 1.0
   final Color topicColor;
+  final ProgressRepository progressRepo;
   final VoidCallback onTap;
 
   const _LessonCard({
@@ -354,6 +357,7 @@ class _LessonCard extends StatelessWidget {
     required this.isCompleted,
     required this.progress,
     required this.topicColor,
+    required this.progressRepo,
     required this.onTap,
   });
 
@@ -479,6 +483,36 @@ class _LessonCard extends StatelessWidget {
 
               const SizedBox(height: AppSizes.s12),
 
+              // Module Type Indicators (6 icons with completion status)
+              Row(
+                children: [
+                  Text(
+                    'Modules:',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.grey600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.s8),
+                  Expanded(
+                    child: Wrap(
+                      spacing: AppSizes.s8,
+                      children: lesson.modules.asMap().entries.map((entry) {
+                        final module = entry.value;
+                        final isModuleCompleted = _isModuleCompleted(lesson.id, module.id);
+                        return _buildModuleIndicator(
+                          module.type, 
+                          topicColor,
+                          isModuleCompleted,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AppSizes.s12),
+
               // Progress Bar
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,5 +554,109 @@ class _LessonCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Build module type indicator icon with completion status
+  Widget _buildModuleIndicator(ModuleType moduleType, Color baseColor, bool isCompleted) {
+    // Module type colors
+    Color getModuleColor() {
+      switch (moduleType) {
+        case ModuleType.pre_scintation:
+          return const Color(0xFF2196F3); // Blue
+        case ModuleType.fa_scinate:
+          return const Color(0xFF9C27B0); // Purple
+        case ModuleType.inve_scitigation:
+          return const Color(0xFFFF9800); // Orange
+        case ModuleType.goal_scitting:
+          return const Color(0xFF4CAF50); // Green
+        case ModuleType.self_a_scissment:
+          return const Color(0xFFF44336); // Red
+        case ModuleType.scipplementary:
+          return AppColors.primary; // Teal
+      }
+    }
+
+    // Asset image path for each module type
+    String getModuleAssetPath() {
+      switch (moduleType) {
+        case ModuleType.pre_scintation:
+          return 'assets/icons/Pre-SCI-ntation.png';
+        case ModuleType.fa_scinate:
+          return 'assets/icons/Fa-SCI-nate.png';
+        case ModuleType.inve_scitigation:
+          return 'assets/icons/Inve-SCI-tigation.png';
+        case ModuleType.goal_scitting:
+          return 'assets/icons/Goal-SCI-tting.png';
+        case ModuleType.self_a_scissment:
+          return 'assets/icons/Self-A-SCI-ssment.png';
+        case ModuleType.scipplementary:
+          return 'assets/icons/SCI-pplumentary.png';
+      }
+    }
+
+    final moduleColor = getModuleColor();
+    final assetPath = getModuleAssetPath();
+
+    return Stack(
+      children: [
+        // Main container with colored background and icon
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isCompleted 
+                ? AppColors.success.withOpacity(0.15)
+                : moduleColor.withOpacity(0.15),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isCompleted ? AppColors.success : moduleColor,
+              width: 2,
+            ),
+          ),
+          padding: const EdgeInsets.all(4),
+          child: Image.asset(
+            assetPath,
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to icon if image fails to load
+              return Icon(
+                Icons.circle,
+                size: 16,
+                color: moduleColor,
+              );
+            },
+          ),
+        ),
+        
+        // Completion checkmark overlay
+        if (isCompleted)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: const BoxDecoration(
+                color: AppColors.success,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                size: 10,
+                color: Colors.white,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Check if a specific module is completed
+  bool _isModuleCompleted(String lessonId, String moduleId) {
+    final progress = progressRepo.getProgress(lessonId);
+    if (progress == null) return false;
+    return progress.isModuleCompleted(moduleId);
   }
 }

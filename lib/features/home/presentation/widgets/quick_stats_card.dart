@@ -4,6 +4,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 
 /// Quick stats display for user progress
+/// Matches Figma design exactly - just progress circle with text
 class QuickStatsCard extends StatelessWidget {
   final int lessonsCompleted;
   final int totalLessons;
@@ -23,140 +24,115 @@ class QuickStatsCard extends StatelessWidget {
         : 0.0;
 
     return Card(
+      elevation: AppSizes.cardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
+      ),
+      color: AppColors.white,
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.s16),
+        padding: const EdgeInsets.all(AppSizes.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Text(
               'Your Progress',
-              style: AppTextStyles.headingSmall,
-            ),
-            const SizedBox(height: AppSizes.s16),
-            
-            // Circular Progress Indicator
-            Center(
-              child: SizedBox(
-                width: 120,
-                height: 120,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Background Circle
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: CircularProgressIndicator(
-                        value: 1.0,
-                        strokeWidth: 12,
-                        backgroundColor: AppColors.grey300,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.grey300,
-                        ),
-                      ),
-                    ),
-                    // Progress Circle
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: CircularProgressIndicator(
-                        value: completionPercentage,
-                        strokeWidth: 12,
-                        backgroundColor: Colors.transparent,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          completionPercentage == 1.0 
-                              ? AppColors.success 
-                              : AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    // Percentage Text
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${(completionPercentage * 100).toInt()}%',
-                          style: AppTextStyles.headingLarge.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: completionPercentage == 1.0 
-                                ? AppColors.success 
-                                : AppColors.primary,
-                          ),
-                        ),
-                        Text(
-                          'Complete',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.grey600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              style: AppTextStyles.headingSmall.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
+            const SizedBox(height: AppSizes.s24),
             
-            const SizedBox(height: AppSizes.s20),
-            
+            // Progress Circle with Text on Side
             Row(
               children: [
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.check_circle,
-                    iconColor: AppColors.success,
-                    label: 'Completed',
-                    value: '$lessonsCompleted/$totalLessons',
+                // Circular Progress Indicator
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Background Circle
+                      SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: CircularProgressIndicator(
+                          value: 1.0,
+                          strokeWidth: 10,
+                          backgroundColor: AppColors.grey300,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.grey300,
+                          ),
+                        ),
+                      ),
+                      // Progress Circle
+                      SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: CircularProgressIndicator(
+                          value: completionPercentage,
+                          strokeWidth: 10,
+                          backgroundColor: Colors.transparent,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      // Percentage Text
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${(completionPercentage * 100).toInt()}%',
+                            style: AppTextStyles.headingLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                              fontSize: 32,
+                            ),
+                          ),
+                          Text(
+                            'Complete',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.grey600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: AppSizes.s16),
+                
+                const SizedBox(width: AppSizes.s24),
+                
+                // Text on Side
                 Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.local_fire_department,
-                    iconColor: AppColors.warning,
-                    label: 'Streak',
-                    value: '$currentStreak days',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Lessons Completed',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.grey600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.s4),
+                      Text(
+                        '$lessonsCompleted of $totalLessons',
+                        style: AppTextStyles.headingMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.grey900,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
+            ), 
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.s12),
-      decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: AppSizes.iconL,
-          ),
-          const SizedBox(height: AppSizes.s8),
-          Text(
-            value,
-            style: AppTextStyles.headingSmall.copyWith(
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(height: AppSizes.s4),
-          Text(
-            label,
-            style: AppTextStyles.caption,
-          ),
-        ],
       ),
     );
   }

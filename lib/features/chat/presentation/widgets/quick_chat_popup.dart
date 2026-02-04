@@ -104,9 +104,9 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
           // First chunk - add new message
           aiMessage = message;
           _messages.add(message);
-        } else if (aiMessage != null) {
+        } else {
           // Update existing message
-          final index = _messages.indexOf(aiMessage!);
+          final index = _messages.indexOf(message);
           if (index != -1) {
             _messages[index] = message;
             aiMessage = message;
@@ -150,35 +150,37 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
       initialChildSize: 0.5,
       minChildSize: 0.3,
       maxChildSize: 0.9,
+      snap: true,
+      snapSizes: const [0.3, 0.5, 0.9],
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSizes.radiusXL),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, -2),
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
               ),
             ],
           ),
           child: Column(
             children: [
-              // Handle bar
+              // Handle bar (draggable)
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
+                margin: const EdgeInsets.symmetric(vertical: AppSizes.s12),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.grey300,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
               ),
 
-              // Header
+              // Header with gradient
               _buildHeader(),
 
               const Divider(height: 1),
@@ -186,7 +188,11 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
               // Messages
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(vertical: AppSizes.s8),
@@ -204,15 +210,25 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
               _buildInput(),
 
               // Open full chat link
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.go('/chat');
-                },
-                child: const Text('Open Full Chat →'),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.s16,
+                  vertical: AppSizes.s8,
+                ),
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.go('/chat');
+                  },
+                  icon: const Icon(Icons.open_in_full, size: 16),
+                  label: const Text('Open Full Chat'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 8),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),
         );

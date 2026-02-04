@@ -11,7 +11,7 @@ import 'widgets/typing_indicator.dart';
 /// Full Chat Screen
 /// Complete chat interface with message history, search, and clear options
 /// 
-/// Week 3 Day 2 Implementation
+/// Week 3 Day 2 Implementation + Singleton Sync
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -20,7 +20,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final _chatRepo = ChatRepository();
+  final _chatRepo = ChatRepository(); // ✅ Now returns singleton instance
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
@@ -29,11 +29,28 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isStreaming = false;
   bool _isSearching = false;
   String _searchQuery = '';
+  
+  // ✅ Stream subscription for real-time sync
+  StreamSubscription<List<ChatMessage>>? _messageSubscription;
 
   @override
   void initState() {
     super.initState();
     _initialize();
+    _listenToMessageUpdates();
+  }
+
+  /// ✅ Listen to message stream for real-time updates from other interfaces
+  void _listenToMessageUpdates() {
+    _messageSubscription = _chatRepo.messageStream.listen((messages) {
+      if (mounted) {
+        setState(() {
+          _messages.clear();
+          _messages.addAll(messages);
+        });
+        _scrollToBottom();
+      }
+    });
   }
 
   Future<void> _initialize() async {
@@ -45,10 +62,8 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         // Load conversation history or show greeting
         if (_chatRepo.conversationHistory.isEmpty) {
-          // Show greeting for first time
           _messages.add(_chatRepo.getGreeting());
         } else {
-          // Load all history
           _messages.addAll(_chatRepo.conversationHistory);
         }
         _isLoading = false;
@@ -56,13 +71,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _scrollToBottom();
     } catch (e) {
-      // If initialization fails, still show greeting
       print('⚠️ Error initializing chat: $e');
       
       if (!mounted) return;
       
       setState(() {
-        // Show greeting anyway
         _messages.add(_chatRepo.getGreeting());
         _isLoading = false;
       });
@@ -77,44 +90,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _controller.clear();
     
-    // Add user message immediately
-    final userMsg = ChatMessage.user(text);
     setState(() {
-      _messages.add(userMsg);
       _isStreaming = true;
     });
     
     _scrollToBottom();
 
-    // Create placeholder for AI response
-    ChatMessage? aiMessage;
-    
-    // Get current context - will be enhanced with navigation context
     await for (final message in _chatRepo.sendMessageStream(text)) {
-      setState(() {
-        if (message.role == 'user') {
-          // Skip user messages (already added above)
-          return;
-        }
-        
-        // Find or create AI message
-        if (aiMessage == null) {
-          // First chunk - add new message
-          aiMessage = message;
-          _messages.add(message);
-        } else {
-          // Update existing message
-          final index = _messages.indexOf(message);
-          if (index != -1) {
-            _messages[index] = message;
-            aiMessage = message;
-          }
-        }
-      });
-
-      _scrollToBottom();
-
-      // Stop streaming indicator when complete
+      // Messages are automatically synced via stream listener
       if (!message.isStreaming && message.role == 'assistant') {
         setState(() {
           _isStreaming = false;
@@ -179,8 +162,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (confirmed == true) {
       await _chatRepo.clearHistory();
       setState(() {
-        _messages.clear();
-        // Add greeting after clearing
         _messages.add(_chatRepo.getGreeting());
       });
     }
@@ -190,6 +171,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _messageSubscription?.cancel();
     super.dispose();
   }
 
@@ -199,20 +181,13 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // App Bar
           _buildAppBar(),
-
-          // Search Bar (if active)
           if (_isSearching) _buildSearchBar(),
-
-          // Messages
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _buildMessagesList(),
           ),
-
-          // Input Area
           _buildInputArea(),
         ],
       ),
@@ -233,7 +208,6 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           child: Row(
             children: [
-              // Avatar
               Container(
                 width: 40,
                 height: 40,
@@ -247,10 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   size: 24,
                 ),
               ),
-
               const SizedBox(width: AppSizes.s12),
-
-              // Title
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,8 +241,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
               ),
-
-              // Actions
               IconButton(
                 icon: Icon(
                   _isSearching ? Icons.close : Icons.search,
@@ -391,10 +360,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 enabled: !_isStreaming,
               ),
             ),
-
             const SizedBox(width: AppSizes.s12),
-
-            // Send Button
             Container(
               decoration: BoxDecoration(
                 color: _isStreaming ? AppColors.grey300 : AppColors.primary,

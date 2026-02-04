@@ -13,6 +13,8 @@ import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
 import 'widgets/quick_stats_card.dart';
 import 'widgets/inline_search_suggestions.dart';
+import 'widgets/streak_tracker_card.dart';
+import 'widgets/daily_tip_card.dart';
 import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
 import '../../chat/presentation/widgets/floating_chat_button.dart';
@@ -187,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Quick Stats
+          // Quick Stats (progress circle only)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
@@ -196,6 +198,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 totalLessons: _lessonRepo.getLessonsCount(),
                 currentStreak: 0, // TODO: Calculate streak
               ),
+            ),
+          ),
+
+          // Streak Tracker Card (Separate)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
+              child: StreakTrackerCard(
+                currentStreak: 0, // TODO: Calculate real streak
+                last7Days: const [false, false, false, false, false, false, false],
+              ),
+            ),
+          ),
+
+          // Daily Science Tip Card
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
+              child: DailyTipCard(),
             ),
           ),
 
@@ -310,6 +331,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? (completedCount / totalCount)
                       : 0.0;
                   
+                  // Gradient colors per topic (NEW)
+                  List<Color> gradientColors;
+                  if (topic.id == 'topic_body_systems') {
+                    // Circulation: Pink gradient
+                    gradientColors = [const Color(0xFFE91E63), const Color(0xFFF06292)];
+                  } else if (topic.id == 'topic_heredity') {
+                    // Heredity: Purple gradient
+                    gradientColors = [const Color(0xFF9C27B0), const Color(0xFFBA68C8)];
+                  } else if (topic.id == 'topic_energy') {
+                    // Energy: Green gradient
+                    gradientColors = [const Color(0xFF4CAF50), const Color(0xFF81C784)];
+                  } else {
+                    // Default gradient
+                    gradientColors = [const Color(0xFF4DB8C4), const Color(0xFF7BC9A4)];
+                  }
+                  
                   return Padding(
                     padding: EdgeInsets.only(
                       bottom: index < topics.length - 1 ? AppSizes.s16 : 0,
@@ -320,6 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.school,
                       imageAsset: topic.imageAsset,
                       iconColor: _parseColor(topic.colorHex),
+                      gradientColors: gradientColors, // NEW: Pass gradient
                       lessonCount: topic.lessonIds.length,
                       progress: progress,
                       onTap: () {
@@ -372,7 +410,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const FloatingChatButton(),
         ], // Close Stack children
       ), // Close Stack
-    ); // Close GestureDetector
+      ); // Close GestureDetector
+    
   }
 
   /// Parse hex color string to Color

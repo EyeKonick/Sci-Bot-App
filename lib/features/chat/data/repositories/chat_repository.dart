@@ -6,11 +6,24 @@ import '../../../../services/ai/openai_service.dart';
 import '../../../../services/ai/prompts/aristotle_prompts.dart';
 import '../services/context_service.dart';
 
-/// Chat Repository
+/// Chat Repository - SINGLETON
 /// Manages chat messages, AI interactions, and message history
+/// Ensures all chat interfaces (messenger window + full screen) share same data
 /// 
-/// Week 3 Day 1-2 Implementation
+/// Week 3 Day 1-2 Implementation + Singleton Pattern Fix
 class ChatRepository {
+  // ✅ SINGLETON PATTERN - Critical fix for syncing messenger and full chat
+  static final ChatRepository _instance = ChatRepository._internal();
+  
+  // ✅ Factory constructor always returns the same instance
+  factory ChatRepository() {
+    return _instance;
+  }
+  
+  // ✅ Private constructor
+  ChatRepository._internal();
+  
+  // Shared state across ALL chat interfaces
   final _openAI = OpenAIService();
   final _conversationHistory = <ChatMessage>[];
   final _contextService = ContextService();
@@ -19,14 +32,21 @@ class ChatRepository {
   String _currentCharacter = 'Aristotle';
   String _currentContext = 'home';
   
+  // ✅ Broadcast stream for real-time updates across interfaces
+  final _messageStreamController = StreamController<List<ChatMessage>>.broadcast();
+  
+  /// Stream that notifies all listeners when messages change
+  Stream<List<ChatMessage>> get messageStream => _messageStreamController.stream;
+  
   /// Initialize repository
   Future<void> initialize() async {
     try {
       // OpenAI service is already initialized in main.dart
       // So we just need to load history here
       await _loadHistory();
+      print('✅ ChatRepository initialized (Singleton)');
     } catch (e) {
-      print('Error loading chat history: $e');
+      print('⚠️ Error loading chat history: $e');
       // Don't throw error, just log it - we can still chat without history
     }
   }
@@ -55,6 +75,9 @@ class ChatRepository {
     if (_conversationHistory.length > 20) {
       _conversationHistory.removeRange(0, _conversationHistory.length - 20);
     }
+    
+    // ✅ Notify listeners of initial state
+    _notifyListeners();
   }
 
   /// Send message and get streaming response
@@ -79,8 +102,13 @@ class ChatRepository {
 
     // Create user message
     final userMsg = ChatMessage.user(userMessage, context: appContext.location);
+    
+    // ✅ Add to shared history
     _conversationHistory.add(userMsg);
     await _saveMessage(userMsg);
+    
+    // ✅ Notify all listeners (messenger + full chat)
+    _notifyListeners();
     
     yield userMsg;
 
@@ -93,18 +121,35 @@ class ChatRepository {
 
     // Stream response from OpenAI
     String fullResponse = '';
+    ChatMessage? streamingMessage;
     
     try {
       await for (final chunk in _openAI.streamChatCompletion(messages: apiMessages)) {
         fullResponse += chunk;
         
-        // Yield streaming message
-        yield ChatMessage.assistant(
+        // Create/update streaming message
+        streamingMessage = ChatMessage.assistant(
           fullResponse,
           characterName: _currentCharacter,
           context: appContext.location,
           isStreaming: true,
         );
+        
+        // ✅ Update in shared history (replace or add)
+        if (_conversationHistory.isNotEmpty && 
+            _conversationHistory.last.role == 'assistant' && 
+            _conversationHistory.last.isStreaming) {
+          // Replace last streaming message
+          _conversationHistory[_conversationHistory.length - 1] = streamingMessage;
+        } else {
+          // Add new streaming message
+          _conversationHistory.add(streamingMessage);
+        }
+        
+        // ✅ Notify listeners with each chunk
+        _notifyListeners();
+        
+        yield streamingMessage;
       }
 
       // Save final complete message
@@ -115,8 +160,18 @@ class ChatRepository {
         isStreaming: false,
       );
       
-      _conversationHistory.add(finalMsg);
+      // ✅ Replace streaming message with final
+      if (_conversationHistory.isNotEmpty && 
+          _conversationHistory.last.role == 'assistant') {
+        _conversationHistory[_conversationHistory.length - 1] = finalMsg;
+      } else {
+        _conversationHistory.add(finalMsg);
+      }
+      
       await _saveMessage(finalMsg);
+      
+      // ✅ Final notification
+      _notifyListeners();
       
       yield finalMsg;
       
@@ -128,7 +183,18 @@ class ChatRepository {
         context: appContext.location,
       );
       
+      // ✅ Add error to shared history
+      _conversationHistory.add(errorMsg);
+      _notifyListeners();
+      
       yield errorMsg;
+    }
+  }
+
+  /// ✅ Notify all listeners of conversation changes
+  void _notifyListeners() {
+    if (!_messageStreamController.isClosed) {
+      _messageStreamController.add(List.unmodifiable(_conversationHistory));
     }
   }
 
@@ -222,9 +288,12 @@ class ChatRepository {
   Future<void> clearHistory() async {
     _conversationHistory.clear();
     await HiveService.chatHistoryBox.clear();
+    
+    // ✅ Notify all listeners
+    _notifyListeners();
   }
 
-  /// Get conversation history
+  /// Get conversation history (unmodifiable)
   List<ChatMessage> get conversationHistory => 
       List.unmodifiable(_conversationHistory);
 
@@ -239,5 +308,10 @@ class ChatRepository {
   /// Set current context
   void setContext(String context) {
     _currentContext = context;
+  }
+  
+  /// ✅ Cleanup - call this when app is disposing
+  void dispose() {
+    _messageStreamController.close();
   }
 }

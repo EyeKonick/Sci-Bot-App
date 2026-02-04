@@ -46,19 +46,22 @@ class ChatBubble extends StatelessWidget {
           // Message bubble
           Flexible(
             child: Container(
-              padding: const EdgeInsets.all(AppSizes.s12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.s16,
+                vertical: AppSizes.s12,
+              ),
               decoration: BoxDecoration(
                 color: _getBubbleColor(isUser),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(isUser ? AppSizes.radiusM : AppSizes.radiusS),
-                  topRight: Radius.circular(isUser ? AppSizes.radiusS : AppSizes.radiusM),
-                  bottomLeft: const Radius.circular(AppSizes.radiusM),
-                  bottomRight: const Radius.circular(AppSizes.radiusM),
+                  topLeft: Radius.circular(isUser ? AppSizes.radiusL : AppSizes.radiusS),
+                  topRight: Radius.circular(isUser ? AppSizes.radiusS : AppSizes.radiusL),
+                  bottomLeft: const Radius.circular(AppSizes.radiusL),
+                  bottomRight: const Radius.circular(AppSizes.radiusL),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 4,
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -75,7 +78,7 @@ class ChatBubble extends StatelessWidget {
                         color: _getTextColor(isUser).withOpacity(0.7),
                       ),
                     ),
-                    const SizedBox(height: AppSizes.s4),
+                    const SizedBox(height: AppSizes.s8),
                   ],
 
                   // Message content
@@ -83,12 +86,13 @@ class ChatBubble extends StatelessWidget {
                     message.content,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: _getTextColor(isUser),
+                      height: 1.5,
                     ),
                   ),
 
                   // Streaming indicator
                   if (message.isStreaming) ...[
-                    const SizedBox(height: AppSizes.s4),
+                    const SizedBox(height: AppSizes.s8),
                     _buildStreamingCursor(),
                   ],
                 ],
