@@ -21,7 +21,7 @@ class GreetingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.s20),
+      padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s20, AppSizes.s20, AppSizes.s40),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
         borderRadius: const BorderRadius.only(
@@ -45,6 +45,7 @@ class GreetingHeader extends StatelessWidget {
                         '${_getGreeting()} 👋',
                         style: AppTextStyles.headingMedium.copyWith(
                           color: AppColors.white,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: AppSizes.s4),
@@ -59,20 +60,20 @@ class GreetingHeader extends StatelessWidget {
                 ),
                 // Profile Avatar Placeholder
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.white,
+                      color: AppColors.white.withOpacity(0.6),
                       width: 2,
                     ),
                   ),
                   child: const Icon(
                     Icons.person,
                     color: AppColors.white,
-                    size: 24,
+                    size: 22,
                   ),
                 ),
               ],

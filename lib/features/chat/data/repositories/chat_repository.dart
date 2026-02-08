@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../../../../shared/models/chat_message_extended.dart';
 import '../../../../shared/models/models.dart';
+import '../../../../shared/models/ai_character_model.dart';
 import '../../../../services/storage/hive_service.dart';
 import '../../../../services/ai/openai_service.dart';
 import '../../../../services/ai/prompts/aristotle_prompts.dart';
@@ -25,13 +26,22 @@ class ChatRepository {
   
   // Shared state across ALL chat interfaces
   final _openAI = OpenAIService();
-  final _conversationHistory = <ChatMessage>[];
+
+  // ✅ PHASE 3.1: Character-scoped conversation histories
+  // Each AI character has its own isolated chat history
+  final _characterHistories = <String, List<ChatMessage>>{
+    'aristotle': [],
+    'herophilus': [],
+    'mendel': [],
+    'odum': [],
+  };
+
   final _contextService = ContextService();
-  
-  // Character context
-  String _currentCharacter = 'Aristotle';
+
+  // Character context (will be set by provider)
+  AiCharacter _currentCharacter = AiCharacter.aristotle;
   String _currentContext = 'home';
-  
+
   // ✅ Broadcast stream for real-time updates across interfaces
   final _messageStreamController = StreamController<List<ChatMessage>>.broadcast();
   
@@ -52,32 +62,83 @@ class ChatRepository {
   }
 
   /// Load chat history from Hive
+  /// ✅ PHASE 3.1: Load messages grouped by character ID
   Future<void> _loadHistory() async {
     final box = HiveService.chatHistoryBox;
-    _conversationHistory.clear();
-    
-    // Load last 20 messages for context
+
+    // Clear all character histories
+    for (final key in _characterHistories.keys) {
+      _characterHistories[key]?.clear();
+    }
+
+    // Load all messages from Hive
     final hiveMessages = box.values.toList();
-    
+
     // Convert ChatMessageModel to ChatMessage (extended)
+    // Group by character ID
     for (final hiveMsg in hiveMessages) {
+      // ✅ PHASE 3.1: Use lessonContext as character ID
+      // (We store characterId in lessonContext for backward compatibility)
+      String characterId = hiveMsg.lessonContext ?? 'aristotle';
+
+      // Validate character ID
+      if (!_characterHistories.containsKey(characterId)) {
+        // If invalid or old data, try to infer from content or default to aristotle
+        if (hiveMsg.lessonContext != null) {
+          final context = hiveMsg.lessonContext!;
+          if (context.contains('circulation') || context.contains('gas_exchange')) {
+            characterId = 'herophilus';
+          } else if (context.contains('heredity') || context.contains('variation')) {
+            characterId = 'mendel';
+          } else if (context.contains('energy') || context.contains('ecosystem')) {
+            characterId = 'odum';
+          } else {
+            characterId = 'aristotle';
+          }
+        } else {
+          characterId = 'aristotle';
+        }
+      }
+
       final extendedMsg = ChatMessage(
         id: hiveMsg.id,
         role: hiveMsg.sender == MessageSender.user ? 'user' : 'assistant',
         content: hiveMsg.text,
         timestamp: hiveMsg.timestamp,
-        characterName: _currentCharacter,
+        characterName: _getCharacterName(characterId),
+        characterId: characterId,
       );
-      _conversationHistory.add(extendedMsg);
+
+      // Add to appropriate character's history
+      _characterHistories[characterId]?.add(extendedMsg);
     }
-    
-    // Keep only last 20
-    if (_conversationHistory.length > 20) {
-      _conversationHistory.removeRange(0, _conversationHistory.length - 20);
+
+    // Keep only last 20 messages per character
+    for (final key in _characterHistories.keys) {
+      final history = _characterHistories[key]!;
+      if (history.length > 20) {
+        _characterHistories[key] = history.sublist(history.length - 20);
+      }
     }
-    
-    // ✅ Notify listeners of initial state
+
+    // ✅ Notify listeners of initial state (current character's messages)
     _notifyListeners();
+  }
+
+  /// Helper to get character name from ID
+  String _getCharacterName(String characterId) {
+    switch (characterId) {
+      case 'aristotle':
+        return 'Aristotle';
+      case 'herophilus':
+        return 'Herophilus';
+      case 'mendel':
+        return 'Gregor Mendel';
+      case 'odum':
+        return 'Eugene Odum';
+      default:
+        return 'Aristotle';
+    }
   }
 
   /// Send message and get streaming response
@@ -86,9 +147,13 @@ class ChatRepository {
     int? progressPercentage,
     String? lessonId,
     int? moduleIndex,
+    AiCharacter? character, // NEW: Accept character parameter
   }) async* {
     // Update context
     if (context != null) _currentContext = context;
+    
+    // Update character if provided
+    if (character != null) _currentCharacter = character;
 
     // Get current context from service
     ChatContext appContext;
@@ -100,16 +165,20 @@ class ChatRepository {
       appContext = await _contextService.getCurrentContext();
     }
 
-    // Create user message
-    final userMsg = ChatMessage.user(userMessage, context: appContext.location);
-    
-    // ✅ Add to shared history
-    _conversationHistory.add(userMsg);
+    // Create user message with character ID
+    final userMsg = ChatMessage.user(
+      userMessage,
+      context: appContext.location,
+      characterId: _currentCharacter.id,
+    );
+
+    // ✅ Add to character-specific history
+    _getCurrentHistory().add(userMsg);
     await _saveMessage(userMsg);
-    
+
     // ✅ Notify all listeners (messenger + full chat)
     _notifyListeners();
-    
+
     yield userMsg;
 
     // Prepare messages for API
@@ -130,71 +199,82 @@ class ChatRepository {
         // Create/update streaming message
         streamingMessage = ChatMessage.assistant(
           fullResponse,
-          characterName: _currentCharacter,
+          characterName: _currentCharacter.name,
           context: appContext.location,
           isStreaming: true,
+          characterId: _currentCharacter.id,
         );
-        
-        // ✅ Update in shared history (replace or add)
-        if (_conversationHistory.isNotEmpty && 
-            _conversationHistory.last.role == 'assistant' && 
-            _conversationHistory.last.isStreaming) {
+
+        // ✅ Update in character-specific history (replace or add)
+        final currentHistory = _getCurrentHistory();
+        if (currentHistory.isNotEmpty &&
+            currentHistory.last.role == 'assistant' &&
+            currentHistory.last.isStreaming) {
           // Replace last streaming message
-          _conversationHistory[_conversationHistory.length - 1] = streamingMessage;
+          currentHistory[currentHistory.length - 1] = streamingMessage;
         } else {
           // Add new streaming message
-          _conversationHistory.add(streamingMessage);
+          currentHistory.add(streamingMessage);
         }
-        
+
         // ✅ Notify listeners with each chunk
         _notifyListeners();
-        
+
         yield streamingMessage;
       }
 
       // Save final complete message
       final finalMsg = ChatMessage.assistant(
         fullResponse,
-        characterName: _currentCharacter,
+        characterName: _currentCharacter.name,
         context: appContext.location,
         isStreaming: false,
+        characterId: _currentCharacter.id,
       );
-      
+
       // ✅ Replace streaming message with final
-      if (_conversationHistory.isNotEmpty && 
-          _conversationHistory.last.role == 'assistant') {
-        _conversationHistory[_conversationHistory.length - 1] = finalMsg;
+      final currentHistory = _getCurrentHistory();
+      if (currentHistory.isNotEmpty &&
+          currentHistory.last.role == 'assistant') {
+        currentHistory[currentHistory.length - 1] = finalMsg;
       } else {
-        _conversationHistory.add(finalMsg);
+        currentHistory.add(finalMsg);
       }
-      
+
       await _saveMessage(finalMsg);
-      
+
       // ✅ Final notification
       _notifyListeners();
-      
+
       yield finalMsg;
       
     } catch (e) {
       // Error handling
       final errorMsg = ChatMessage.assistant(
         "I'm having trouble connecting right now. Please check your internet connection and try again. 🔌",
-        characterName: _currentCharacter,
+        characterName: _currentCharacter.name,
         context: appContext.location,
+        characterId: _currentCharacter.id,
       );
-      
-      // ✅ Add error to shared history
-      _conversationHistory.add(errorMsg);
+
+      // ✅ Add error to character-specific history
+      _getCurrentHistory().add(errorMsg);
       _notifyListeners();
-      
+
       yield errorMsg;
     }
   }
 
+  /// Get current character's conversation history
+  List<ChatMessage> _getCurrentHistory() {
+    return _characterHistories[_currentCharacter.id] ?? [];
+  }
+
   /// ✅ Notify all listeners of conversation changes
+  /// Sends only the current character's messages
   void _notifyListeners() {
     if (!_messageStreamController.isClosed) {
-      _messageStreamController.add(List.unmodifiable(_conversationHistory));
+      _messageStreamController.add(List.unmodifiable(_getCurrentHistory()));
     }
   }
 
@@ -206,23 +286,25 @@ class ChatRepository {
   }) {
     final messages = <Map<String, dynamic>>[];
 
-    // Add system prompt with context
-    final systemPrompt = AristotlePrompts.getContextPrompt(
-      context: context,
-      progressPercentage: progressPercentage,
-    );
+    // Use character's system prompt
+    String systemPrompt = _currentCharacter.systemPrompt;
     
-    // Append additional context details if provided
-    final fullPrompt = contextDetails != null
-        ? '$systemPrompt\n\nADDITIONAL CONTEXT:\n$contextDetails'
-        : systemPrompt;
+    // For Aristotle, can still use context-aware prompts
+    if (_currentCharacter.id == 'aristotle' && contextDetails != null) {
+      systemPrompt = '$systemPrompt\n\nADDITIONAL CONTEXT:\n$contextDetails';
+    } else if (contextDetails != null) {
+      // For expert characters, append context
+      systemPrompt = '$systemPrompt\n\nCURRENT CONTEXT:\n$contextDetails';
+    }
     
-    messages.add({'role': 'system', 'content': fullPrompt});
+    messages.add({'role': 'system', 'content': systemPrompt});
 
     // Add conversation history (last 10 messages for context)
-    final recentHistory = _conversationHistory.length > 10
-        ? _conversationHistory.sublist(_conversationHistory.length - 10)
-        : _conversationHistory;
+    // ✅ Use current character's history only
+    final currentHistory = _getCurrentHistory();
+    final recentHistory = currentHistory.length > 10
+        ? currentHistory.sublist(currentHistory.length - 10)
+        : currentHistory;
 
     for (final msg in recentHistory) {
       if (msg.role != 'system') {
@@ -234,21 +316,24 @@ class ChatRepository {
   }
 
   /// Save message to Hive (convert to ChatMessageModel)
+  /// ✅ PHASE 3.1: Include character ID in lesson context for filtering
   Future<void> _saveMessage(ChatMessage message) async {
     final box = HiveService.chatHistoryBox;
-    
+
     // Convert ChatMessage to ChatMessageModel for Hive storage
+    // Use lessonContext to store character ID for backward compatibility
     final hiveMessage = ChatMessageModel(
       id: message.id,
       sender: message.role == 'user' ? MessageSender.user : MessageSender.ai,
       text: message.content,
       timestamp: message.timestamp,
+      lessonContext: message.characterId, // Store character ID here
     );
-    
+
     await box.add(hiveMessage);
-    
-    // Keep only last 100 messages in storage
-    if (box.length > 100) {
+
+    // Keep only last 100 messages per character (400 total max)
+    if (box.length > 400) {
       await box.deleteAt(0);
     }
   }
@@ -258,17 +343,19 @@ class ChatRepository {
     int completedLessons = 0,
     int totalLessons = 8,
     double progressPercentage = 0.0,
+    AiCharacter? character, // NEW: Accept character parameter
+    String? personalizedGreeting, // NEW: Accept personalized greeting
   }) {
-    final greeting = AristotlePrompts.getProgressGreeting(
-      completedLessons: completedLessons,
-      totalLessons: totalLessons,
-      progressPercentage: progressPercentage,
-    );
+    final activeChar = character ?? _currentCharacter;
+    
+    // Use personalized greeting if provided, otherwise use character's default
+    final greeting = personalizedGreeting ?? activeChar.greeting;
 
     return ChatMessage.assistant(
       greeting,
-      characterName: 'Aristotle',
+      characterName: activeChar.name,
       context: 'home',
+      characterId: activeChar.id,
     );
   }
 
@@ -285,29 +372,120 @@ class ChatRepository {
   }
 
   /// Clear chat history
+  /// ✅ PHASE 3.1: Clear only current character's history
   Future<void> clearHistory() async {
-    _conversationHistory.clear();
-    await HiveService.chatHistoryBox.clear();
-    
+    // Clear current character's in-memory history
+    _getCurrentHistory().clear();
+
+    // Clear current character's messages from Hive
+    final box = HiveService.chatHistoryBox;
+    final keysToDelete = <dynamic>[];
+
+    for (final key in box.keys) {
+      final msg = box.get(key);
+      if (msg != null && msg.lessonContext == _currentCharacter.id) {
+        keysToDelete.add(key);
+      }
+    }
+
+    for (final key in keysToDelete) {
+      await box.delete(key);
+    }
+
     // ✅ Notify all listeners
     _notifyListeners();
   }
 
   /// Get conversation history (unmodifiable)
-  List<ChatMessage> get conversationHistory => 
-      List.unmodifiable(_conversationHistory);
+  /// ✅ PHASE 3.1: Returns only current character's history
+  List<ChatMessage> get conversationHistory =>
+      List.unmodifiable(_getCurrentHistory());
 
   /// Check if OpenAI is configured
   bool get isConfigured => _openAI.isConfigured;
 
   /// Set current character
-  void setCharacter(String characterName) {
-    _currentCharacter = characterName;
+  /// ✅ PHASE 3.1: Switch to different character's history
+  /// ✅ PHASE 3.4: Inject context-aware greeting on switch
+  void setCharacter(AiCharacter character, {String? contextGreeting}) {
+    if (_currentCharacter.id != character.id) {
+      _currentCharacter = character;
+
+      // If there's a personalized greeting and existing history,
+      // add it as a new assistant message so the character comments
+      // on the student's learning journey
+      if (contextGreeting != null && _getCurrentHistory().isNotEmpty) {
+        final greetingMsg = ChatMessage.assistant(
+          contextGreeting,
+          characterName: character.name,
+          context: 'greeting',
+          characterId: character.id,
+        );
+        _getCurrentHistory().add(greetingMsg);
+        _saveMessage(greetingMsg);
+      }
+
+      // Notify listeners to load new character's messages
+      _notifyListeners();
+    }
   }
+  
+  /// Get current character
+  AiCharacter get currentCharacter => _currentCharacter;
 
   /// Set current context
   void setContext(String context) {
     _currentContext = context;
+  }
+
+  /// Send a guided lesson message with a custom system prompt
+  /// Used by the guided lesson flow to teach module content
+  /// Keeps messages separate from character chat histories
+  Stream<String> sendGuidedLessonStream({
+    required String userMessage,
+    required String systemPrompt,
+    int? maxTokens,
+  }) async* {
+    final apiMessages = <Map<String, dynamic>>[
+      {'role': 'system', 'content': systemPrompt},
+      {'role': 'user', 'content': userMessage},
+    ];
+
+    try {
+      await for (final chunk in _openAI.streamChatCompletion(
+        messages: apiMessages,
+        maxTokens: maxTokens ?? 1000,
+      )) {
+        yield chunk;
+      }
+    } catch (e) {
+      yield 'I\'m having trouble connecting right now. Please check your internet connection and try again.';
+    }
+  }
+
+  /// Send a guided lesson message with conversation history for follow-up questions
+  Stream<String> sendGuidedFollowUpStream({
+    required String userMessage,
+    required String systemPrompt,
+    required List<Map<String, dynamic>> conversationHistory,
+    int? maxTokens,
+  }) async* {
+    final apiMessages = <Map<String, dynamic>>[
+      {'role': 'system', 'content': systemPrompt},
+      ...conversationHistory,
+      {'role': 'user', 'content': userMessage},
+    ];
+
+    try {
+      await for (final chunk in _openAI.streamChatCompletion(
+        messages: apiMessages,
+        maxTokens: maxTokens ?? 800,
+      )) {
+        yield chunk;
+      }
+    } catch (e) {
+      yield 'I\'m having trouble connecting right now. Please check your internet connection and try again.';
+    }
   }
   
   /// ✅ Cleanup - call this when app is disposing

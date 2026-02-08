@@ -3,11 +3,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/models/chat_message_extended.dart';
+import '../../../../shared/models/ai_character_model.dart';
 
 /// Chat Bubble Widget
-/// Displays messages with character-specific styling
-/// 
-/// Week 3 Day 1 Implementation
+/// Clean, modern chat bubbles with per-character theming
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
   final bool showAvatar;
@@ -17,6 +16,10 @@ class ChatBubble extends StatelessWidget {
     required this.message,
     this.showAvatar = true,
   });
+
+  /// Get the character for this message
+  AiCharacter get _character =>
+      AiCharacter.getCharacterById(message.characterId);
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +32,13 @@ class ChatBubble extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.s16,
-        vertical: AppSizes.s8,
+        horizontal: AppSizes.s12,
+        vertical: AppSizes.s4,
       ),
       child: Row(
         mainAxisAlignment:
             isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // Avatar (for assistant only)
           if (!isUser && showAvatar) ...[
@@ -46,25 +49,36 @@ class ChatBubble extends StatelessWidget {
           // Message bubble
           Flexible(
             child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.s16,
-                vertical: AppSizes.s12,
+                horizontal: AppSizes.s12,
+                vertical: AppSizes.s8,
               ),
               decoration: BoxDecoration(
-                color: _getBubbleColor(isUser),
+                color: isUser
+                    ? _character.themeColor
+                    : AppColors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(isUser ? AppSizes.radiusL : AppSizes.radiusS),
-                  topRight: Radius.circular(isUser ? AppSizes.radiusS : AppSizes.radiusL),
-                  bottomLeft: const Radius.circular(AppSizes.radiusL),
-                  bottomRight: const Radius.circular(AppSizes.radiusL),
+                  topLeft: const Radius.circular(18),
+                  topRight: const Radius.circular(18),
+                  bottomLeft: Radius.circular(isUser ? 18 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 18),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
                   ),
                 ],
+                border: isUser
+                    ? null
+                    : Border.all(
+                        color: AppColors.grey300.withOpacity(0.5),
+                        width: 0.5,
+                      ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,53 +89,145 @@ class ChatBubble extends StatelessWidget {
                       message.characterName!,
                       style: AppTextStyles.caption.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: _getTextColor(isUser).withOpacity(0.7),
+                        color: _character.themeColor,
+                        fontSize: 11,
+                        decoration: TextDecoration.none,
+                        backgroundColor: Colors.transparent,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.s8),
+                    const SizedBox(height: 4),
                   ],
 
-                  // Message content
-                  Text(
-                    message.content,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: _getTextColor(isUser),
-                      height: 1.5,
-                    ),
-                  ),
+                  // Message content with bold support
+                  _buildMessageContent(isUser),
 
                   // Streaming indicator
                   if (message.isStreaming) ...[
-                    const SizedBox(height: AppSizes.s8),
+                    const SizedBox(height: 4),
                     _buildStreamingCursor(),
                   ],
                 ],
               ),
             ),
           ),
-
-          // Spacing for user messages
-          if (isUser && showAvatar) const SizedBox(width: AppSizes.s40),
         ],
       ),
     );
   }
 
-  Widget _buildAvatar() {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.2),
-        shape: BoxShape.circle,
+  /// Build message content with bold text support
+  /// Supports **bold** markdown syntax
+  Widget _buildMessageContent(bool isUser) {
+    final text = message.content;
+    final textColor = isUser ? AppColors.white : AppColors.grey900;
+
+    // Parse bold markers (**text**)
+    final spans = _parseBoldText(text, textColor);
+
+    return RichText(
+      text: TextSpan(
+        style: AppTextStyles.chatMessage.copyWith(
+          color: textColor,
+          height: 1.45,
+          backgroundColor: Colors.transparent,
+          decoration: TextDecoration.none,
+        ),
+        children: spans,
       ),
-      child: Center(
-        child: Text(
-          _getAvatarInitial(),
-          style: AppTextStyles.caption.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+    );
+  }
+
+  /// Parse **bold** markers in text
+  List<TextSpan> _parseBoldText(String text, Color baseColor) {
+    final spans = <TextSpan>[];
+    final boldPattern = RegExp(r'\*\*(.*?)\*\*');
+    int lastEnd = 0;
+
+    for (final match in boldPattern.allMatches(text)) {
+      // Add text before the bold
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: TextStyle(
+            backgroundColor: Colors.transparent,
+            decoration: TextDecoration.none,
           ),
+        ));
+      }
+      // Add bold text
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: baseColor,
+          backgroundColor: Colors.transparent,
+          decoration: TextDecoration.none,
+        ),
+      ));
+      lastEnd = match.end;
+    }
+
+    // Add remaining text
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: TextStyle(
+          backgroundColor: Colors.transparent,
+          decoration: TextDecoration.none,
+        ),
+      ));
+    }
+
+    // If no bold markers found, return plain text
+    if (spans.isEmpty) {
+      spans.add(TextSpan(
+        text: text,
+        style: TextStyle(
+          backgroundColor: Colors.transparent,
+          decoration: TextDecoration.none,
+        ),
+      ));
+    }
+
+    return spans;
+  }
+
+  /// Build character avatar icon (small circular image)
+  Widget _buildAvatar() {
+    final character = _character;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: character.themeColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      child: ClipOval(
+        child: Image.asset(
+          character.avatarAsset,
+          width: 28,
+          height: 28,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 28,
+              height: 28,
+              color: character.themeColor.withOpacity(0.15),
+              child: Center(
+                child: Text(
+                  character.name.substring(0, 1),
+                  style: AppTextStyles.caption.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: character.themeColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -137,16 +243,19 @@ class ChatBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSizes.s12,
-            vertical: AppSizes.s8,
+            vertical: AppSizes.s4,
           ),
           decoration: BoxDecoration(
-            color: AppColors.grey300,
+            color: AppColors.grey100,
             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           child: Text(
             message.content,
             style: AppTextStyles.caption.copyWith(
               color: AppColors.grey600,
+              fontSize: 11,
+              backgroundColor: Colors.transparent,
+              decoration: TextDecoration.none,
             ),
             textAlign: TextAlign.center,
           ),
@@ -156,62 +265,66 @@ class ChatBubble extends StatelessWidget {
   }
 
   Widget _buildStreamingCursor() {
-    return Container(
-      width: 2,
-      height: 16,
-      color: AppColors.primary,
-      child: const _BlinkingCursor(),
-    );
+    return _BlinkingCursor(color: _character.themeColor);
   }
 
-  Color _getBubbleColor(bool isUser) {
-    if (isUser) {
-      return const Color(0xFFE8F5E9); // Light green
+  /// Split a long message into paragraph-based chunks for display
+  /// Returns a list of content strings split at paragraph boundaries
+  static List<String> splitLongMessage(String content, {int maxCharsPerBubble = 300}) {
+    // Don't split short messages
+    if (content.length <= maxCharsPerBubble) return [content];
+
+    // Split by double newlines (paragraphs) first
+    final paragraphs = content.split(RegExp(r'\n\n+'));
+
+    if (paragraphs.length > 1) {
+      // Group paragraphs into chunks that stay under the limit
+      final chunks = <String>[];
+      String currentChunk = '';
+
+      for (final paragraph in paragraphs) {
+        if (currentChunk.isEmpty) {
+          currentChunk = paragraph;
+        } else if (currentChunk.length + paragraph.length + 2 <= maxCharsPerBubble) {
+          currentChunk += '\n\n$paragraph';
+        } else {
+          chunks.add(currentChunk.trim());
+          currentChunk = paragraph;
+        }
+      }
+      if (currentChunk.isNotEmpty) {
+        chunks.add(currentChunk.trim());
+      }
+      return chunks;
     }
 
-    // Character-specific colors
-    switch (message.characterName) {
-      case 'Aristotle':
-        return const Color(0xFFE3F2FD); // Light blue
-      case 'Herophilus':
-        return const Color(0xFFFCE4EC); // Light pink
-      case 'Gregor Mendel':
-        return const Color(0xFFF3E5F5); // Light purple
-      case 'Edward Wilson':
-        return const Color(0xFFFFF3E0); // Light orange
-      default:
-        return const Color(0xFFE3F2FD);
-    }
-  }
+    // Single long paragraph - split by sentences
+    final sentences = content.split(RegExp(r'(?<=[.!?])\s+'));
+    final chunks = <String>[];
+    String currentChunk = '';
 
-  Color _getTextColor(bool isUser) {
-    if (isUser) {
-      return const Color(0xFF388E3C); // Dark green
+    for (final sentence in sentences) {
+      if (currentChunk.isEmpty) {
+        currentChunk = sentence;
+      } else if (currentChunk.length + sentence.length + 1 <= maxCharsPerBubble) {
+        currentChunk += ' $sentence';
+      } else {
+        chunks.add(currentChunk.trim());
+        currentChunk = sentence;
+      }
+    }
+    if (currentChunk.isNotEmpty) {
+      chunks.add(currentChunk.trim());
     }
 
-    switch (message.characterName) {
-      case 'Aristotle':
-        return const Color(0xFF1976D2); // Dark blue
-      case 'Herophilus':
-        return AppColors.error; // Pink
-      case 'Gregor Mendel':
-        return const Color(0xFF9C27B0); // Purple
-      case 'Edward Wilson':
-        return AppColors.warning; // Orange
-      default:
-        return const Color(0xFF1976D2);
-    }
-  }
-
-  String _getAvatarInitial() {
-    if (message.characterName == null) return 'A';
-    return message.characterName!.substring(0, 1).toUpperCase();
+    return chunks.isEmpty ? [content] : chunks;
   }
 }
 
-/// Blinking cursor animation
+/// Blinking cursor animation for streaming
 class _BlinkingCursor extends StatefulWidget {
-  const _BlinkingCursor();
+  final Color color;
+  const _BlinkingCursor({required this.color});
 
   @override
   State<_BlinkingCursor> createState() => _BlinkingCursorState();
@@ -241,7 +354,12 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
     return FadeTransition(
       opacity: _controller,
       child: Container(
-        color: AppColors.primary,
+        width: 2,
+        height: 14,
+        decoration: BoxDecoration(
+          color: widget.color,
+          borderRadius: BorderRadius.circular(1),
+        ),
       ),
     );
   }

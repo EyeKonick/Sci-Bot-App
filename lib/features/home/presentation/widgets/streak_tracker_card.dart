@@ -5,8 +5,6 @@ import '../../../../core/constants/app_sizes.dart';
 
 /// Streak Tracker Card
 /// Shows user's learning streak with calendar dots
-/// 
-/// Week 3 Batch 1 - UI Improvement
 class StreakTrackerCard extends StatelessWidget {
   final int currentStreak;
   final List<bool> last7Days; // true = completed, false = not completed
@@ -22,65 +20,46 @@ class StreakTrackerCard extends StatelessWidget {
     return Card(
       elevation: AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.s16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.white,
-              AppColors.primary.withOpacity(0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
+      color: AppColors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with flame icon
+            // Header with fire emoji
             Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF6B00), Color(0xFFFFB800)],
-                    ),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                const Text(
+                  '🔥',
+                  style: TextStyle(fontSize: 24),
                 ),
-                const SizedBox(width: AppSizes.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currentStreak > 0
-                            ? '$currentStreak Day Streak! 🔥'
-                            : '0 Day Streak!',
-                        style: AppTextStyles.headingSmall,
-                      ),
-                      Text(
-                        currentStreak > 0
-                            ? 'Keep it up!'
-                            : 'Start learning to begin your streak',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.grey600,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: AppSizes.s8),
+                Text(
+                  currentStreak > 0
+                      ? '$currentStreak Day Streak!'
+                      : '0 Day Streak!',
+                  style: AppTextStyles.headingSmall.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: AppSizes.s4),
+
+            // Subtitle
+            Padding(
+              padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
+              child: Text(
+                currentStreak > 0
+                    ? 'Keep it up!'
+                    : 'Start learning to begin your streak',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.grey600,
+                ),
+              ),
             ),
 
             const SizedBox(height: AppSizes.s16),
@@ -91,7 +70,7 @@ class StreakTrackerCard extends StatelessWidget {
               children: List.generate(7, (index) {
                 final dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
                 final isCompleted = index < last7Days.length && last7Days[index];
-                
+
                 return Column(
                   children: [
                     // Day label
@@ -99,10 +78,10 @@ class StreakTrackerCard extends StatelessWidget {
                       dayLabels[index],
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.grey600,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.s4),
+                    const SizedBox(height: AppSizes.s8),
                     // Dot indicator
                     Container(
                       width: 32,
@@ -111,7 +90,7 @@ class StreakTrackerCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isCompleted
                             ? AppColors.success
-                            : AppColors.grey300,
+                            : AppColors.grey300.withOpacity(0.6),
                       ),
                       child: isCompleted
                           ? const Icon(

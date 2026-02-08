@@ -27,6 +27,9 @@ class ChatMessage extends HiveObject {
   @HiveField(6)
   final bool isStreaming; // For real-time display
 
+  @HiveField(7)
+  final String? characterId; // 'aristotle', 'herophilus', 'mendel', 'odum'
+
   ChatMessage({
     required this.id,
     required this.role,
@@ -35,16 +38,18 @@ class ChatMessage extends HiveObject {
     this.characterName,
     this.context,
     this.isStreaming = false,
+    this.characterId,
   });
 
   /// Create user message
-  factory ChatMessage.user(String content, {String? context}) {
+  factory ChatMessage.user(String content, {String? context, String? characterId}) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       role: 'user',
       content: content,
       timestamp: DateTime.now(),
       context: context,
+      characterId: characterId,
     );
   }
 
@@ -54,6 +59,7 @@ class ChatMessage extends HiveObject {
     String characterName = 'Aristotle',
     String? context,
     bool isStreaming = false,
+    String? characterId,
   }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -63,6 +69,7 @@ class ChatMessage extends HiveObject {
       characterName: characterName,
       context: context,
       isStreaming: isStreaming,
+      characterId: characterId,
     );
   }
 
@@ -93,6 +100,7 @@ class ChatMessage extends HiveObject {
     String? characterName,
     String? context,
     bool? isStreaming,
+    String? characterId,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -102,6 +110,7 @@ class ChatMessage extends HiveObject {
       characterName: characterName ?? this.characterName,
       context: context ?? this.context,
       isStreaming: isStreaming ?? this.isStreaming,
+      characterId: characterId ?? this.characterId,
     );
   }
 

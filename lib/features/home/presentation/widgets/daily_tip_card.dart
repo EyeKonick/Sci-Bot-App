@@ -5,14 +5,12 @@ import '../../../../core/constants/app_sizes.dart';
 
 /// Daily Science Tip Card
 /// Shows a random fun science fact that rotates daily
-/// 
-/// Week 3 Batch 1 - UI Improvement
 class DailyTipCard extends StatelessWidget {
   const DailyTipCard({super.key});
 
   // Fun science facts for Grade 9 students
   static const List<String> _scienceTips = [
-    'Your heart beats around 100,000 times per day, pumping about 2,000 gallons of blood through your body!',
+    'Your heart beats about 100,000 times per day, pumping around 2,000 gallons of blood through your body!',
     'DNA is so long that if you uncoiled all the DNA in your body, it would stretch to the sun and back over 600 times!',
     'The human body contains about 37.2 trillion cells, each working together to keep you alive!',
     'Plants produce the oxygen we breathe through photosynthesis - about 28% of Earth\'s oxygen comes from rainforests!',
@@ -23,7 +21,6 @@ class DailyTipCard extends StatelessWidget {
   ];
 
   String _getTipOfDay() {
-    // Use current day of year to get consistent daily tip
     final now = DateTime.now();
     final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
     final tipIndex = dayOfYear % _scienceTips.length;
@@ -35,64 +32,42 @@ class DailyTipCard extends StatelessWidget {
     return Card(
       elevation: AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.s16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFE3F2FD), // Light blue
-              const Color(0xFFE1F5FE).withOpacity(0.5),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
-        child: Row(
+      color: AppColors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.s20),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Lightbulb icon
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFC107), Color(0xFFFFEB3B)],
+            // Header with lightbulb emoji
+            Row(
+              children: [
+                const Text(
+                  '💡',
+                  style: TextStyle(fontSize: 24),
                 ),
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-              child: const Icon(
-                Icons.lightbulb,
-                color: Colors.white,
-                size: 24,
-              ),
+                const SizedBox(width: AppSizes.s8),
+                Text(
+                  'Did you know?',
+                  style: AppTextStyles.headingSmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            
-            const SizedBox(width: AppSizes.s12),
-            
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Did you know? 💡',
-                    style: AppTextStyles.subtitle.copyWith(
-                      color: const Color(0xFF1565C0),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.s8),
-                  Text(
-                    _getTipOfDay(),
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: const Color(0xFF0D47A1),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
+
+            const SizedBox(height: AppSizes.s12),
+
+            // Tip text
+            Padding(
+              padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
+              child: Text(
+                _getTipOfDay(),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.grey600,
+                  height: 1.5,
+                ),
               ),
             ),
           ],

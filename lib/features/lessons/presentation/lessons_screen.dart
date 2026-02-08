@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -8,10 +9,11 @@ import '../../../shared/models/module_type.dart';
 import '../../topics/data/repositories/topic_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
+import '../../chat/data/providers/character_provider.dart';
 
 /// Lesson List Screen - Shows all lessons for a selected topic
-/// Week 2 Day 3 Implementation
-class LessonsScreen extends StatefulWidget {
+/// Week 2 Day 3 Implementation + Week 3 Day 3 Character Integration
+class LessonsScreen extends ConsumerStatefulWidget {
   final String topicId;
 
   const LessonsScreen({
@@ -20,10 +22,10 @@ class LessonsScreen extends StatefulWidget {
   });
 
   @override
-  State<LessonsScreen> createState() => _LessonsScreenState();
+  ConsumerState<LessonsScreen> createState() => _LessonsScreenState();
 }
 
-class _LessonsScreenState extends State<LessonsScreen> {
+class _LessonsScreenState extends ConsumerState<LessonsScreen> {
   final _topicRepo = TopicRepository();
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
@@ -36,6 +38,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
   void initState() {
     super.initState();
     _loadData();
+    
+    // Update navigation context when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(characterContextManagerProvider).navigateToTopic(widget.topicId);
+    });
   }
 
   Future<void> _loadData() async {
@@ -214,10 +221,21 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
                 progressRepo: _progressRepo,
-                onTap: () {
+                onTap: () async {
                   // Resume from last incomplete module or start from beginning
                   final startIndex = _getStartingModuleIndex(lesson);
-                  context.push('/lessons/${lesson.id}/module/$startIndex');
+
+                  // Update navigation context before navigating
+                  ref.read(characterContextManagerProvider).navigateToLesson(
+                    topicId: widget.topicId,
+                    lessonId: lesson.id,
+                  );
+
+                  await context.push('/lessons/${lesson.id}/module/$startIndex');
+                  // Reset to topic context when returning from module
+                  if (mounted) {
+                    ref.read(characterContextManagerProvider).navigateToTopic(widget.topicId);
+                  }
                 },
               ),
             );

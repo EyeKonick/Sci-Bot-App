@@ -59,10 +59,11 @@ class QuickStatsCard extends StatelessWidget {
                         height: 100,
                         child: CircularProgressIndicator(
                           value: 1.0,
-                          strokeWidth: 10,
-                          backgroundColor: AppColors.grey300,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.grey300,
+                          strokeWidth: 8,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: AppColors.grey300.withOpacity(0.4),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.grey300.withOpacity(0.4),
                           ),
                         ),
                       ),
@@ -72,7 +73,8 @@ class QuickStatsCard extends StatelessWidget {
                         height: 100,
                         child: CircularProgressIndicator(
                           value: completionPercentage,
-                          strokeWidth: 10,
+                          strokeWidth: 8,
+                          strokeCap: StrokeCap.round,
                           backgroundColor: Colors.transparent,
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.primary,
@@ -87,8 +89,8 @@ class QuickStatsCard extends StatelessWidget {
                             '${(completionPercentage * 100).toInt()}%',
                             style: AppTextStyles.headingLarge.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                              fontSize: 32,
+                              color: AppColors.grey900,
+                              fontSize: 28,
                             ),
                           ),
                           Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -18,15 +19,16 @@ import 'widgets/daily_tip_card.dart';
 import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
 import '../../chat/presentation/widgets/floating_chat_button.dart';
+import '../../chat/data/providers/character_provider.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _topicRepo = TopicRepository();
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
@@ -43,6 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onSearchFocusChanged);
+    
+    // Update navigation context to home
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(characterContextManagerProvider).navigateToHome();
+    });
   }
 
   @override
@@ -109,13 +116,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchFocusNode.unfocus();
   }
 
-  void _onSuggestionTap(LessonModel lesson) {
+  void _onSuggestionTap(LessonModel lesson) async {
     // Clear search
     _clearSearch();
-    
+
     // Navigate to lesson
     final startIndex = _getStartingModuleIndex(lesson.id);
-    context.push('/lessons/${lesson.id}/module/$startIndex');
+    await context.push('/lessons/${lesson.id}/module/$startIndex');
+    // Reset character to Aristotle when returning
+    if (mounted) {
+      ref.read(characterContextManagerProvider).navigateToHome();
+    }
   }
 
   int _getStartingModuleIndex(String lessonId) {
@@ -150,41 +161,44 @@ class _HomeScreenState extends State<HomeScreen> {
        slivers: [
           // Greeting Header
          const SliverToBoxAdapter(
-            child: GreetingHeader(),  // ✅ CORRECT - no parameters
+            child: GreetingHeader(),
           ),
 
-          // Search Bar
+          
+
+          // Search Bar - overlapping the gradient header
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, 0),
-              child: Column(
-                children: [
-                  // Search Bar
-                  SearchBarWidget(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    readOnly: false,
-                    onChanged: (_) {}, // Handled by controller listener
-                    onClear: _clearSearch,
-                  ),
-                  
-                  // Inline Search Suggestions
-                  if (_isSearchActive && _searchController.text.length >= 3)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSizes.s8),
-                      child: AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        child: InlineSearchSuggestions(
-                          suggestions: _searchSuggestions,
-                          query: _searchController.text,
-                          onTap: _onSuggestionTap,
+            child: Transform.translate(
+              offset: const Offset(0, -24),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, 0),
+                child: Column(
+                  children: [
+                    // Search Bar
+                    SearchBarWidget(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      readOnly: false,
+                      onChanged: (_) {}, // Handled by controller listener
+                      onClear: _clearSearch,
+                    ),
+
+                    // Inline Search Suggestions
+                    if (_isSearchActive && _searchController.text.length >= 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSizes.s8),
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          child: InlineSearchSuggestions(
+                            suggestions: _searchSuggestions,
+                            query: _searchController.text,
+                            onTap: _onSuggestionTap,
+                          ),
                         ),
                       ),
-                    ),
-                  
-                  const SizedBox(height: AppSizes.s20),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -202,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Streak Tracker Card (Separate)
-          SliverToBoxAdapter(
+         const SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
               child: StreakTrackerCard(
@@ -292,9 +306,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: AppTextStyles.headingMedium,
                   ),
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       // Navigate to Topics screen
-                      context.push('/topics');
+                      await context.push('/topics');
+                      // Reset character to Aristotle when returning
+                      if (mounted) {
+                        ref.read(characterContextManagerProvider).navigateToHome();
+                      }
                     },
                     child: Text(
                       'See All',
@@ -360,9 +378,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       gradientColors: gradientColors, // NEW: Pass gradient
                       lessonCount: topic.lessonIds.length,
                       progress: progress,
-                      onTap: () {
+                      onTap: () async {
                         // Navigate to topic lessons
-                        context.push('/topics/${topic.id}/lessons');
+                        await context.push('/topics/${topic.id}/lessons');
+                        // Reset character to Aristotle when returning
+                        if (mounted) {
+                          ref.read(characterContextManagerProvider).navigateToHome();
+                        }
                       },
                     ),
                   );
@@ -405,9 +427,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
           ), // Close Scaffold
-          
-          // Floating Aristotle Button
-          const FloatingChatButton(),
         ], // Close Stack children
       ), // Close Stack
       ); // Close GestureDetector

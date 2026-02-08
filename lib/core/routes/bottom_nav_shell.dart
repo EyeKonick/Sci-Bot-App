@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../../features/chat/presentation/widgets/floating_chat_button.dart';
 
 /// Bottom Navigation Shell for persistent navigation
 /// Used as parent widget for Home, Chat, and More tabs
-/// Updated with improved styling (Batch 1)
-class BottomNavShell extends StatelessWidget {
+/// Updated with improved styling (Batch 1) + Character System (Week 3 Day 3)
+class BottomNavShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const BottomNavShell({
@@ -15,10 +17,12 @@ class BottomNavShell extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: Container(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Stack(
+      children: [
+        Scaffold(
+          body: navigationShell,
+          bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
@@ -86,6 +90,12 @@ class BottomNavShell extends StatelessWidget {
           ],
         ),
       ),
+        ),
+        
+        // Floating Chat Button - Available globally except on Chat tab
+        if (navigationShell.currentIndex != 1) // Don't show on Chat tab
+          const FloatingChatButton(),
+      ],
     );
   }
 }

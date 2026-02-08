@@ -1,25 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../shared/models/chat_message_extended.dart';
 import '../data/repositories/chat_repository.dart';
+import '../data/providers/character_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/typing_indicator.dart';
 
 /// Full Chat Screen
 /// Complete chat interface with message history, search, and clear options
-/// 
-/// Week 3 Day 2 Implementation + Singleton Sync
-class ChatScreen extends StatefulWidget {
+/// Week 3 Day 2 Implementation + Singleton Sync + Week 3 Day 3 Character Integration
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _chatRepo = ChatRepository(); // ✅ Now returns singleton instance
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -40,13 +41,38 @@ class _ChatScreenState extends State<ChatScreen> {
     _listenToMessageUpdates();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ PHASE 3.1: Update repository when character changes
+    // ✅ PHASE 3.4: Pass contextual greeting for returning characters
+    final character = ref.read(activeCharacterProvider);
+    final contextManager = ref.read(characterContextManagerProvider);
+    final greeting = contextManager.getPersonalizedGreeting();
+    final contextGreeting = greeting != character.greeting ? greeting : null;
+    _chatRepo.setCharacter(character, contextGreeting: contextGreeting);
+  }
+
   /// ✅ Listen to message stream for real-time updates from other interfaces
   void _listenToMessageUpdates() {
     _messageSubscription = _chatRepo.messageStream.listen((messages) {
       if (mounted) {
         setState(() {
           _messages.clear();
-          _messages.addAll(messages);
+
+          // If no messages for this character, show greeting
+          if (messages.isEmpty) {
+            final character = ref.read(activeCharacterProvider);
+            final contextManager = ref.read(characterContextManagerProvider);
+            final personalizedGreeting = contextManager.getPersonalizedGreeting();
+
+            _messages.add(_chatRepo.getGreeting(
+              character: character,
+              personalizedGreeting: personalizedGreeting,
+            ));
+          } else {
+            _messages.addAll(messages);
+          }
         });
         _scrollToBottom();
       }
@@ -59,10 +85,18 @@ class _ChatScreenState extends State<ChatScreen> {
       
       if (!mounted) return;
       
+      // Get active character and context manager
+      final character = ref.read(activeCharacterProvider);
+      final contextManager = ref.read(characterContextManagerProvider);
+      final personalizedGreeting = contextManager.getPersonalizedGreeting();
+
       setState(() {
         // Load conversation history or show greeting
         if (_chatRepo.conversationHistory.isEmpty) {
-          _messages.add(_chatRepo.getGreeting());
+          _messages.add(_chatRepo.getGreeting(
+            character: character,
+            personalizedGreeting: personalizedGreeting,
+          ));
         } else {
           _messages.addAll(_chatRepo.conversationHistory);
         }
@@ -75,11 +109,18 @@ class _ChatScreenState extends State<ChatScreen> {
       
       if (!mounted) return;
       
+      final character = ref.read(activeCharacterProvider);
+      final contextManager = ref.read(characterContextManagerProvider);
+      final personalizedGreeting = contextManager.getPersonalizedGreeting();
+
       setState(() {
-        _messages.add(_chatRepo.getGreeting());
+        _messages.add(_chatRepo.getGreeting(
+          character: character,
+          personalizedGreeting: personalizedGreeting,
+        ));
         _isLoading = false;
       });
-      
+
       _scrollToBottom();
     }
   }
@@ -96,7 +137,10 @@ class _ChatScreenState extends State<ChatScreen> {
     
     _scrollToBottom();
 
-    await for (final message in _chatRepo.sendMessageStream(text)) {
+    // Get current character
+    final character = ref.read(activeCharacterProvider);
+    
+    await for (final message in _chatRepo.sendMessageStream(text, character: character)) {
       // Messages are automatically synced via stream listener
       if (!message.isStreaming && message.role == 'assistant') {
         setState(() {
@@ -161,8 +205,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (confirmed == true) {
       await _chatRepo.clearHistory();
+      final character = ref.read(activeCharacterProvider);
       setState(() {
-        _messages.add(_chatRepo.getGreeting());
+        _messages.add(_chatRepo.getGreeting(character: character));
       });
     }
   }
@@ -178,7 +223,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.grey50,
       body: Column(
         children: [
           _buildAppBar(),
@@ -195,9 +240,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildAppBar() {
+    // Get current character from provider
+    final character = ref.watch(activeCharacterProvider);
+    
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppColors.primaryGradient,
+      decoration: BoxDecoration(
+        gradient: character.themeGradient,
       ),
       child: SafeArea(
         bottom: false,
@@ -208,6 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           child: Row(
             children: [
+              // Character Avatar
               Container(
                 width: 40,
                 height: 40,
@@ -215,10 +264,20 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: AppColors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.smart_toy_outlined,
-                  color: AppColors.white,
-                  size: 24,
+                child: ClipOval(
+                  child: Image.asset(
+                    character.avatarAsset,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.smart_toy_outlined,
+                        color: AppColors.white,
+                        size: 24,
+                      );
+                    },
+                  ),
                 ),
               ),
               const SizedBox(width: AppSizes.s12),
@@ -227,15 +286,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Aristotle',
+                      character.name,
                       style: AppTextStyles.headingSmall.copyWith(
                         color: AppColors.white,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                     Text(
-                      'Your AI Science Companion',
+                      character.specialization,
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.white.withOpacity(0.9),
+                        decoration: TextDecoration.none,
                       ),
                     ),
                   ],
@@ -286,8 +347,28 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Expand messages - split long assistant messages into multiple bubbles
+  List<ChatMessage> get _expandedMessages {
+    final expanded = <ChatMessage>[];
+    for (final msg in _filteredMessages) {
+      if (msg.role == 'assistant' && !msg.isStreaming && msg.content.length > 300) {
+        final chunks = ChatBubble.splitLongMessage(msg.content);
+        for (int i = 0; i < chunks.length; i++) {
+          expanded.add(msg.copyWith(
+            content: chunks[i],
+            // Only first chunk shows character name
+            characterName: i == 0 ? msg.characterName : null,
+          ));
+        }
+      } else {
+        expanded.add(msg);
+      }
+    }
+    return expanded;
+  }
+
   Widget _buildMessagesList() {
-    final displayMessages = _filteredMessages;
+    final displayMessages = _expandedMessages;
 
     if (displayMessages.isEmpty) {
       return Center(
@@ -319,14 +400,17 @@ class _ChatScreenState extends State<ChatScreen> {
         if (index == displayMessages.length && _isStreaming) {
           return const TypingIndicator();
         }
-        return ChatBubble(message: displayMessages[index]);
+        return ChatBubble(
+          message: displayMessages[index],
+          showAvatar: displayMessages[index].characterName != null,
+        );
       },
     );
   }
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.s16),
+      padding: const EdgeInsets.fromLTRB(AppSizes.s12, AppSizes.s12, AppSizes.s12, AppSizes.s12),
       decoration: BoxDecoration(
         color: AppColors.white,
         boxShadow: [
@@ -340,35 +424,65 @@ class _ChatScreenState extends State<ChatScreen> {
       child: SafeArea(
         top: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Ask Aristotle anything...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.s16,
-                    vertical: AppSizes.s12,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: 48,
+                  maxHeight: 120,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.grey100,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.grey300,
+                    width: 0.5,
                   ),
                 ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
-                enabled: !_isStreaming,
+                child: TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: 'Ask ${ref.read(activeCharacterProvider).name} anything...',
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.grey600,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    isDense: true,
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.grey900,
+                    height: 1.4,
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  onSubmitted: (_) => _sendMessage(),
+                  enabled: !_isStreaming,
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
             ),
-            const SizedBox(width: AppSizes.s12),
+            const SizedBox(width: AppSizes.s8),
             Container(
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                color: _isStreaming ? AppColors.grey300 : AppColors.primary,
+                color: _controller.text.trim().isEmpty || _isStreaming
+                    ? AppColors.grey300
+                    : ref.watch(activeCharacterProvider).themeColor,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.send, color: AppColors.white),
-                onPressed: _isStreaming ? null : _sendMessage,
+                icon: const Icon(Icons.send_rounded, color: AppColors.white, size: 22),
+                onPressed: _controller.text.trim().isEmpty || _isStreaming
+                    ? null
+                    : _sendMessage,
               ),
             ),
           ],
@@ -378,6 +492,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showMenu() {
+    final character = ref.read(activeCharacterProvider);
+
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -386,7 +502,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('About Aristotle'),
+              title: Text('About ${character.name}'),
               onTap: () {
                 Navigator.pop(context);
                 _showAboutDialog();
@@ -407,30 +523,28 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showAboutDialog() {
+    final character = ref.read(activeCharacterProvider);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About Aristotle'),
+        title: Text('About ${character.name}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your AI Science Companion',
+              character.specialization,
               style: AppTextStyles.subtitle.copyWith(
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
             Text(
-              'Aristotle is your personal AI tutor for Grade 9 Science. '
-              'Ask questions, get explanations, and explore topics in:',
+              '${character.name} is your AI tutor for Grade 9 Science. '
+              'Ask questions and get guided explanations.',
               style: AppTextStyles.bodyMedium,
             ),
-            const SizedBox(height: AppSizes.s12),
-            _buildInfoItem('• Circulation & Gas Exchange'),
-            _buildInfoItem('• Heredity & Variation'),
-            _buildInfoItem('• Energy in Ecosystems'),
             const SizedBox(height: AppSizes.s12),
             Text(
               'Powered by OpenAI GPT-4',
@@ -450,10 +564,4 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildInfoItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSizes.s8, bottom: AppSizes.s4),
-      child: Text(text, style: AppTextStyles.bodyMedium),
-    );
-  }
 }

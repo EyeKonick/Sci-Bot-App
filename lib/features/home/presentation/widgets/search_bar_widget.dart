@@ -27,12 +27,12 @@ class SearchBarWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
         boxShadow: [
           BoxShadow(
             color: AppColors.grey300.withOpacity(0.5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),

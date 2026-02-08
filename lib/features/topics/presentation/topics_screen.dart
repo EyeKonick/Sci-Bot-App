@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../data/repositories/topic_repository.dart';
 import '../../lessons/data/repositories/progress_repository.dart';
+import '../../chat/data/providers/character_provider.dart';
 
 /// Full-screen topic browsing
 /// Shows all available topics with progress and navigation
-class TopicsScreen extends StatefulWidget {
+class TopicsScreen extends ConsumerStatefulWidget {
   const TopicsScreen({super.key});
 
   @override
-  State<TopicsScreen> createState() => _TopicsScreenState();
+  ConsumerState<TopicsScreen> createState() => _TopicsScreenState();
 }
 
-class _TopicsScreenState extends State<TopicsScreen> {
+class _TopicsScreenState extends ConsumerState<TopicsScreen> {
   final _topicRepo = TopicRepository();
   final _progressRepo = ProgressRepository();
   bool _isLoading = true;
@@ -140,8 +142,14 @@ class _TopicsScreenState extends State<TopicsScreen> {
                         progress: progressPercent,
                         completedLessons: completedCount,
                         totalLessons: totalCount,
-                        onTap: () {
-                          context.push('/topics/${topic.id}/lessons');
+                        onTap: () async {
+                          // Update character context before navigating
+                          ref.read(characterContextManagerProvider).navigateToTopic(topic.id);
+                          await context.push('/topics/${topic.id}/lessons');
+                          // Reset to Aristotle when returning
+                          if (mounted) {
+                            ref.read(characterContextManagerProvider).navigateToHome();
+                          }
                         },
                       ),
                     );
