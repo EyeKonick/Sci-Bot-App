@@ -10,20 +10,39 @@ import '../services/context_service.dart';
 /// Chat Repository - SINGLETON
 /// Manages chat messages, AI interactions, and message history
 /// Ensures all chat interfaces (messenger window + full screen) share same data
-/// 
+///
 /// Week 3 Day 1-2 Implementation + Singleton Pattern Fix
+/// Phase 0: Added async mutex for concurrent access safety
 class ChatRepository {
   // ✅ SINGLETON PATTERN - Critical fix for syncing messenger and full chat
   static final ChatRepository _instance = ChatRepository._internal();
-  
+
   // ✅ Factory constructor always returns the same instance
   factory ChatRepository() {
     return _instance;
   }
-  
+
   // ✅ Private constructor
   ChatRepository._internal();
-  
+
+  // Phase 0: Async mutex to prevent concurrent message history corruption
+  Completer<void>? _lock;
+
+  /// Acquire async lock. Waits if another operation is in progress.
+  Future<void> _acquireLock() async {
+    while (_lock != null && !_lock!.isCompleted) {
+      await _lock!.future;
+    }
+    _lock = Completer<void>();
+  }
+
+  /// Release async lock.
+  void _releaseLock() {
+    if (_lock != null && !_lock!.isCompleted) {
+      _lock!.complete();
+    }
+  }
+
   // Shared state across ALL chat interfaces
   final _openAI = OpenAIService();
 
@@ -142,126 +161,129 @@ class ChatRepository {
   }
 
   /// Send message and get streaming response
+  /// Phase 0: Protected with async mutex to prevent concurrent corruption
   Stream<ChatMessage> sendMessageStream(String userMessage, {
     String? context,
     int? progressPercentage,
     String? lessonId,
     int? moduleIndex,
-    AiCharacter? character, // NEW: Accept character parameter
+    AiCharacter? character,
   }) async* {
-    // Update context
-    if (context != null) _currentContext = context;
-    
-    // Update character if provided
-    if (character != null) _currentCharacter = character;
-
-    // Get current context from service
-    ChatContext appContext;
-    if (lessonId != null && moduleIndex != null) {
-      appContext = await _contextService.getModuleContext(lessonId, moduleIndex);
-    } else if (lessonId != null) {
-      appContext = await _contextService.getLessonContext(lessonId);
-    } else {
-      appContext = await _contextService.getCurrentContext();
-    }
-
-    // Create user message with character ID
-    final userMsg = ChatMessage.user(
-      userMessage,
-      context: appContext.location,
-      characterId: _currentCharacter.id,
-    );
-
-    // ✅ Add to character-specific history
-    _getCurrentHistory().add(userMsg);
-    await _saveMessage(userMsg);
-
-    // ✅ Notify all listeners (messenger + full chat)
-    _notifyListeners();
-
-    yield userMsg;
-
-    // Prepare messages for API
-    final apiMessages = _prepareAPIMessages(
-      context: appContext.location,
-      progressPercentage: appContext.progressPercentage,
-      contextDetails: appContext.toPromptContext(),
-    );
-
-    // Stream response from OpenAI
-    String fullResponse = '';
-    ChatMessage? streamingMessage;
-    
+    await _acquireLock();
     try {
-      await for (final chunk in _openAI.streamChatCompletion(messages: apiMessages)) {
-        fullResponse += chunk;
-        
-        // Create/update streaming message
-        streamingMessage = ChatMessage.assistant(
+      // Update context
+      if (context != null) _currentContext = context;
+
+      // Update character if provided
+      if (character != null) _currentCharacter = character;
+
+      // Get current context from service
+      ChatContext appContext;
+      if (lessonId != null && moduleIndex != null) {
+        appContext = await _contextService.getModuleContext(lessonId, moduleIndex);
+      } else if (lessonId != null) {
+        appContext = await _contextService.getLessonContext(lessonId);
+      } else {
+        appContext = await _contextService.getCurrentContext();
+      }
+
+      // Create user message with character ID
+      final userMsg = ChatMessage.user(
+        userMessage,
+        context: appContext.location,
+        characterId: _currentCharacter.id,
+      );
+
+      // Add to character-specific history
+      _getCurrentHistory().add(userMsg);
+      await _saveMessage(userMsg);
+
+      // Notify all listeners (messenger + full chat)
+      _notifyListeners();
+
+      yield userMsg;
+
+      // Prepare messages for API
+      final apiMessages = _prepareAPIMessages(
+        context: appContext.location,
+        progressPercentage: appContext.progressPercentage,
+        contextDetails: appContext.toPromptContext(),
+      );
+
+      // Stream response from OpenAI
+      String fullResponse = '';
+      ChatMessage? streamingMessage;
+
+      try {
+        await for (final chunk in _openAI.streamChatCompletion(messages: apiMessages)) {
+          fullResponse += chunk;
+
+          // Create/update streaming message
+          streamingMessage = ChatMessage.assistant(
+            fullResponse,
+            characterName: _currentCharacter.name,
+            context: appContext.location,
+            isStreaming: true,
+            characterId: _currentCharacter.id,
+          );
+
+          // Update in character-specific history (replace or add)
+          final currentHistory = _getCurrentHistory();
+          if (currentHistory.isNotEmpty &&
+              currentHistory.last.role == 'assistant' &&
+              currentHistory.last.isStreaming) {
+            currentHistory[currentHistory.length - 1] = streamingMessage;
+          } else {
+            currentHistory.add(streamingMessage);
+          }
+
+          // Notify listeners with each chunk
+          _notifyListeners();
+
+          yield streamingMessage;
+        }
+
+        // Save final complete message
+        final finalMsg = ChatMessage.assistant(
           fullResponse,
           characterName: _currentCharacter.name,
           context: appContext.location,
-          isStreaming: true,
+          isStreaming: false,
           characterId: _currentCharacter.id,
         );
 
-        // ✅ Update in character-specific history (replace or add)
+        // Replace streaming message with final
         final currentHistory = _getCurrentHistory();
         if (currentHistory.isNotEmpty &&
-            currentHistory.last.role == 'assistant' &&
-            currentHistory.last.isStreaming) {
-          // Replace last streaming message
-          currentHistory[currentHistory.length - 1] = streamingMessage;
+            currentHistory.last.role == 'assistant') {
+          currentHistory[currentHistory.length - 1] = finalMsg;
         } else {
-          // Add new streaming message
-          currentHistory.add(streamingMessage);
+          currentHistory.add(finalMsg);
         }
 
-        // ✅ Notify listeners with each chunk
+        await _saveMessage(finalMsg);
+
+        // Final notification
         _notifyListeners();
 
-        yield streamingMessage;
+        yield finalMsg;
+
+      } catch (e) {
+        // Error handling
+        final errorMsg = ChatMessage.assistant(
+          "I'm having trouble connecting right now. Please check your internet connection and try again.",
+          characterName: _currentCharacter.name,
+          context: appContext.location,
+          characterId: _currentCharacter.id,
+        );
+
+        _getCurrentHistory().add(errorMsg);
+        _notifyListeners();
+
+        yield errorMsg;
       }
-
-      // Save final complete message
-      final finalMsg = ChatMessage.assistant(
-        fullResponse,
-        characterName: _currentCharacter.name,
-        context: appContext.location,
-        isStreaming: false,
-        characterId: _currentCharacter.id,
-      );
-
-      // ✅ Replace streaming message with final
-      final currentHistory = _getCurrentHistory();
-      if (currentHistory.isNotEmpty &&
-          currentHistory.last.role == 'assistant') {
-        currentHistory[currentHistory.length - 1] = finalMsg;
-      } else {
-        currentHistory.add(finalMsg);
-      }
-
-      await _saveMessage(finalMsg);
-
-      // ✅ Final notification
-      _notifyListeners();
-
-      yield finalMsg;
-      
-    } catch (e) {
-      // Error handling
-      final errorMsg = ChatMessage.assistant(
-        "I'm having trouble connecting right now. Please check your internet connection and try again. 🔌",
-        characterName: _currentCharacter.name,
-        context: appContext.location,
-        characterId: _currentCharacter.id,
-      );
-
-      // ✅ Add error to character-specific history
-      _getCurrentHistory().add(errorMsg);
-      _notifyListeners();
-
-      yield errorMsg;
+    } finally {
+      _releaseLock();
     }
   }
 
@@ -372,28 +394,33 @@ class ChatRepository {
   }
 
   /// Clear chat history
-  /// ✅ PHASE 3.1: Clear only current character's history
+  /// Phase 0: Protected with async mutex
   Future<void> clearHistory() async {
-    // Clear current character's in-memory history
-    _getCurrentHistory().clear();
+    await _acquireLock();
+    try {
+      // Clear current character's in-memory history
+      _getCurrentHistory().clear();
 
-    // Clear current character's messages from Hive
-    final box = HiveService.chatHistoryBox;
-    final keysToDelete = <dynamic>[];
+      // Clear current character's messages from Hive
+      final box = HiveService.chatHistoryBox;
+      final keysToDelete = <dynamic>[];
 
-    for (final key in box.keys) {
-      final msg = box.get(key);
-      if (msg != null && msg.lessonContext == _currentCharacter.id) {
-        keysToDelete.add(key);
+      for (final key in box.keys) {
+        final msg = box.get(key);
+        if (msg != null && msg.lessonContext == _currentCharacter.id) {
+          keysToDelete.add(key);
+        }
       }
-    }
 
-    for (final key in keysToDelete) {
-      await box.delete(key);
-    }
+      for (final key in keysToDelete) {
+        await box.delete(key);
+      }
 
-    // ✅ Notify all listeners
-    _notifyListeners();
+      // Notify all listeners
+      _notifyListeners();
+    } finally {
+      _releaseLock();
+    }
   }
 
   /// Get conversation history (unmodifiable)

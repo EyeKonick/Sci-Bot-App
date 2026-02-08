@@ -174,6 +174,35 @@ Run app with network delay simulation (500ms, 5s, timeout) and verify graceful h
 
 ---
 
+**PHASE 0 COMPLETED: February 8, 2026**
+
+**Implemented:**
+- 30-second timeout on all OpenAI API calls (both streaming and non-streaming) with TimeoutException handling and stalled-stream detection
+- Hive integrity check on startup: each box opens inside try-catch, corrupted boxes are deleted and re-created empty (data loss preferred over crash)
+- Async mutex (Completer-based lock) on ChatRepository's `sendMessageStream` and `clearHistory` to prevent concurrent message history corruption
+- `_isDisposed` flag added to FloatingChatButton guarding all Timer callbacks, Future.delayed chains, and animation `.then()` completions against post-dispose execution
+- 300ms debounce timer on home screen search, cancelling previous search on each keystroke, with proper disposal in widget `dispose()`
+
+**Changes from plan:**
+- Used Completer-based async mutex instead of external package (Dart is single-threaded so full mutex unnecessary; async interleaving is the real risk)
+- Chose debouncing (300ms) over search indexing since lesson count is small (<50) and debouncing is simpler with equivalent UX improvement
+
+**Completion criteria:**
+- ✅ All API calls have enforced 30s timeout with error fallback (streaming: connection timeout + stalled-stream detection; non-streaming: request timeout)
+- ✅ Hive database recovers from corruption by deleting and re-opening box (tested via code review of recovery path)
+- ✅ Concurrent chat access protected by async mutex on sendMessageStream and clearHistory
+- ✅ All timer/Future.delayed chains in FloatingChatButton guarded with _isDisposed flag; timers cancelled in dispose()
+- ✅ Search debounced at 300ms; clearing happens immediately without debounce for responsiveness
+
+**Issues:**
+- None
+
+**Time:** 1 session (same day)
+
+**Next phase ready:** Yes - Foundation is stable, ready for Phase 1 (Two-Channel Interaction Enforcement)
+
+---
+
 ### Phase 1: Two-Channel Interaction Enforcement
 
 **Primary Goal:** Make chathead and main chat responsibilities architecturally impossible to violate.

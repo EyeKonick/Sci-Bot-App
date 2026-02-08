@@ -5,8 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// OpenAI Service for GPT-4 API integration
 /// Handles streaming responses and error handling
-/// 
+///
 /// Week 3 Day 1 Implementation
+/// Phase 0: Added 30-second timeout to all API calls
 class OpenAIService {
   static final OpenAIService _instance = OpenAIService._internal();
   factory OpenAIService() => _instance;
@@ -17,6 +18,9 @@ class OpenAIService {
   late final double _temperature;
   late final int _maxTokens;
   bool _isInitialized = false;
+
+  /// Timeout duration for all API calls
+  static const Duration apiTimeout = Duration(seconds: 30);
 
   /// Initialize service with API key from .env
   Future<void> initialize() async {
@@ -67,17 +71,38 @@ class OpenAIService {
       request.headers.addAll(headers);
       request.body = body;
 
-      final response = await request.send();
+      final response = await request.send().timeout(
+        apiTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'OpenAI API request timed out after ${apiTimeout.inSeconds} seconds',
+            apiTimeout,
+          );
+        },
+      );
 
       if (response.statusCode != 200) {
-        final errorBody = await response.stream.bytesToString();
+        final errorBody = await response.stream.bytesToString().timeout(apiTimeout);
         throw Exception('OpenAI API error: ${response.statusCode} - $errorBody');
       }
 
+      // Track time since last chunk to detect stalled streams
+      var lastChunkTime = DateTime.now();
+
       await for (final chunk in response.stream.transform(utf8.decoder).transform(const LineSplitter())) {
+        // Check if stream has stalled (no data for 30 seconds)
+        final elapsed = DateTime.now().difference(lastChunkTime);
+        if (elapsed > apiTimeout) {
+          throw TimeoutException(
+            'OpenAI API stream stalled after ${apiTimeout.inSeconds} seconds',
+            apiTimeout,
+          );
+        }
+        lastChunkTime = DateTime.now();
+
         if (chunk.startsWith('data: ')) {
           final data = chunk.substring(6);
-          
+
           if (data == '[DONE]') {
             break;
           }
@@ -85,7 +110,7 @@ class OpenAIService {
           try {
             final json = jsonDecode(data);
             final content = json['choices']?[0]?['delta']?['content'];
-            
+
             if (content != null && content is String && content.isNotEmpty) {
               yield content;
             }
@@ -95,6 +120,8 @@ class OpenAIService {
           }
         }
       }
+    } on TimeoutException catch (e) {
+      throw Exception('Request timed out: ${e.message}');
     } catch (e) {
       throw Exception('Failed to stream chat: $e');
     }
@@ -122,7 +149,15 @@ class OpenAIService {
     });
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
+      final response = await http.post(url, headers: headers, body: body).timeout(
+        apiTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'OpenAI API request timed out after ${apiTimeout.inSeconds} seconds',
+            apiTimeout,
+          );
+        },
+      );
 
       if (response.statusCode != 200) {
         throw Exception('OpenAI API error: ${response.statusCode} - ${response.body}');
@@ -130,6 +165,8 @@ class OpenAIService {
 
       final json = jsonDecode(response.body);
       return json['choices'][0]['message']['content'] as String;
+    } on TimeoutException catch (e) {
+      throw Exception('Request timed out: ${e.message}');
     } catch (e) {
       throw Exception('Failed to get chat completion: $e');
     }

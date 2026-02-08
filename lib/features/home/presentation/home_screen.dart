@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchFocusNode = FocusNode();
   bool _isSearchActive = false;
   List<LessonModel> _searchSuggestions = [];
+  Timer? _searchDebounce; // Phase 0: Debounce search to prevent UI blocking
 
   @override
   void initState() {
@@ -54,29 +56,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
+  /// Phase 0: Debounced search - waits 300ms after last keystroke before searching
   void _onSearchChanged() {
+    _searchDebounce?.cancel();
+
     final query = _searchController.text;
-    
-    if (query.length >= 3) {
-      // Perform search
-      setState(() {
-        _isSearchActive = true;
-        _searchSuggestions = _searchLessons(query);
-      });
-    } else {
-      // Clear suggestions
+
+    if (query.length < 3) {
+      // Clear suggestions immediately (no debounce needed for clearing)
       setState(() {
         _searchSuggestions = [];
         if (query.isEmpty) {
           _isSearchActive = false;
         }
       });
+      return;
     }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        _isSearchActive = true;
+        _searchSuggestions = _searchLessons(query);
+      });
+    });
   }
 
   void _onSearchFocusChanged() {

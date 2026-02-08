@@ -26,6 +26,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   bool _isDragging = false;
   bool _isChatOpen = false;
   bool _showSpeechBubble = true; // Show speech bubble greeting
+  bool _isDisposed = false; // Phase 0: Guard against post-dispose timer creation
 
   // Speech bubble message cycling
   int _currentBubbleIndex = 0;
@@ -83,7 +84,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     // Show first speech bubble after a short delay
     Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted && !_isChatOpen) {
+      if (!_isDisposed && mounted && !_isChatOpen) {
         _showNextBubble();
       }
     });
@@ -111,7 +112,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
       // Small delay then show first narrative message
       Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted && !_isChatOpen) {
+        if (!_isDisposed && mounted && !_isChatOpen) {
           _showNextBubble();
         }
       });
@@ -130,7 +131,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       });
       // Small delay then show greeting
       Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted && !_isChatOpen) {
+        if (!_isDisposed && mounted && !_isChatOpen) {
           _showNextBubble();
         }
       });
@@ -248,7 +249,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
   /// Show next speech bubble message with animation
   void _showNextBubble() {
-    if (!mounted || _isChatOpen || _isDragging) return;
+    if (_isDisposed || !mounted || _isChatOpen || _isDragging) return;
 
     final messages = _getBubbleMessages();
     final narrativeState = ref.read(lessonNarrativeBubbleProvider);
@@ -262,7 +263,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
         // Narrative finished - hide bubble
         print('💬 Narrative finished - hiding bubble');
         _speechBubbleController.reverse().then((_) {
-          if (mounted) {
+          if (!_isDisposed && mounted) {
             setState(() {
               _showSpeechBubble = false;
             });
@@ -298,16 +299,13 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
       // ✅ FIX: Increased timing from 4s to 6s for better readability
       _bubbleCycleTimer = Timer(const Duration(seconds: 6), () {
-        if (!mounted || _isChatOpen) return;
-        // Animate out, then advance narrative
+        if (_isDisposed || !mounted || _isChatOpen) return;
         _speechBubbleController.reverse().then((_) {
-          if (mounted && !_isChatOpen) {
-            ref.read(lessonNarrativeBubbleProvider.notifier).nextMessage();
-            // Small delay before showing next
-            Future.delayed(const Duration(milliseconds: 400), () {
-              if (mounted) _showNextBubble();
-            });
-          }
+          if (_isDisposed || !mounted || _isChatOpen) return;
+          ref.read(lessonNarrativeBubbleProvider.notifier).nextMessage();
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (!_isDisposed && mounted) _showNextBubble();
+          });
         });
       });
     } else {
@@ -315,15 +313,13 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       if (_currentBubbleIndex >= messages.length) {
         // Finished one cycle - hide bubble and start idle timer
         _speechBubbleController.reverse().then((_) {
-          if (mounted) {
-            setState(() {
-              _showSpeechBubble = false;
-            });
-            _bubbleCycleCount++;
-            // Re-show after idle period (30 seconds), max 3 cycles
-            if (_bubbleCycleCount < 3) {
-              _startIdleTimer();
-            }
+          if (_isDisposed || !mounted) return;
+          setState(() {
+            _showSpeechBubble = false;
+          });
+          _bubbleCycleCount++;
+          if (_bubbleCycleCount < 3) {
+            _startIdleTimer();
           }
         });
         return;
@@ -339,18 +335,15 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       // Schedule transition to next message after display time
       _bubbleCycleTimer?.cancel();
       _bubbleCycleTimer = Timer(const Duration(seconds: 5), () {
-        if (!mounted || _isChatOpen) return;
-        // Animate out, then show next
+        if (_isDisposed || !mounted || _isChatOpen) return;
         _speechBubbleController.reverse().then((_) {
-          if (mounted && !_isChatOpen) {
-            setState(() {
-              _currentBubbleIndex++;
-            });
-            // Small delay between messages
-            Future.delayed(const Duration(milliseconds: 400), () {
-              if (mounted) _showNextBubble();
-            });
-          }
+          if (_isDisposed || !mounted || _isChatOpen) return;
+          setState(() {
+            _currentBubbleIndex++;
+          });
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (!_isDisposed && mounted) _showNextBubble();
+          });
         });
       });
     }
@@ -358,19 +351,20 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
   /// Start idle timer - after period of inactivity, show bubbles again
   void _startIdleTimer() {
+    if (_isDisposed) return;
     _idleTimer?.cancel();
     _idleTimer = Timer(const Duration(seconds: 30), () {
-      if (mounted && !_isChatOpen && !_showSpeechBubble) {
-        setState(() {
-          _currentBubbleIndex = 0;
-        });
-        _showNextBubble();
-      }
+      if (_isDisposed || !mounted || _isChatOpen || _showSpeechBubble) return;
+      setState(() {
+        _currentBubbleIndex = 0;
+      });
+      _showNextBubble();
     });
   }
 
   @override
   void dispose() {
+    _isDisposed = true; // Phase 0: Prevent post-dispose timer creation
     _bubbleCycleTimer?.cancel();
     _idleTimer?.cancel();
     _snapAnimationController.dispose();
