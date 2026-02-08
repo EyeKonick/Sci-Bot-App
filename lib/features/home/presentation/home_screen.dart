@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_feedback.dart';
+import '../../../shared/widgets/feedback_toast.dart';
 import '../../../features/topics/data/repositories/topic_repository.dart';
 import '../../../features/lessons/data/repositories/lesson_repository.dart';
 import '../../../features/lessons/data/repositories/progress_repository.dart';
@@ -175,39 +177,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           
 
-          // Search Bar - overlapping the gradient header
+          // Search Bar
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -24),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, 0),
-                child: Column(
-                  children: [
-                    // Search Bar
-                    SearchBarWidget(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      readOnly: false,
-                      onChanged: (_) {}, // Handled by controller listener
-                      onClear: _clearSearch,
-                    ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s12, AppSizes.s20, 0),
+              child: Column(
+                children: [
+                  // Search Bar
+                  SearchBarWidget(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    readOnly: false,
+                    onChanged: (_) {}, // Handled by controller listener
+                    onClear: _clearSearch,
+                  ),
 
-                    // Inline Search Suggestions
-                    if (_isSearchActive && _searchController.text.length >= 3)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSizes.s8),
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          child: InlineSearchSuggestions(
-                            suggestions: _searchSuggestions,
-                            query: _searchController.text,
-                            onTap: _onSuggestionTap,
-                          ),
+                  // Inline Search Suggestions
+                  if (_isSearchActive && _searchController.text.length >= 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.s8),
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: InlineSearchSuggestions(
+                          suggestions: _searchSuggestions,
+                          query: _searchController.text,
+                          onTap: _onSuggestionTap,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -476,13 +475,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 await HiveService.clearAll();
                 await DataSeederService.resetSeededFlag();
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Data cleared! Restart app to reseed.',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                  ),
+                FeedbackToast.showSnackBar(
+                  context,
+                  type: FeedbackType.warning,
+                  message: 'Data cleared! Restart app to reseed.',
                 );
               },
             ),

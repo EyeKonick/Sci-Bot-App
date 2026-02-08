@@ -275,6 +275,7 @@ class ChatRepository {
           characterName: _currentCharacter.name,
           context: appContext.location,
           characterId: _currentCharacter.id,
+          isError: true,
         );
 
         _getCurrentHistory().add(errorMsg);
@@ -459,6 +460,36 @@ class ChatRepository {
   
   /// Get current character
   AiCharacter get currentCharacter => _currentCharacter;
+
+  /// Retry: remove last error message and re-send the last user message.
+  /// Returns a stream if there is a user message to retry, or null.
+  Stream<ChatMessage>? retryLastMessage({AiCharacter? character}) {
+    final history = _getCurrentHistory();
+
+    // Remove trailing error message(s)
+    while (history.isNotEmpty &&
+        history.last.role == 'assistant' &&
+        history.last.isError) {
+      history.removeLast();
+    }
+
+    // Find the last user message to re-send
+    String? lastUserText;
+    for (int i = history.length - 1; i >= 0; i--) {
+      if (history[i].role == 'user') {
+        lastUserText = history[i].content;
+        // Remove it so sendMessageStream re-adds it
+        history.removeAt(i);
+        break;
+      }
+    }
+
+    _notifyListeners();
+
+    if (lastUserText == null) return null;
+
+    return sendMessageStream(lastUserText, character: character ?? _currentCharacter);
+  }
 
   /// Set current context
   void setContext(String context) {

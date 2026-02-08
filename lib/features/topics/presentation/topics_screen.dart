@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../data/repositories/topic_repository.dart';
 import '../../lessons/data/repositories/progress_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 /// Full-screen topic browsing
 /// Shows all available topics with progress and navigation
@@ -69,43 +70,62 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
             ),
           ),
 
-          // Loading State
+          // Loading State - Phase 8: Skeleton cards instead of bare spinner
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSizes.s20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.s16),
+                    child: SkeletonTopicCard(),
+                  ),
+                  childCount: 3,
                 ),
               ),
             ),
 
-          // Empty State
+          // Empty State - Phase 4: Forward action added
           if (!_isLoading && topics.isEmpty)
             SliverFillRemaining(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.school_outlined,
-                      size: 80,
-                      color: AppColors.grey300,
-                    ),
-                    const SizedBox(height: AppSizes.s16),
-                    Text(
-                      'No Topics Available',
-                      style: AppTextStyles.headingSmall.copyWith(
-                        color: AppColors.grey600,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.s24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.school_outlined,
+                        size: 80,
+                        color: AppColors.grey300,
                       ),
-                    ),
-                    const SizedBox(height: AppSizes.s8),
-                    Text(
-                      'Topics will appear here once loaded',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.grey600,
+                      const SizedBox(height: AppSizes.s16),
+                      Text(
+                        'No Topics Available',
+                        style: AppTextStyles.headingSmall.copyWith(
+                          color: AppColors.grey600,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSizes.s8),
+                      Text(
+                        'Topics will appear here once loaded. Try restarting the app.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.grey600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSizes.s24),
+                      ElevatedButton.icon(
+                        onPressed: () => context.pop(),
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Go Back'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

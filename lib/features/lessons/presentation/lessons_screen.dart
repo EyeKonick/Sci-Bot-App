@@ -10,6 +10,7 @@ import '../../topics/data/repositories/topic_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 /// Lesson List Screen - Shows all lessons for a selected topic
 /// Week 2 Day 3 Implementation + Week 3 Day 3 Character Integration
@@ -75,12 +76,17 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
           // App Bar with Topic Info
           _buildAppBar(),
 
-          // Loading State
+          // Loading State - Phase 8: Skeleton cards instead of bare spinner
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSizes.s20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.s16),
+                    child: SkeletonLessonCard(),
+                  ),
+                  childCount: 3,
                 ),
               ),
             ),
@@ -221,6 +227,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
                 progressRepo: _progressRepo,
+                lessonIconAsset: _getLessonIconAsset(widget.topicId, index + 1),
                 onTap: () async {
                   // Resume from last incomplete module or start from beginning
                   final startIndex = _getStartingModuleIndex(lesson);
@@ -290,7 +297,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     );
   }
 
-  /// Empty State
+  /// Empty State - Phase 4: Forward action added
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -298,7 +305,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.school_outlined,
               size: 80,
               color: AppColors.grey300,
@@ -312,16 +319,38 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
-              'Lessons for this topic are coming soon!',
+              'Lessons for this topic are coming soon! Explore other topics in the meantime.',
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.grey600,
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: AppSizes.s24),
+            ElevatedButton.icon(
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.explore),
+              label: const Text('Explore Other Topics'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// Get lesson icon asset path based on topic and lesson number
+  String? _getLessonIconAsset(String topicId, int lessonNumber) {
+    final topicNumber = switch (topicId) {
+      'topic_body_systems' => 1,
+      'topic_heredity' => 2,
+      'topic_energy' => 3,
+      _ => null,
+    };
+    if (topicNumber == null) return null;
+    return 'assets/icons/lessons-icons/topic$topicNumber-lesson$lessonNumber-icon.png';
   }
 
   /// Parse hex color
@@ -368,6 +397,7 @@ class _LessonCard extends StatelessWidget {
   final Color topicColor;
   final ProgressRepository progressRepo;
   final VoidCallback onTap;
+  final String? lessonIconAsset;
 
   const _LessonCard({
     required this.lesson,
@@ -377,6 +407,7 @@ class _LessonCard extends StatelessWidget {
     required this.topicColor,
     required this.progressRepo,
     required this.onTap,
+    this.lessonIconAsset,
   });
 
   @override
@@ -401,7 +432,7 @@ class _LessonCard extends StatelessWidget {
               // Header Row
               Row(
                 children: [
-                  // Lesson Number Badge
+                  // Lesson Icon / Number Badge
                   Container(
                     width: 48,
                     height: 48,
@@ -411,21 +442,33 @@ class _LessonCard extends StatelessWidget {
                           : topicColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
-                    child: Center(
-                      child: isCompleted
-                          ? const Icon(
+                    child: isCompleted
+                        ? const Center(
+                            child: Icon(
                               Icons.check_circle,
                               color: AppColors.white,
                               size: 28,
-                            )
-                          : Text(
-                              '$lessonNumber',
-                              style: AppTextStyles.headingSmall.copyWith(
-                                color: topicColor,
-                                fontWeight: FontWeight.w700,
-                              ),
                             ),
-                    ),
+                          )
+                        : lessonIconAsset != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                                child: Image.asset(
+                                  lessonIconAsset!,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  '$lessonNumber',
+                                  style: AppTextStyles.headingSmall.copyWith(
+                                    color: topicColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                   ),
                   const SizedBox(width: AppSizes.s12),
 
@@ -598,17 +641,17 @@ class _LessonCard extends StatelessWidget {
     String getModuleAssetPath() {
       switch (moduleType) {
         case ModuleType.pre_scintation:
-          return 'assets/icons/Pre-SCI-ntation.png';
+          return 'assets/icons/modules-icons/Pre-SCI-ntation.png';
         case ModuleType.fa_scinate:
-          return 'assets/icons/Fa-SCI-nate.png';
+          return 'assets/icons/modules-icons/Fa-SCI-nate.png';
         case ModuleType.inve_scitigation:
-          return 'assets/icons/Inve-SCI-tigation.png';
+          return 'assets/icons/modules-icons/Inve-SCI-tigation.png';
         case ModuleType.goal_scitting:
-          return 'assets/icons/Goal-SCI-tting.png';
+          return 'assets/icons/modules-icons/Goal-SCI-tting.png';
         case ModuleType.self_a_scissment:
-          return 'assets/icons/Self-A-SCI-ssment.png';
+          return 'assets/icons/modules-icons/Self-A-SCI-ssment.png';
         case ModuleType.scipplementary:
-          return 'assets/icons/SCI-pplumentary.png';
+          return 'assets/icons/modules-icons/SCI-pplumentary.png';
       }
     }
 

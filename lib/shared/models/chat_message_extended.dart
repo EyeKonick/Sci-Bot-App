@@ -30,6 +30,10 @@ class ChatMessage extends HiveObject {
   @HiveField(7)
   final String? characterId; // 'aristotle', 'herophilus', 'mendel', 'odum'
 
+  /// Transient flag (not persisted to Hive) indicating this message is an error.
+  /// Used by chat UI to render error cards with Retry button.
+  final bool isError;
+
   ChatMessage({
     required this.id,
     required this.role,
@@ -39,6 +43,7 @@ class ChatMessage extends HiveObject {
     this.context,
     this.isStreaming = false,
     this.characterId,
+    this.isError = false,
   });
 
   /// Create user message
@@ -60,6 +65,7 @@ class ChatMessage extends HiveObject {
     String? context,
     bool isStreaming = false,
     String? characterId,
+    bool isError = false,
   }) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -70,6 +76,7 @@ class ChatMessage extends HiveObject {
       context: context,
       isStreaming: isStreaming,
       characterId: characterId,
+      isError: isError,
     );
   }
 
@@ -101,6 +108,7 @@ class ChatMessage extends HiveObject {
     String? context,
     bool? isStreaming,
     String? characterId,
+    bool? isError,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -111,6 +119,7 @@ class ChatMessage extends HiveObject {
       context: context ?? this.context,
       isStreaming: isStreaming ?? this.isStreaming,
       characterId: characterId ?? this.characterId,
+      isError: isError ?? this.isError,
     );
   }
 

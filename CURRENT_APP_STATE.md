@@ -14,6 +14,11 @@
 lib/
 ├── core/
 │   ├── constants/              # Design tokens and app-wide constants (LOCKED)
+│   │   ├── app_colors.dart           # Color palette (LOCKED)
+│   │   ├── app_text_styles.dart      # Typography system (LOCKED)
+│   │   ├── app_sizes.dart            # Spacing/sizing scale (LOCKED)
+│   │   ├── app_strings.dart          # Static strings
+│   │   └── app_feedback.dart         # Feedback timing, loading thresholds, pacing constants
 │   ├── routes/                 # Navigation configuration using GoRouter
 │   └── theme/                  # Flutter theme definitions
 ├── features/                   # Feature-based modular architecture
@@ -55,14 +60,18 @@ lib/
 │   └── preferences/            # SharedPreferences wrapper
 └── shared/
     ├── models/                 # Shared data models
-    │   ├── ai_character_model.dart        # 4 AI character definitions
-    │   ├── chat_message_extended.dart     # Chat message with character tracking
+    │   ├── ai_character_model.dart        # 4 AI character definitions + conversation starters
+    │   ├── channel_message.dart           # Two-channel message types (NarrationMessage, InteractionMessage) + PacingHint
+    │   ├── chat_message_extended.dart     # Chat message with character tracking + transient isError flag
     │   ├── navigation_context_model.dart  # Navigation state for character switching
     │   ├── topic_model.dart
     │   ├── lesson_model.dart
     │   ├── module_model.dart
     │   └── progress_model.dart
     └── widgets/                # Shared UI components
+        ├── feedback_toast.dart            # Reusable overlay-based toast with slide+fade animation
+        ├── loading_spinner.dart           # Spinner with context message + timeout awareness
+        └── skeleton_loader.dart           # Shimmer skeleton placeholders for lists
 ```
 
 ---
@@ -215,9 +224,8 @@ The app uses two distinct communication channels. They must never overlap respon
 
 - Expert characters (Herophilus, Mendel, Odum) cannot use popup chat
 - Floating button for experts only shows narrative bubbles
-- Chat histories are character-scoped but no visual indication of separation
-- Contextual greetings sometimes repetitive
-- Chathead vs Main Chat responsibility split not yet enforced consistently across all modules
+- Chat histories are character-scoped with "Starting fresh conversation" indicator on switch (Polish Phase 6)
+- Chathead vs Main Chat responsibility split is now architecturally enforced via typed message system (Polish Phase 1)
 
 ---
 
@@ -333,22 +341,31 @@ _notifyListeners() broadcasts to all chat interfaces
 ### Chat / AI
 
 **Fully Implemented:**
-- 4 distinct AI characters with unique personalities
+- 4 distinct AI characters with unique personalities and conversation starters
 - Automatic character switching based on navigation context
 - Character-scoped conversation histories (Phase 3.1)
+- Two-channel message system: `NarrationMessage` (chathead) and `InteractionMessage` (main chat) with compile-time and runtime enforcement (Polish Phase 1)
 - Floating chat button with draggable positioning
-- Speech bubble greetings with contextual messages
+- Speech bubble greetings with content-aware pacing and semantic splitting (Polish Phase 5)
+- Character switch handoff with 800ms avatar transition, introduction bubbles, and conversation history indicator (Polish Phase 6)
 - Messenger-style popup chat window (Aristotle only)
 - Full-screen chat interface
-- Streaming message responses with typing indicators
+- Streaming message responses with character-themed typing indicators (avatar, name, theme-colored dots) (Polish Phase 2)
 - Bold text support in messages (**text** markdown)
-- Singleton ChatRepository for cross-interface sync
+- Singleton ChatRepository with async mutex for concurrency safety (Polish Phase 0)
 - Hive persistence of chat history
+- Contextual disabled input hints across all chat interfaces (Polish Phase 2)
+- Welcome message with conversation starters for empty chat (Polish Phase 4)
+- Actionable error cards with Retry button on API failure (Polish Phase 4)
+- Offline mode banner explaining capabilities (Polish Phase 4)
+- Consistent feedback vocabulary: FeedbackType enum with standardized colors, icons, timing (Polish Phase 3)
+- Reusable FeedbackToast overlay widget for all toast notifications (Polish Phase 3)
+- "Checking your answer" state (300ms buffer) before AI evaluation (Polish Phase 3)
+- Loading spinners with context messages and timeout awareness (Polish Phase 8)
+- 30-second API call timeout with graceful degradation (Polish Phase 0)
 
 **Partially Implemented:**
-- Contextual greeting system (functional but sometimes repetitive)
 - Expert character chat (only works inline during modules, not in popup)
-- Narrative bubble system for module guidance (works but timing issues observed)
 
 **Non-Functional but Present:**
 - Notification badge on floating button (code present, never triggered)
@@ -363,11 +380,17 @@ _notifyListeners() broadcasts to all chat interfaces
 - Quick stats card on home screen
 - Progress indicator on topic cards
 - Module progress dots in viewer
+- Animated progress bar in module viewer header with smooth 300ms fill transition (Polish Phase 7)
+- Next button success pulse animation (green checkmark, 500ms) on module completion (Polish Phase 3)
+- Module completion toast via FeedbackToast overlay (Polish Phase 3)
+- Personalized lesson completion dialog with sharing prompt (Polish Phase 7)
+- Topic completion confetti celebration (40 particles, 1-second animation) with trophy icon (Polish Phase 7)
 
 **Stub/Placeholder:**
 - Streak calculation (returns 0)
 - Last 7 days activity visualization (hardcoded false values)
 - Time invested tracking (uses estimated minutes, not actual)
+- Share progress button (visual only, shows "coming soon" toast)
 
 ### Navigation
 
@@ -457,11 +480,13 @@ The app defines two non-overlapping communication channels:
 - User responds in Main Chat.
 - After a valid response, the chathead may add a short comment, then the module officially begins.
 
-**Implementation Status:**
+**Implementation Status (Post-Polish):**
 
-- Fa-SCI-nate (Topic 1, Lesson 1, Module 1) contains a partial reference implementation of this model.
-- The chathead-to-main-chat handoff behavior is not yet fully polished.
-- The separation of narration vs interaction responsibilities is not clearly enforced in the current codebase across all modules.
+- Two-channel separation is now architecturally enforced via `NarrationMessage` and `InteractionMessage` types (Polish Phase 1)
+- Chathead only accepts `NarrationMessage` type at compile time; main chat asserts no narration messages at runtime
+- `MessageChannel` enum (`narration`, `interaction`) replaces the previous `MessageType` enum
+- All lesson script steps use correct `MessageChannel` values
+- Fa-SCI-nate (Topic 1, Lesson 1, Module 1) contains the reference implementation of this model
 
 ### 5.1 Chat Head (FloatingChatButton)
 
@@ -491,14 +516,18 @@ The app defines two non-overlapping communication channels:
 **Speech Bubble Behavior:**
 
 - Appears next to chat head with contextual messages
-- 3-5 rotating messages per character
-- Auto-cycles through messages every 5 seconds
+- 3-5 rotating messages per character, delivered as `NarrationMessage` type (compile-time enforced)
+- Content-aware display timing: ~300ms per word, clamped 2-8 seconds (replaces fixed 5s cycle)
+- Variable inter-bubble gaps based on PacingHint: fast (800ms), normal (800-1800ms length-based), slow (1800ms), questions (1500ms)
+- Long messages split at semantic boundaries (paragraph breaks, then sentence boundaries) via `NarrationMessage.semanticSplit()`
+- Bubbles fade in with 200ms easeIn opacity animation (replaces instant pop)
 - Hides after completing one cycle
 - Re-appears after 30-second idle period (max 3 cycles)
 - Immediately hides when dragging starts
 - Positioned left or right of button depending on screen position
 - Tapping bubble opens chat
 - Speech bubbles are part of the Guided Narration Channel and must never contain questions requiring user input
+- Character switch triggers handoff introduction sequence: "Meet [Name]..." / "Welcome back!" + greeting + "Starting fresh conversation..."
 
 **Navigation Behavior:**
 
@@ -508,13 +537,13 @@ The app defines two non-overlapping communication channels:
 - Character changes when navigating between topics
 - Speech bubble content updates based on previous navigation context
 
-**Observed Inconsistencies:**
+**Observed Inconsistencies (Post-Polish):**
 
 - Expert characters (Herophilus, Mendel, Odum) cannot open popup chat (by design, but may confuse users)
-- Speech bubble sometimes appears during module narrative (timing conflict)
 - Button remains visible during module lessons (could be distracting)
-- No visual indicator of which character is active (only avatar visible)
 - Breathing animation always white (not character-themed)
+- (Resolved in Polish Phase 6) Character switch now announced via handoff introduction bubbles with 800ms avatar fade transition
+- (Resolved in Polish Phase 5) Speech bubble timing is now content-aware with variable pacing instead of fixed intervals
 
 ### 5.2 Chat Bubble (Message Display)
 
@@ -548,9 +577,10 @@ The app defines two non-overlapping communication channels:
 - User can manually scroll up to read history
 
 **Animation/Transition:**
-- No entrance/exit animations for bubbles
+- No entrance/exit animations for chat message bubbles
 - Streaming cursor blinks at 500ms intervals (opacity fade)
-- Speech bubbles have scale + opacity animation (elastic curve)
+- Speech bubbles fade in with 200ms easeIn opacity animation (Polish Phase 5, replaced elastic scale+opacity)
+- Character avatar transitions with 800ms fade-out/pause/fade-in sequence on character switch (Polish Phase 6)
 - No message deletion or editing (static once sent)
 
 **Timestamp/Metadata:**
@@ -587,8 +617,11 @@ The app defines two non-overlapping communication channels:
 - Rounded rectangle (24px radius) with grey background
 - Expands vertically up to 120px height for multi-line input
 - Send button changes from grey to character-colored gradient when text entered
-- Send button disabled when text empty or AI is streaming
-- Text field disabled during streaming responses
+- Send button disabled when text empty, AI is streaming, or input is disabled
+- Text field disabled during streaming responses with contextual hint: "[Name] is thinking..." (Polish Phase 2)
+- Module viewer input always visible (not conditionally hidden) with state-specific hints: "Listen to [Name] first", "[Name] is thinking...", "Lesson in progress...", "Module complete! Tap Next to continue" (Polish Phase 2)
+- Animated border color transition: enabled state shows character-themed border, disabled shows grey (Polish Phase 2)
+- Pulse glow animation on module viewer input when transitioning from disabled to enabled (Polish Phase 2)
 - Placeholder: "Type a message..." (popup) or "ASK QUESTION or TYPE" (module viewer)
 
 **Accessibility Considerations:**
@@ -599,14 +632,13 @@ The app defines two non-overlapping communication channels:
 - No high contrast mode
 - No voice input integration
 
-**Observed Issues:**
-- Popup chat only works for Aristotle, not expert characters (confusing UX)
-- No visual separation between different character conversations in UI
-- Speech bubble can overlap with module narrative bubbles
-- No loading state shown when initializing chat
-- No error message if OpenAI API fails during chat
-- Character switch not announced to user (just happens silently)
+**Observed Issues (Post-Polish):**
+- Popup chat only works for Aristotle, not expert characters (by design)
 - No way to view conversation list (manual character selection is permanently excluded by design)
+- (Resolved in Polish Phase 6) Character switch now announced via handoff introduction bubbles
+- (Resolved in Polish Phase 8) Loading state shown when initializing chat via `LoadingSpinner` with context message
+- (Resolved in Polish Phase 4) API errors now show actionable error card with Retry button
+- (Resolved in Polish Phase 6) Character conversations visually separated with "Starting fresh conversation" indicator
 
 ---
 

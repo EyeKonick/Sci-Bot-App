@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/constants/app_feedback.dart';
 import '../../../../shared/models/ai_character_model.dart';
 import '../../data/providers/character_provider.dart';
 import '../../../lessons/data/providers/lesson_chat_provider.dart';
@@ -20,7 +20,7 @@ class FloatingChatButton extends ConsumerStatefulWidget {
 }
 
 class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with TickerProviderStateMixin {
-  Offset _position = const Offset(20, 100);
+  Offset _position = const Offset(300, 200);
   Offset? _closedPosition; // Stores position when chat is closed
   bool _hasNotification = false;
   bool _isDragging = false;
@@ -28,11 +28,23 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   bool _showSpeechBubble = true; // Show speech bubble greeting
   bool _isDisposed = false; // Phase 0: Guard against post-dispose timer creation
 
+  // Phase 3/6: Character switch transition
+  String? _previousCharacterId;
+  bool _isCharacterTransitioning = false;
+  bool _justSwitchedCharacter = false; // Phase 6: flag for handoff bubbles
+  String? _switchedFromCharacterId; // Phase 6: track outgoing character
+  late AnimationController _characterTransitionController;
+  late Animation<double> _characterFadeAnimation;
+
   // Speech bubble message cycling
   int _currentBubbleIndex = 0;
   Timer? _bubbleCycleTimer;
   Timer? _idleTimer;
   int _bubbleCycleCount = 0; // Track how many full cycles we've shown
+
+  // Bubble mode state machine
+  BubbleMode? _lastBubbleMode;
+  int _timerGeneration = 0; // Cancellation token for Future.delayed callbacks
 
   late AnimationController _snapAnimationController;
   late Animation<Offset> _snapAnimation;
@@ -70,84 +82,107 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       curve: Curves.easeInOut,
     );
 
-    // Speech bubble animation
+    // Speech bubble animation - Phase 5: 200ms subtle fade-in
     _speechBubbleController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: AppFeedback.bubbleFadeDuration,
       vsync: this,
     );
     _speechBubbleAnimation = CurvedAnimation(
       parent: _speechBubbleController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeIn,
+    );
+
+    // Phase 3: Character transition animation (500ms fade)
+    _characterTransitionController = AnimationController(
+      duration: AppFeedback.characterTransitionDuration,
+      vsync: this,
+    );
+    _characterFadeAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(
+      CurvedAnimation(parent: _characterTransitionController, curve: Curves.easeInOut),
     );
 
     _loadPosition();
 
-    // Show first speech bubble after a short delay
+    // Show first speech bubble after a short delay (only if still in greeting mode)
+    final gen = _timerGeneration;
     Future.delayed(const Duration(milliseconds: 800), () {
-      if (!_isDisposed && mounted && !_isChatOpen) {
-        _showNextBubble();
+      if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+      _showNextBubble();
+    });
+  }
+
+  /// Cancel all bubble timers and invalidate in-flight Future.delayed callbacks
+  void _cancelAllBubbleTimers() {
+    _bubbleCycleTimer?.cancel();
+    _bubbleCycleTimer = null;
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    _timerGeneration++; // All pending Future.delayed callbacks become no-ops
+  }
+
+  /// Handle bubble mode transitions. Called from build() when mode changes.
+  void _handleBubbleModeTransition(BubbleMode mode) {
+    if (mode == _lastBubbleMode) return;
+    _lastBubbleMode = mode;
+
+    _cancelAllBubbleTimers();
+    _speechBubbleController.stop();
+
+    // Use post-frame callback since this is triggered during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isDisposed || !mounted) return;
+
+      switch (mode) {
+        case BubbleMode.greeting:
+          // Restart greeting cycle from scratch
+          setState(() {
+            _currentBubbleIndex = 0;
+            _bubbleCycleCount = 0;
+            _showSpeechBubble = false;
+          });
+          final gen = _timerGeneration;
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+            _showNextBubble();
+          });
+
+        case BubbleMode.waitingForNarrative:
+          // Immediately hide everything — no greetings, no narrative yet
+          _speechBubbleController.reverse();
+          setState(() => _showSpeechBubble = false);
+
+        case BubbleMode.narrative:
+          // Narrative started — show first message
+          setState(() {
+            _currentBubbleIndex = 0;
+            _showSpeechBubble = false;
+          });
+          final gen = _timerGeneration;
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+            _showNextBubble();
+          });
       }
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Watch for narrative state changes
-    final narrativeState = ref.watch(lessonNarrativeBubbleProvider);
-
-    // ✅ FIX: When narrative becomes ACTIVE (lesson starts), immediately take over
-    if (narrativeState.isActive && narrativeState.messages.isNotEmpty) {
-      // Cancel any ongoing greeting animations
-      _bubbleCycleTimer?.cancel();
-      _idleTimer?.cancel();
-      _speechBubbleController.stop();
-
-      // Reset to narrative mode
-      setState(() {
-        _currentBubbleIndex = 0;
-        _showSpeechBubble = false; // Hide any existing bubble
-      });
-
-      // Small delay then show first narrative message
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (!_isDisposed && mounted && !_isChatOpen) {
-          _showNextBubble();
-        }
-      });
-      return;
+  /// Get contextual speech bubble messages for the current character.
+  ///
+  /// Returns [NarrationMessage] list to enforce that only narration-channel
+  /// content appears in speech bubbles. Questions and evaluative content
+  /// must use the interaction channel (main chat) instead.
+  List<NarrationMessage> _getBubbleMessages() {
+    // Check bubble mode — use ref.read (NOT ref.watch) to prevent rebuilds
+    // on every narrative sub-state change (e.g., nextMessage index advances)
+    final mode = ref.read(bubbleModeProvider);
+    if (mode == BubbleMode.narrative) {
+      final narrativeState = ref.read(lessonNarrativeBubbleProvider);
+      if (narrativeState.isActive && narrativeState.messages.isNotEmpty) {
+        return narrativeState.messages;
+      }
     }
 
-    // If narrative just became inactive and we're not in chat, restart greetings
-    if (!narrativeState.isActive &&
-        narrativeState.messages.isEmpty &&
-        !_isChatOpen &&
-        !_showSpeechBubble) {
-      // Reset and show contextual greeting immediately
-      setState(() {
-        _currentBubbleIndex = 0;
-        _bubbleCycleCount = 0;
-      });
-      // Small delay then show greeting
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!_isDisposed && mounted && !_isChatOpen) {
-          _showNextBubble();
-        }
-      });
-    }
-  }
-
-  /// Get contextual speech bubble messages for the current character
-  List<String> _getBubbleMessages() {
-    // Check if lesson narrative is active (takes priority)
-    final narrativeState = ref.watch(lessonNarrativeBubbleProvider);
-    if (narrativeState.isActive && narrativeState.messages.isNotEmpty) {
-      // Show lesson narrative messages
-      return narrativeState.messages;
-    }
-
-    // Otherwise, show contextual greetings
+    // Otherwise, build contextual greetings as NarrationMessages
     final character = ref.read(activeCharacterProvider);
     final prevContext = ref.read(previousContextProvider);
     final previousCharacter = prevContext?.currentTopicId != null
@@ -158,123 +193,161 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     final wasInLesson = prevContext?.currentLessonId != null;
     final sameCharacter = previousCharacter?.id == character.id;
 
+    // Phase 6: Determine outgoing character for handoff messages
+    final switchedFrom = _switchedFromCharacterId != null
+        ? AiCharacter.getCharacterById(_switchedFromCharacterId)
+        : null;
+    final isHandoff = _justSwitchedCharacter && switchedFrom != null;
+
+    // Helper to wrap greeting strings as NarrationMessages with semantic splitting
+    List<NarrationMessage> narrate(List<String> texts, {PacingHint pacing = PacingHint.normal}) {
+      final messages = texts.map((t) => NarrationMessage(
+        content: t,
+        characterId: character.id,
+        pacingHint: pacing,
+      )).toList();
+      // Phase 5: Split long messages at sentence boundaries
+      return NarrationMessage.semanticSplit(messages);
+    }
+
+    // Phase 6: Character handoff sequence
+    // When a character switch just happened, show structured introduction
+    if (isHandoff) {
+      // Clear the flag after building handoff messages (consumed once)
+      _justSwitchedCharacter = false;
+
+      if (character.id == 'aristotle') {
+        // Returning to Aristotle - acknowledgment of learning journey
+        return narrate([
+          'Welcome back! How did your lesson with ${switchedFrom.name} go?',
+          'I hope you learned something great about ${switchedFrom.specialization.toLowerCase()}!',
+          'Starting fresh conversation with me. What would you like to explore next?',
+        ], pacing: PacingHint.normal);
+      } else {
+        // Switching to a topic expert - introduction handoff
+        return narrate([
+          'Meet ${character.name}, your specialist in ${character.specialization.toLowerCase()}!',
+          character.greeting,
+          'Starting fresh conversation with ${character.name}.',
+        ], pacing: PacingHint.normal);
+      }
+    }
+
     switch (character.id) {
       case 'aristotle':
         if (previousCharacter != null && previousCharacter.id != 'aristotle') {
-          return [
+          return narrate([
             'Welcome back! You just studied ${previousCharacter.specialization.toLowerCase()} with ${previousCharacter.name}.',
             'So how did it go? Did you learn something new about ${previousCharacter.specialization.toLowerCase()}?',
             'If you want, I can help you review what you learned or explore a new topic!',
-          ];
+          ]);
         }
-        return [
+        return narrate([
           'Hey! I\'m ${character.name}, your science guide.',
           'Ready to explore some Grade 9 Science? Pick a topic and let\'s get started!',
           'Tap on me if you have any questions about your lessons.',
-        ];
+        ]);
 
       case 'herophilus':
-        // ✅ Enhanced casual messages when returning from module
         if (wasInLesson && sameCharacter) {
-          return [
+          return narrate([
             'So, how was the lesson? Did it make sense?',
             'Learning about circulation can be tricky! Need any clarification?',
             'Ready to continue with another module? I\'m here if you need help!',
-          ];
+          ]);
         }
         if (previousCharacter != null && previousCharacter.id != 'herophilus') {
-          return [
+          return narrate([
             'Hello! Coming from ${previousCharacter.name}\'s class? Let\'s study circulation!',
             'Did you know the heart beats about 100,000 times a day? Let me tell you more!',
             'Tap me if you want to learn how blood flows through your body.',
-          ];
+          ]);
         }
-        return [
+        return narrate([
           'I\'m Herophilus, your guide to the circulatory system!',
           'Did you know your blood vessels could wrap around the Earth twice?',
           'Ask me anything about how your heart and lungs work together!',
-        ];
+        ]);
 
       case 'mendel':
-        // ✅ Enhanced casual messages when returning from module
         if (wasInLesson && sameCharacter) {
-          return [
+          return narrate([
             'How was the lesson? Genetics can be fascinating!',
             'Did everything make sense? I can clarify anything you found confusing.',
             'Ready to explore more? Pick another module or ask me questions!',
-          ];
+          ]);
         }
         if (previousCharacter != null && previousCharacter.id != 'mendel') {
-          return [
+          return narrate([
             'Welcome! Finished studying ${previousCharacter.specialization.toLowerCase()}? Now let\'s explore heredity!',
             'Ever wonder why you look like your parents? I can explain the science behind it!',
             'Tap me and let\'s discover how traits pass from one generation to the next.',
-          ];
+          ]);
         }
-        return [
+        return narrate([
           'Hello! I\'m Gregor Mendel, the father of genetics.',
           'Did you know I studied over 28,000 pea plants to discover inheritance patterns?',
           'Ask me about dominant traits, Punnett squares, or anything about heredity!',
-        ];
+        ]);
 
       case 'odum':
-        // ✅ Enhanced casual messages when returning from module
         if (wasInLesson && sameCharacter) {
-          return [
+          return narrate([
             'So, how did you find the lesson?',
             'Energy flow and ecosystems can be complex! Any questions?',
             'Ready for the next module? I\'m here to help!',
-          ];
+          ]);
         }
         if (previousCharacter != null && previousCharacter.id != 'odum') {
-          return [
+          return narrate([
             'Hi there! Coming from ${previousCharacter.name}\'s lesson? Perfect timing!',
             'Let me show you how energy flows through every living thing in an ecosystem.',
             'Tap me to learn about food chains, energy pyramids, and more!',
-          ];
+          ]);
         }
-        return [
+        return narrate([
           'I\'m Eugene Odum, your ecosystem expert!',
           'Everything in nature is connected through energy. Want to see how?',
           'Ask me about food chains, photosynthesis, or how ecosystems work!',
-        ];
+        ]);
 
       default:
-        return [
+        return narrate([
           'Hey! I\'m ${character.name}. Ask me anything.',
           'Tap on me to start a conversation about science!',
-        ];
+        ]);
     }
   }
 
-  /// Show next speech bubble message with animation
+  /// Show next speech bubble message with animation.
+  /// Uses _timerGeneration to cancel stale callbacks from previous mode transitions.
   void _showNextBubble() {
     if (_isDisposed || !mounted || _isChatOpen || _isDragging) return;
 
+    final gen = _timerGeneration;
+    final mode = ref.read(bubbleModeProvider);
     final messages = _getBubbleMessages();
-    final narrativeState = ref.read(lessonNarrativeBubbleProvider);
 
-    // If narrative is active, use narrative index
-    if (narrativeState.isActive) {
+    // Narrative mode: use narrative provider's index
+    if (mode == BubbleMode.narrative) {
+      final narrativeState = ref.read(lessonNarrativeBubbleProvider);
       final currentIndex = narrativeState.currentIndex;
-      print('💬 _showNextBubble: Narrative active, showing index $currentIndex of ${messages.length}');
+      debugPrint('💬 _showNextBubble: Narrative mode, index $currentIndex of ${messages.length}');
 
       if (currentIndex >= messages.length) {
-        // Narrative finished - hide bubble
-        print('💬 Narrative finished - hiding bubble');
+        debugPrint('💬 Narrative finished - hiding bubble');
         _speechBubbleController.reverse().then((_) {
           if (!_isDisposed && mounted) {
-            setState(() {
-              _showSpeechBubble = false;
-            });
+            setState(() => _showSpeechBubble = false);
           }
         });
         return;
       }
 
       if (messages.isNotEmpty && currentIndex < messages.length) {
-        final messagePreview = messages[currentIndex].substring(0, messages[currentIndex].length.clamp(0, 40));
-        print('💬 Displaying: "$messagePreview..."');
+        final msgContent = messages[currentIndex].content;
+        final messagePreview = msgContent.substring(0, msgContent.length.clamp(0, 40));
+        debugPrint('💬 Displaying: "$messagePreview..."');
       }
 
       setState(() {
@@ -282,41 +355,34 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
         _currentBubbleIndex = currentIndex;
       });
 
-      // Animate in
       _speechBubbleController.forward(from: 0.0);
 
-      // Auto-advance narrative after delay (only if not on last message)
       _bubbleCycleTimer?.cancel();
 
-      // Check if this is the last message
-      final isLastMessage = currentIndex >= messages.length - 1;
+      // Don't auto-advance past last message
+      if (currentIndex >= messages.length - 1) return;
 
-      if (isLastMessage) {
-        // Don't cycle - keep last message visible
-        // User will tap Next when ready
-        return;
-      }
-
-      // ✅ FIX: Increased timing from 4s to 6s for better readability
-      _bubbleCycleTimer = Timer(const Duration(seconds: 6), () {
-        if (_isDisposed || !mounted || _isChatOpen) return;
+      // Phase 5: Variable display timing based on message content
+      final currentMsg = messages[currentIndex];
+      final displayDuration = Duration(milliseconds: currentMsg.displayMs);
+      _bubbleCycleTimer = Timer(displayDuration, () {
+        if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
         _speechBubbleController.reverse().then((_) {
-          if (_isDisposed || !mounted || _isChatOpen) return;
+          if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
           ref.read(lessonNarrativeBubbleProvider.notifier).nextMessage();
-          Future.delayed(const Duration(milliseconds: 400), () {
-            if (!_isDisposed && mounted) _showNextBubble();
+          final gapDuration = Duration(milliseconds: currentMsg.gapMs);
+          Future.delayed(gapDuration, () {
+            if (gen != _timerGeneration || _isDisposed || !mounted) return;
+            _showNextBubble();
           });
         });
       });
-    } else {
-      // Use existing greeting cycling logic
+    } else if (mode == BubbleMode.greeting) {
+      // Greeting cycling logic
       if (_currentBubbleIndex >= messages.length) {
-        // Finished one cycle - hide bubble and start idle timer
         _speechBubbleController.reverse().then((_) {
-          if (_isDisposed || !mounted) return;
-          setState(() {
-            _showSpeechBubble = false;
-          });
+          if (_isDisposed || !mounted || gen != _timerGeneration) return;
+          setState(() => _showSpeechBubble = false);
           _bubbleCycleCount++;
           if (_bubbleCycleCount < 3) {
             _startIdleTimer();
@@ -325,36 +391,36 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
         return;
       }
 
-      setState(() {
-        _showSpeechBubble = true;
-      });
+      setState(() => _showSpeechBubble = true);
 
-      // Animate in
       _speechBubbleController.forward(from: 0.0);
 
-      // Schedule transition to next message after display time
       _bubbleCycleTimer?.cancel();
-      _bubbleCycleTimer = Timer(const Duration(seconds: 5), () {
-        if (_isDisposed || !mounted || _isChatOpen) return;
+      final currentMsg = messages[_currentBubbleIndex.clamp(0, messages.length - 1)];
+      final displayDuration = Duration(milliseconds: currentMsg.displayMs);
+      _bubbleCycleTimer = Timer(displayDuration, () {
+        if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
         _speechBubbleController.reverse().then((_) {
-          if (_isDisposed || !mounted || _isChatOpen) return;
-          setState(() {
-            _currentBubbleIndex++;
-          });
-          Future.delayed(const Duration(milliseconds: 400), () {
-            if (!_isDisposed && mounted) _showNextBubble();
+          if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
+          final gapDuration = Duration(milliseconds: currentMsg.gapMs);
+          setState(() => _currentBubbleIndex++);
+          Future.delayed(gapDuration, () {
+            if (gen != _timerGeneration || _isDisposed || !mounted) return;
+            _showNextBubble();
           });
         });
       });
     }
+    // BubbleMode.waitingForNarrative: do nothing (bubbles suppressed)
   }
 
   /// Start idle timer - after period of inactivity, show bubbles again
   void _startIdleTimer() {
     if (_isDisposed) return;
     _idleTimer?.cancel();
+    final gen = _timerGeneration;
     _idleTimer = Timer(const Duration(seconds: 30), () {
-      if (_isDisposed || !mounted || _isChatOpen || _showSpeechBubble) return;
+      if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen || _showSpeechBubble) return;
       setState(() {
         _currentBubbleIndex = 0;
       });
@@ -365,28 +431,26 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   @override
   void dispose() {
     _isDisposed = true; // Phase 0: Prevent post-dispose timer creation
-    _bubbleCycleTimer?.cancel();
-    _idleTimer?.cancel();
+    _cancelAllBubbleTimers();
     _snapAnimationController.dispose();
     _openAnimationController.dispose();
     _speechBubbleController.dispose();
+    _characterTransitionController.dispose();
     super.dispose();
   }
 
   Future<void> _loadPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    final x = prefs.getDouble('chat_button_x') ?? 20;
-    final y = prefs.getDouble('chat_button_y') ?? 100;
+    // Always start at the default initial position when app opens
+    const defaultPosition = Offset(300, 200);
     setState(() {
-      _position = Offset(x, y);
-      _closedPosition = _position;
+      _position = defaultPosition;
+      _closedPosition = defaultPosition;
     });
   }
 
-  Future<void> _savePosition(Offset position) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('chat_button_x', position.dx);
-    await prefs.setDouble('chat_button_y', position.dy);
+  void _savePosition(Offset position) {
+    // Position is only kept in memory for current session
+    // Chathead always returns to default position on app restart
   }
 
   /// Snap to nearest edge with animation
@@ -533,6 +597,64 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
 
+    // Watch bubble mode in build() for reliable provider subscription.
+    // Handle mode transitions (greeting ↔ narrative ↔ waitingForNarrative).
+    final bubbleMode = ref.watch(bubbleModeProvider);
+    _handleBubbleModeTransition(bubbleMode);
+
+    // Phase 6: Detect character switch and trigger 800ms visual bridge with handoff bubbles
+    final currentCharacter = ref.watch(activeCharacterProvider);
+    if (_previousCharacterId != null &&
+        _previousCharacterId != currentCharacter.id &&
+        !_isCharacterTransitioning) {
+      _isCharacterTransitioning = true;
+      _switchedFromCharacterId = _previousCharacterId;
+
+      // Cancel any ongoing bubble animations during transition
+      _bubbleCycleTimer?.cancel();
+      _idleTimer?.cancel();
+      _speechBubbleController.reverse();
+      _showSpeechBubble = false;
+
+      // Fade out → pause → fade in transition (800ms)
+      _characterFadeAnimation = TweenSequence<double>([
+        TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.0)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: 40,
+        ),
+        TweenSequenceItem(
+          tween: ConstantTween(0.0),
+          weight: 20,
+        ),
+        TweenSequenceItem(
+          tween: Tween(begin: 0.0, end: 1.0)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 40,
+        ),
+      ]).animate(_characterTransitionController);
+
+      _characterTransitionController.forward(from: 0.0).then((_) {
+        if (!_isDisposed && mounted) {
+          setState(() {
+            _isCharacterTransitioning = false;
+            _justSwitchedCharacter = true;
+            _currentBubbleIndex = 0;
+            _bubbleCycleCount = 0;
+          });
+          // Show handoff bubbles after transition completes
+          if (!_isChatOpen) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (!_isDisposed && mounted && !_isChatOpen) {
+                _showNextBubble();
+              }
+            });
+          }
+        }
+      });
+    }
+    _previousCharacterId = currentCharacter.id;
+
     return Stack(
       children: [
         // Chat Window
@@ -589,13 +711,10 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
                 top: currentPos.dy + 8,
                 left: isOnRight ? null : currentPos.dx + buttonSize + 4,
                 right: isOnRight ? screenSize.width - currentPos.dx + 4 : null,
-                child: Transform.scale(
-                  scale: _speechBubbleAnimation.value,
-                  alignment: isOnRight ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Opacity(
-                    opacity: _speechBubbleAnimation.value.clamp(0.0, 1.0),
-                    child: _buildSpeechBubble(isOnRight),
-                  ),
+                // Phase 5: Subtle fade-in only (no scale transform)
+                child: Opacity(
+                  opacity: _speechBubbleAnimation.value.clamp(0.0, 1.0),
+                  child: _buildSpeechBubble(isOnRight),
                 ),
               );
             },
@@ -654,7 +773,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     final character = ref.watch(activeCharacterProvider);
     final messages = _getBubbleMessages();
     final safeIndex = _currentBubbleIndex.clamp(0, messages.length - 1);
-    final currentMessage = messages[safeIndex];
+    final currentMessage = messages[safeIndex].content;
 
     return GestureDetector(
       onTap: () {
@@ -702,38 +821,49 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
   Widget _buildButton({bool isDragging = false}) {
     final size = isDragging ? 78.0 : 70.0;
-    
+
     // Get current character from provider
     final character = ref.watch(activeCharacterProvider);
-    
+
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         children: [
-          // Character avatar
+          // Character avatar with Phase 3 fade transition
           Center(
-            child: ClipOval(
-              child: Image.asset(
-                character.avatarAsset,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: size,
-                    height: size,
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.smart_toy_outlined,
-                      size: 36,
-                      color: Colors.white,
-                    ),
-                  );
-                },
+            child: AnimatedBuilder(
+              animation: _characterFadeAnimation,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _isCharacterTransitioning
+                      ? _characterFadeAnimation.value.clamp(0.0, 1.0)
+                      : 1.0,
+                  child: child,
+                );
+              },
+              child: ClipOval(
+                child: Image.asset(
+                  character.avatarAsset,
+                  width: size,
+                  height: size,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: size,
+                      height: size,
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.smart_toy_outlined,
+                        size: 36,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),

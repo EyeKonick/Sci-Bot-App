@@ -5,14 +5,18 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_feedback.dart';
+import '../../../shared/widgets/feedback_toast.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/models/ai_character_model.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../data/repositories/bookmark_repository.dart';
+import '../../topics/data/repositories/topic_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
 import '../../chat/data/repositories/chat_repository.dart';
 import '../../chat/presentation/widgets/typing_indicator.dart';
+import '../../../shared/widgets/loading_spinner.dart';
 import '../data/providers/guided_lesson_provider.dart';
 import '../data/providers/lesson_chat_provider.dart';
 
@@ -34,13 +38,29 @@ class ModuleViewerScreen extends ConsumerStatefulWidget {
   ConsumerState<ModuleViewerScreen> createState() => _ModuleViewerScreenState();
 }
 
-class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
+class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
+    with TickerProviderStateMixin {
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
   final _bookmarkRepo = BookmarkRepository();
   final _chatRepo = ChatRepository();
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
+
+  // Phase 2: Input pulse animation when input becomes available
+  late AnimationController _inputPulseController;
+  late Animation<double> _inputPulseAnimation;
+  bool _wasWaitingForUser = false;
+
+  // Phase 3: Next button success pulse when module completes
+  late AnimationController _nextButtonPulseController;
+  late Animation<double> _nextButtonPulseAnimation;
+  bool _wasModuleComplete = false;
+
+  // Phase 7: Animated progress bar
+  late AnimationController _progressBarController;
+  late Animation<double> _progressBarAnimation;
+  double _animatedProgress = 0.0;
 
   LessonModel? _lesson;
   late int _currentModuleIndex;
@@ -52,8 +72,37 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     super.initState();
     _currentModuleIndex = widget.moduleIndex;
 
+    // Phase 2: Input pulse animation controller
+    _inputPulseController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _inputPulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _inputPulseController, curve: Curves.easeOut),
+    );
+
+    // Phase 3: Next button success pulse controller
+    _nextButtonPulseController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _nextButtonPulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _nextButtonPulseController, curve: Curves.easeOut),
+    );
+
+    // Phase 7: Progress bar smooth fill animation (300ms)
+    _progressBarController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _progressBarAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(parent: _progressBarController, curve: Curves.easeOut),
+    );
+
     // ✅ FIX: Clear any previous module state to ensure fresh start
+    // Suppress greetings immediately — narrative will start after loading
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(bubbleModeProvider.notifier).state = BubbleMode.waitingForNarrative;
       ref.read(lessonChatProvider.notifier).reset();
       ref.read(lessonNarrativeBubbleProvider.notifier).hideNarrative();
     });
@@ -86,6 +135,16 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
 
     if (mounted) {
+      // Phase 7: Initialize animated progress to current value
+      _animatedProgress = _currentProgress;
+      _progressBarAnimation = Tween<double>(
+        begin: _animatedProgress,
+        end: _animatedProgress,
+      ).animate(CurvedAnimation(
+        parent: _progressBarController,
+        curve: Curves.easeOut,
+      ));
+
       setState(() => _isLoading = false);
 
       // Start guided lesson if online
@@ -165,8 +224,9 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
         );
       }
 
-      // Restart guided lesson for the new module
+      // Suppress bubbles during module switch, then restart guided lesson
       if (!_isOffline) {
+        ref.read(bubbleModeProvider.notifier).state = BubbleMode.waitingForNarrative;
         _startGuidedModule();
       }
     }
@@ -178,9 +238,24 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
         widget.lessonId,
         _currentModule!.id,
       );
+
+      // Phase 7: Animate progress bar smooth fill
+      _animateProgressBar();
+
+      // Phase 3: Show subtle toast for module completion (not last module)
+      if (!_isLastModule && mounted) {
+        FeedbackToast.show(
+          context,
+          type: FeedbackType.success,
+          message: 'Module ${_currentModuleIndex + 1} complete!',
+        );
+      }
     }
 
     if (!_isLastModule) {
+      // Reset pulse state for next module
+      _wasModuleComplete = false;
+
       setState(() {
         _currentModuleIndex++;
       });
@@ -193,15 +268,49 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
         );
       }
 
-      // Start guided lesson for the new module
+      // Suppress bubbles during module switch, then start guided lesson
       if (!_isOffline) {
+        ref.read(bubbleModeProvider.notifier).state = BubbleMode.waitingForNarrative;
         _startGuidedModule();
       } else {
         ref.read(guidedLessonProvider.notifier).setOfflineMode();
       }
     } else {
-      _showLessonCompleteDialog();
+      // Phase 7: Check if all lessons in topic are now complete
+      final isTopicComplete = _checkTopicCompletion();
+      _showLessonCompleteDialog(topicComplete: isTopicComplete);
     }
+  }
+
+  /// Phase 7: Animate progress bar from old value to new value
+  void _animateProgressBar() {
+    final newProgress = _currentProgress;
+    _progressBarAnimation = Tween<double>(
+      begin: _animatedProgress,
+      end: newProgress,
+    ).animate(CurvedAnimation(
+      parent: _progressBarController,
+      curve: Curves.easeOut,
+    ));
+    _progressBarController.forward(from: 0.0);
+    _animatedProgress = newProgress;
+  }
+
+  /// Phase 7: Check if all lessons in the current topic are completed
+  bool _checkTopicCompletion() {
+    if (_lesson == null) return false;
+    final topicId = _lesson!.topicId;
+    final topicRepo = TopicRepository();
+    final topic = topicRepo.getTopicById(topicId);
+    if (topic == null) return false;
+
+    // Check if every lesson in this topic is completed
+    for (final lessonId in topic.lessonIds) {
+      if (!_progressRepo.isLessonCompleted(lessonId)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Send student message during asking phase
@@ -228,15 +337,20 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     });
   }
 
-  void _showLessonCompleteDialog() {
+  void _showLessonCompleteDialog({bool topicComplete = false}) {
     final progress = _progressRepo.getProgress(widget.lessonId);
     final completedModules = progress?.completedModuleIds.length ?? 0;
     final totalModules = _lesson?.modules.length ?? 6;
 
+    // Phase 7: Show confetti overlay if topic is complete
+    if (topicComplete) {
+      _showConfettiCelebration();
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
@@ -246,20 +360,22 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: topicComplete
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.success.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.celebration,
-                color: AppColors.success,
+              child: Icon(
+                topicComplete ? Icons.emoji_events : Icons.celebration,
+                color: topicComplete ? AppColors.primary : AppColors.success,
                 size: 48,
               ),
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
-              'Lesson Complete!',
+              topicComplete ? 'Topic Mastered!' : 'Lesson Complete!',
               style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.success,
+                color: topicComplete ? AppColors.primary : AppColors.success,
               ),
               textAlign: TextAlign.center,
             ),
@@ -269,10 +385,21 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Congratulations! You\'ve finished all modules for "${_lesson?.title}".',
+              'You\'ve mastered "${_lesson?.title}"! $completedModules modules completed.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
+            if (topicComplete) ...[
+              const SizedBox(height: AppSizes.s8),
+              Text(
+                'All lessons in this topic are complete!',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: AppSizes.s16),
             Container(
               padding: const EdgeInsets.all(AppSizes.s16),
@@ -296,13 +423,16 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
                 ],
               ),
             ),
+            // Phase 7: Share your progress prompt
+            const SizedBox(height: AppSizes.s16),
+            _buildShareProgressPrompt(),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.pop();
+              Navigator.pop(dialogContext);
+              if (mounted) context.pop();
             },
             child: Text(
               'Back to Lessons',
@@ -313,8 +443,8 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.pop();
+              Navigator.pop(dialogContext);
+              if (mounted) context.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
@@ -327,6 +457,84 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
         actionsPadding: const EdgeInsets.all(AppSizes.s16),
       ),
     );
+  }
+
+  /// Phase 7: Share progress prompt with achievement preview
+  Widget _buildShareProgressPrompt() {
+    final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
+    final character = ref.read(activeCharacterProvider);
+
+    return InkWell(
+      onTap: () {
+        // Show preview toast - actual sharing not implemented per scope
+        FeedbackToast.show(
+          context,
+          type: FeedbackType.info,
+          message: 'Sharing coming soon!',
+        );
+      },
+      borderRadius: BorderRadius.circular(AppSizes.radiusM),
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.s12),
+        decoration: BoxDecoration(
+          color: character.themeColor.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          border: Border.all(
+            color: character.themeColor.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.share_rounded,
+              size: 20,
+              color: character.themeColor,
+            ),
+            const SizedBox(width: AppSizes.s8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Share your progress',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: character.themeColor,
+                    ),
+                  ),
+                  Text(
+                    '$completedLessonsCount lesson${completedLessonsCount == 1 ? '' : 's'} mastered in Grade 9 Science',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.grey600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: character.themeColor.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Phase 7: Show confetti celebration overlay for topic completion (1 second)
+  void _showConfettiCelebration() {
+    final overlay = Overlay.of(context);
+    late final OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => _ConfettiOverlay(
+        onComplete: () => entry.remove(),
+      ),
+    );
+
+    overlay.insert(entry);
   }
 
   Widget _buildStatRow(IconData icon, String label, String value) {
@@ -355,12 +563,14 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
 
   @override
   void dispose() {
-    // ✅ FIX: Clear all module state when leaving
-    // This ensures clean restart when re-entering the same module
-    ref.read(lessonNarrativeBubbleProvider.notifier).hideNarrative();
+    // Clear all module state when leaving.
+    // reset() handles: incrementing requestId (cancels async chains),
+    // hiding narrative bubbles, and setting bubble mode back to greeting.
     ref.read(lessonChatProvider.notifier).reset();
-    // Note: guidedLessonProvider state is reset in startModule() call
 
+    _inputPulseController.dispose();
+    _nextButtonPulseController.dispose();
+    _progressBarController.dispose();
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -368,12 +578,11 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Phase 8: Contextual loading spinner instead of bare spinner
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: AppColors.grey50,
-        body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        body: LoadingSpinner(message: 'Loading lesson...'),
       );
     }
 
@@ -385,18 +594,39 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
           backgroundColor: AppColors.primary,
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 80, color: AppColors.grey300),
-              const SizedBox(height: AppSizes.s16),
-              Text('Lesson not found', style: AppTextStyles.headingSmall),
-              const SizedBox(height: AppSizes.s24),
-              ElevatedButton(
-                onPressed: () => context.pop(),
-                child: const Text('Go Back'),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.s24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 80, color: AppColors.grey300),
+                const SizedBox(height: AppSizes.s16),
+                Text(
+                  'Lesson Not Found',
+                  style: AppTextStyles.headingSmall.copyWith(
+                    color: AppColors.grey600,
+                  ),
+                ),
+                const SizedBox(height: AppSizes.s8),
+                Text(
+                  'This lesson may have been removed or is temporarily unavailable.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.grey600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSizes.s24),
+                ElevatedButton.icon(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Lessons'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -410,7 +640,42 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
           title: const Text('Error'),
           backgroundColor: AppColors.primary,
         ),
-        body: const Center(child: Text('Module not found')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.s24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 80, color: AppColors.grey300),
+                const SizedBox(height: AppSizes.s16),
+                Text(
+                  'Module Not Found',
+                  style: AppTextStyles.headingSmall.copyWith(
+                    color: AppColors.grey600,
+                  ),
+                ),
+                const SizedBox(height: AppSizes.s8),
+                Text(
+                  'This module could not be loaded.',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.grey600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSizes.s24),
+                ElevatedButton.icon(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Lessons'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -461,17 +726,14 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
               );
               setState(() {});
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _bookmarkRepo.isBookmarked(widget.lessonId)
-                          ? 'Lesson bookmarked!'
-                          : 'Bookmark removed',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                FeedbackToast.showSnackBar(
+                  context,
+                  type: _bookmarkRepo.isBookmarked(widget.lessonId)
+                      ? FeedbackType.success
+                      : FeedbackType.info,
+                  message: _bookmarkRepo.isBookmarked(widget.lessonId)
+                      ? 'Lesson bookmarked!'
+                      : 'Bookmark removed',
                 );
               }
             },
@@ -490,8 +752,8 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
                 : _buildGuidedChatContent(module, guidedState),
           ),
 
-          // Input area: visible when bot is waiting for student response
-          if (!_isOffline && guidedState.waitingForUser)
+          // Input area: always visible when online, with contextual state
+          if (!_isOffline)
             _buildInputArea(moduleColor),
 
           // Navigation Buttons
@@ -501,7 +763,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     );
   }
 
-  /// Module Header with phase badge
+  /// Module Header - compact design with module icon
   Widget _buildModuleHeader(
     ModuleModel module,
     Color moduleColor,
@@ -509,7 +771,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.s20),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.s16, vertical: AppSizes.s12),
       decoration: BoxDecoration(
         color: moduleColor,
         boxShadow: [
@@ -522,118 +784,138 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Module Type + Phase Badges
-            Row(
-              children: [
-                // Module type badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.s12,
-                    vertical: AppSizes.s8,
+            // Module icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                child: Image.asset(
+                  module.type.iconAsset,
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(module.type.icon, size: 24, color: AppColors.white);
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSizes.s12),
+
+            // Title, type badge, and progress
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Module title
+                  Text(
+                    module.title,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: AppSizes.s4),
+
+                  // Type name + time + status
+                  Row(
                     children: [
-                      Icon(module.type.icon, size: 16, color: AppColors.white),
-                      const SizedBox(width: AppSizes.s4),
                       Text(
                         module.type.displayName,
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w600,
+                          color: AppColors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-
-                // Status badge (only when online)
-                if (!_isOffline) ...[
-                  const SizedBox(width: AppSizes.s8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.s12,
-                      vertical: AppSizes.s8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: guidedState.canProceed
-                          ? Colors.green.shade700
-                          : Colors.orange.shade700,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          guidedState.canProceed
-                              ? Icons.check_circle
-                              : Icons.school,
-                          size: 14,
-                          color: AppColors.white,
+                      const SizedBox(width: AppSizes.s8),
+                      Icon(
+                        Icons.access_time,
+                        size: 12,
+                        color: AppColors.white.withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${module.estimatedMinutes} min',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.white.withValues(alpha: 0.8),
+                          fontSize: 11,
                         ),
-                        const SizedBox(width: AppSizes.s4),
-                        Text(
-                          guidedState.canProceed ? 'Complete' : 'In Progress',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
+                      ),
+                      if (!_isOffline) ...[
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.s8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: guidedState.canProceed
+                                ? Colors.green.shade700
+                                : Colors.orange.shade700,
+                            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                          ),
+                          child: Text(
+                            guidedState.canProceed ? 'Complete' : 'In Progress',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
                       ],
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.s4),
+
+                  // Progress bar
+                  AnimatedBuilder(
+                    animation: _progressBarAnimation,
+                    builder: (context, child) {
+                      final displayProgress = _progressBarController.isAnimating
+                          ? _progressBarAnimation.value
+                          : _animatedProgress;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                              child: LinearProgressIndicator(
+                                value: displayProgress,
+                                backgroundColor: AppColors.white.withValues(alpha: 0.2),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  AppColors.white,
+                                ),
+                                minHeight: 4,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.s8),
+                          Text(
+                            '${(displayProgress * 100).toInt()}%',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
-              ],
-            ),
-            const SizedBox(height: AppSizes.s12),
-
-            // Module Title
-            Text(
-              module.title,
-              style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.white,
-                fontWeight: FontWeight.w700,
               ),
-            ),
-            const SizedBox(height: AppSizes.s8),
-
-            // Module Info
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: AppColors.white.withValues(alpha: 0.9),
-                ),
-                const SizedBox(width: AppSizes.s4),
-                Text(
-                  '${module.estimatedMinutes} min',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.s16),
-                Icon(
-                  Icons.pending_actions,
-                  size: 16,
-                  color: AppColors.white.withValues(alpha: 0.9),
-                ),
-                const SizedBox(width: AppSizes.s4),
-                Text(
-                  '${(_currentProgress * 100).toInt()}% Complete',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -649,10 +931,25 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     final chatState = ref.watch(lessonChatProvider);
     final character = ref.watch(activeCharacterProvider);
 
-    // Filter to show only Q&A messages (not narrative)
+    // Phase 1 Channel Enforcement: Only interaction-channel messages
+    // appear in the main chat area. Narration messages go to speech bubbles.
     final qaMessages = chatState.messages.where((msg) {
-      return msg.role == 'user' || msg.messageType == MessageType.question;
+      return msg.role == 'user' || msg.channel == MessageChannel.interaction;
     }).toList();
+
+    // Phase 1: Assert no narration messages leaked into the main chat
+    assert(() {
+      for (final msg in qaMessages) {
+        if (msg.channel == MessageChannel.narration) {
+          debugPrint(
+            '⚠️ CHANNEL VIOLATION: Narration message in main chat: '
+            '"${msg.content.substring(0, msg.content.length.clamp(0, 60))}"',
+          );
+          return false;
+        }
+      }
+      return true;
+    }(), 'Narration messages must not appear in the interaction channel (main chat)');
 
     // Auto-scroll when new messages arrive
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -665,12 +962,32 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSizes.s24),
-                child: Text(
-                  'Your conversation will appear here.',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey600,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 48,
+                      color: character.themeColor.withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(height: AppSizes.s12),
+                    Text(
+                      '${character.name} is preparing your lesson',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.grey600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSizes.s4),
+                    Text(
+                      'Questions and answers will appear here.',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             )
@@ -681,10 +998,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
                 vertical: AppSizes.s8,
               ),
               itemCount: qaMessages.length +
-                  (chatState.isStreaming ? 1 : 0),
+                  (chatState.isStreaming || chatState.isChecking ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index == qaMessages.length && chatState.isStreaming) {
-                  return TypingIndicator(color: character.themeColor);
+                // Phase 3: Show "checking" state or typing indicator
+                if (index == qaMessages.length &&
+                    (chatState.isStreaming || chatState.isChecking)) {
+                  if (chatState.isChecking) {
+                    return _buildCheckingIndicator(character);
+                  }
+                  return TypingIndicator(
+                    color: character.themeColor,
+                    characterName: character.name,
+                    avatarAsset: character.avatarAsset,
+                  );
                 }
 
                 final msg = qaMessages[index];
@@ -894,6 +1220,70 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     );
   }
 
+  /// Phase 3: "Checking your answer..." indicator before AI evaluation
+  Widget _buildCheckingIndicator(AiCharacter character) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.s12,
+        vertical: AppSizes.s4,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _buildCharacterAvatar(character),
+          const SizedBox(width: AppSizes.s8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.s12,
+              vertical: AppSizes.s8,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(18),
+                topRight: Radius.circular(18),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(18),
+              ),
+              border: Border.all(
+                color: AppColors.grey300.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: character.themeColor,
+                  ),
+                ),
+                const SizedBox(width: AppSizes.s8),
+                Text(
+                  'Checking your answer...',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.grey600,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Offline fallback: static markdown content
   Widget _buildOfflineContent(ModuleModel module) {
     return Column(
@@ -912,7 +1302,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
               const SizedBox(width: AppSizes.s8),
               Expanded(
                 child: Text(
-                  'AI tutor unavailable offline. Showing lesson text.',
+                  'Lessons work offline! Connect to internet for AI tutor guidance.',
                   style: AppTextStyles.caption.copyWith(
                     color: AppColors.warning,
                   ),
@@ -965,92 +1355,154 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     );
   }
 
-  /// Text input area for asking phase
+  /// Text input area - always visible with contextual state indicators
+  /// Phase 2: Shows disabled reason, pulse on enable, character context
   Widget _buildInputArea(Color moduleColor) {
     final character = ref.watch(activeCharacterProvider);
     final chatState = ref.watch(lessonChatProvider);
+    final guidedState = ref.watch(guidedLessonProvider);
+    final narrativeState = ref.watch(lessonNarrativeBubbleProvider);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.grey300),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(
-                minHeight: 48,
-                maxHeight: 120,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.grey300),
-              ),
-              child: TextField(
-                controller: _inputController,
-                enabled: !chatState.isStreaming,
-                decoration: const InputDecoration(
-                  hintText: 'ASK QUESTION or TYPE',
-                  hintStyle: TextStyle(
-                    color: AppColors.grey600,
-                    fontSize: 14,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  isDense: true,
-                ),
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-                textCapitalization: TextCapitalization.sentences,
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                onSubmitted: (_) => _sendStudentMessage(),
-                onChanged: (_) => setState(() {}),
-              ),
+    final bool isWaitingForUser = guidedState.waitingForUser;
+    final bool isStreaming = chatState.isStreaming;
+    final bool isNarrating = narrativeState.isActive;
+    final bool isEnabled = isWaitingForUser && !isStreaming;
+
+    // Phase 2: Detect transition from disabled to enabled and trigger pulse
+    if (isEnabled && !_wasWaitingForUser) {
+      _inputPulseController.forward(from: 0.0);
+    }
+    _wasWaitingForUser = isEnabled;
+
+    // Contextual hint text based on state
+    final bool isChecking = chatState.isChecking;
+    String hintText;
+    if (isChecking) {
+      hintText = 'Checking your answer...';
+    } else if (isStreaming) {
+      hintText = '${character.name} is thinking...';
+    } else if (isNarrating) {
+      hintText = 'Listen to ${character.name} first';
+    } else if (!isWaitingForUser && !guidedState.canProceed) {
+      hintText = 'Lesson in progress...';
+    } else if (guidedState.canProceed) {
+      hintText = 'Module complete! Tap Next to continue';
+    } else {
+      hintText = 'Type your answer...';
+    }
+
+    return AnimatedBuilder(
+      animation: _inputPulseAnimation,
+      builder: (context, child) {
+        // Pulse glow effect when input just became enabled
+        final pulseValue = _inputPulseAnimation.value;
+        final glowOpacity = isEnabled && pulseValue > 0 && pulseValue < 1.0
+            ? (1.0 - pulseValue) * 0.3
+            : 0.0;
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            border: const Border(
+              top: BorderSide(color: AppColors.grey300),
             ),
+            boxShadow: glowOpacity > 0
+                ? [
+                    BoxShadow(
+                      color: character.themeColor.withValues(alpha: glowOpacity),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: _inputController.text.trim().isEmpty
-                  ? null
-                  : character.themeGradient,
-              color: _inputController.text.trim().isEmpty
-                  ? AppColors.grey300
-                  : null,
-              shape: BoxShape.circle,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _inputController.text.trim().isEmpty || chatState.isStreaming
-                    ? null
-                    : _sendStudentMessage,
-                customBorder: const CircleBorder(),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 22,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  constraints: const BoxConstraints(
+                    minHeight: 48,
+                    maxHeight: 120,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isEnabled ? AppColors.white : AppColors.grey100,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isEnabled
+                          ? character.themeColor.withValues(alpha: 0.5)
+                          : AppColors.grey300,
+                      width: isEnabled ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _inputController,
+                    enabled: isEnabled,
+                    decoration: InputDecoration(
+                      hintText: hintText,
+                      hintStyle: AppTextStyles.bodyMedium.copyWith(
+                        color: isEnabled
+                            ? AppColors.grey600
+                            : isStreaming
+                                ? character.themeColor.withValues(alpha: 0.5)
+                                : AppColors.grey600.withValues(alpha: 0.6),
+                        fontStyle: isEnabled ? FontStyle.normal : FontStyle.italic,
+                        fontSize: 14,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      isDense: true,
+                    ),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.grey900,
+                      height: 1.4,
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    maxLines: null,
+                    keyboardType: TextInputType.multiline,
+                    onSubmitted: (_) => _sendStudentMessage(),
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: (_inputController.text.trim().isEmpty || !isEnabled)
+                      ? null
+                      : character.themeGradient,
+                  color: (_inputController.text.trim().isEmpty || !isEnabled)
+                      ? AppColors.grey300
+                      : null,
+                  shape: BoxShape.circle,
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: (_inputController.text.trim().isEmpty || !isEnabled)
+                        ? null
+                        : _sendStudentMessage,
+                    customBorder: const CircleBorder(),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1060,6 +1512,12 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
     GuidedLessonState guidedState,
   ) {
     final canProceed = _isOffline || guidedState.canProceed;
+
+    // Phase 3: Detect module completion transition and trigger pulse
+    if (canProceed && !_wasModuleComplete) {
+      _nextButtonPulseController.forward(from: 0.0);
+    }
+    _wasModuleComplete = canProceed;
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.s20),
@@ -1099,24 +1557,51 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen> {
                   ),
                 if (!_isFirstModule) const SizedBox(width: AppSizes.s12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: canProceed ? _goToNextModule : null,
-                    icon: Icon(
-                      _isLastModule ? Icons.check : Icons.arrow_forward,
-                    ),
-                    label: Text(
-                      canProceed
-                          ? (_isLastModule ? 'Complete' : 'Next')
-                          : _getLockedButtonLabel(guidedState),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          canProceed ? moduleColor : AppColors.grey300,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSizes.s16,
+                  child: AnimatedBuilder(
+                    animation: _nextButtonPulseAnimation,
+                    builder: (context, child) {
+                      final pulseValue = _nextButtonPulseAnimation.value;
+                      final glowOpacity = canProceed && pulseValue > 0 && pulseValue < 1.0
+                          ? (1.0 - pulseValue) * 0.5
+                          : 0.0;
+
+                      return Container(
+                        decoration: glowOpacity > 0
+                            ? BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.success.withValues(alpha: glowOpacity),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              )
+                            : null,
+                        child: child,
+                      );
+                    },
+                    child: ElevatedButton.icon(
+                      onPressed: canProceed ? _goToNextModule : null,
+                      icon: Icon(
+                        canProceed
+                            ? (_isLastModule ? Icons.check_circle_rounded : Icons.check_circle_rounded)
+                            : (_isLastModule ? Icons.check : Icons.arrow_forward),
                       ),
-                      elevation: 0,
+                      label: Text(
+                        canProceed
+                            ? (_isLastModule ? 'Complete' : 'Next')
+                            : _getLockedButtonLabel(guidedState),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            canProceed ? moduleColor : AppColors.grey300,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSizes.s16,
+                        ),
+                        elevation: 0,
+                      ),
                     ),
                   ),
                 ),
@@ -1210,5 +1695,169 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
         ),
       ),
     );
+  }
+}
+
+/// Phase 7: Confetti celebration overlay for topic completion.
+/// Shows falling confetti particles for 1 second, then auto-removes.
+class _ConfettiOverlay extends StatefulWidget {
+  final VoidCallback onComplete;
+  const _ConfettiOverlay({required this.onComplete});
+
+  @override
+  State<_ConfettiOverlay> createState() => _ConfettiOverlayState();
+}
+
+class _ConfettiOverlayState extends State<_ConfettiOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late List<_ConfettiParticle> _particles;
+
+  static const int _particleCount = 40;
+  static const List<Color> _colors = [
+    AppColors.success,
+    AppColors.primary,
+    AppColors.warning,
+    AppColors.info,
+    Color(0xFF9C27B0),
+    Color(0xFFFF5722),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    // Generate random confetti particles
+    _particles = List.generate(_particleCount, (i) {
+      final random = i / _particleCount;
+      return _ConfettiParticle(
+        x: (random * 1.2) - 0.1, // -0.1 to 1.1 horizontal spread
+        delay: (i % 5) * 0.05, // stagger start times
+        speed: 0.6 + (i % 3) * 0.2, // variable fall speed
+        wobble: (i % 2 == 0 ? 1 : -1) * (0.02 + (i % 4) * 0.01),
+        size: 6.0 + (i % 3) * 2.0,
+        color: _colors[i % _colors.length],
+        isSquare: i % 3 != 0,
+      );
+    });
+
+    _controller.forward().then((_) {
+      if (mounted) {
+        widget.onComplete();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final t = _controller.value;
+
+            return CustomPaint(
+              size: size,
+              painter: _ConfettiPainter(
+                particles: _particles,
+                progress: t,
+                screenHeight: size.height,
+                screenWidth: size.width,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfettiParticle {
+  final double x; // 0-1 horizontal position
+  final double delay; // stagger delay (0-0.25)
+  final double speed; // fall speed multiplier
+  final double wobble; // horizontal oscillation
+  final double size;
+  final Color color;
+  final bool isSquare; // square vs circle shape
+
+  const _ConfettiParticle({
+    required this.x,
+    required this.delay,
+    required this.speed,
+    required this.wobble,
+    required this.size,
+    required this.color,
+    required this.isSquare,
+  });
+}
+
+class _ConfettiPainter extends CustomPainter {
+  final List<_ConfettiParticle> particles;
+  final double progress;
+  final double screenHeight;
+  final double screenWidth;
+
+  _ConfettiPainter({
+    required this.particles,
+    required this.progress,
+    required this.screenHeight,
+    required this.screenWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      // Adjust progress for stagger delay
+      final adjustedT = ((progress - p.delay) / (1.0 - p.delay)).clamp(0.0, 1.0);
+      if (adjustedT <= 0) continue;
+
+      // Fade out in last 30%
+      final opacity = adjustedT > 0.7
+          ? ((1.0 - adjustedT) / 0.3).clamp(0.0, 1.0)
+          : 1.0;
+
+      final paint = Paint()
+        ..color = p.color.withValues(alpha: opacity)
+        ..style = PaintingStyle.fill;
+
+      // Position: fall from top with horizontal wobble
+      final x = p.x * screenWidth +
+          (adjustedT * 30 * p.wobble * screenWidth).clamp(-50.0, screenWidth + 50);
+      final y = -20 + (adjustedT * p.speed * screenHeight * 1.2);
+
+      if (p.isSquare) {
+        // Rotating square effect via skewed rect
+        final rotation = adjustedT * 3.14 * 2 * (p.wobble > 0 ? 1 : -1);
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.rotate(rotation);
+        canvas.drawRect(
+          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.6),
+          paint,
+        );
+        canvas.restore();
+      } else {
+        canvas.drawCircle(Offset(x, y), p.size / 2, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConfettiPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }

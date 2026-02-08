@@ -1,22 +1,36 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/models.dart';
 import '../../../../shared/models/ai_character_model.dart';
+import '../../../../shared/models/channel_message.dart';
 import '../../../chat/data/repositories/chat_repository.dart';
 import 'guided_lesson_provider.dart';
 
+// Re-export MessageChannel and NarrationMessage for consumers
+export '../../../../shared/models/channel_message.dart';
+
 // ---------------------------------------------------------------------------
-// Message Type Enum
+// Bubble Mode — explicit state for FloatingChatButton speech bubble behavior
 // ---------------------------------------------------------------------------
 
-/// Distinguishes narrative content from interactive Q&A
-enum MessageType {
-  /// Narrative content shown in speech bubble next to floating avatar
+/// Controls what the FloatingChatButton's speech bubble displays.
+/// Changes only at well-defined transition points (entering/leaving modules,
+/// narrative start), NOT on every sub-state change like message index advances.
+enum BubbleMode {
+  /// Show contextual character greetings (Home, Topics, Lessons screens)
+  greeting,
+
+  /// Module is loading — suppress ALL bubbles (no greetings, no narrative yet)
+  waitingForNarrative,
+
+  /// Lesson narrative is active — show script messages from lessonNarrativeBubbleProvider
   narrative,
-
-  /// Interactive question shown in central chat area
-  question,
 }
+
+/// Provider for the current bubble mode. Set by ModuleViewerScreen and
+/// LessonChatNotifier at well-defined transition points.
+final bubbleModeProvider = StateProvider<BubbleMode>((ref) => BubbleMode.greeting);
 
 // ---------------------------------------------------------------------------
 // Script Step Model
@@ -28,8 +42,8 @@ class ScriptStep {
   /// Messages the bot sends (each becomes a separate chat bubble)
   final List<String> botMessages;
 
-  /// Type of message: narrative (speech bubble) or question (central chat)
-  final MessageType messageType;
+  /// Channel designation: narration (speech bubble) or interaction (main chat)
+  final MessageChannel channel;
 
   /// Whether to pause and wait for student input after sending messages
   final bool waitForUser;
@@ -41,12 +55,16 @@ class ScriptStep {
   /// If true, completing this step marks the module as done
   final bool isModuleComplete;
 
+  /// Phase 5: Pacing hint for speech bubble timing (narration channel only)
+  final PacingHint pacingHint;
+
   const ScriptStep({
     required this.botMessages,
-    required this.messageType,
+    required this.channel,
     this.waitForUser = false,
     this.aiEvalContext,
     this.isModuleComplete = false,
+    this.pacingHint = PacingHint.normal,
   });
 }
 
@@ -54,12 +72,16 @@ class ScriptStep {
 // Lesson Chat Message
 // ---------------------------------------------------------------------------
 
-/// A single message in the guided lesson chat (separate from global chat)
+/// A single message in the guided lesson chat (separate from global chat).
+///
+/// Each message has a [channel] indicating whether it belongs to the
+/// narration channel (speech bubbles) or the interaction channel (main chat).
+/// User messages are always [MessageChannel.interaction].
 class LessonChatMessage {
   final String id;
   final String role; // 'assistant' or 'user'
   final String content;
-  final MessageType? messageType; // null for user messages
+  final MessageChannel? channel; // null for legacy; user messages are always interaction
   final bool isStreaming;
   final DateTime timestamp;
 
@@ -67,7 +89,7 @@ class LessonChatMessage {
     required this.id,
     required this.role,
     required this.content,
-    this.messageType,
+    this.channel,
     this.isStreaming = false,
     required this.timestamp,
   });
@@ -75,13 +97,13 @@ class LessonChatMessage {
   LessonChatMessage copyWith({
     String? content,
     bool? isStreaming,
-    MessageType? messageType,
+    MessageChannel? channel,
   }) {
     return LessonChatMessage(
       id: id,
       role: role,
       content: content ?? this.content,
-      messageType: messageType ?? this.messageType,
+      channel: channel ?? this.channel,
       isStreaming: isStreaming ?? this.isStreaming,
       timestamp: timestamp,
     );
@@ -95,22 +117,26 @@ class LessonChatMessage {
 class LessonChatState {
   final List<LessonChatMessage> messages;
   final bool isStreaming;
+  final bool isChecking; // Phase 3: "checking answer" state before evaluation
   final int currentStepIndex;
 
   const LessonChatState({
     this.messages = const [],
     this.isStreaming = false,
+    this.isChecking = false,
     this.currentStepIndex = 0,
   });
 
   LessonChatState copyWith({
     List<LessonChatMessage>? messages,
     bool? isStreaming,
+    bool? isChecking,
     int? currentStepIndex,
   }) {
     return LessonChatState(
       messages: messages ?? this.messages,
       isStreaming: isStreaming ?? this.isStreaming,
+      isChecking: isChecking ?? this.isChecking,
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
     );
   }
@@ -120,10 +146,14 @@ class LessonChatState {
 // Lesson Narrative Bubble State (for Speech Bubbles)
 // ---------------------------------------------------------------------------
 
-/// State for narrative speech bubbles shown by floating avatar
+/// State for narrative speech bubbles shown by floating avatar.
+///
+/// Uses [NarrationMessage] to enforce that only narration-channel
+/// content appears in the chathead speech bubbles.
 class LessonNarrativeBubbleState {
-  /// Current narrative messages to display in speech bubble
-  final List<String> messages;
+  /// Current narrative messages to display in speech bubble.
+  /// Typed as [NarrationMessage] to prevent interaction content from leaking.
+  final List<NarrationMessage> messages;
 
   /// Index of currently displayed message
   final int currentIndex;
@@ -142,7 +172,7 @@ class LessonNarrativeBubbleState {
   });
 
   LessonNarrativeBubbleState copyWith({
-    List<String>? messages,
+    List<NarrationMessage>? messages,
     int? currentIndex,
     bool? isActive,
     String? lessonId,
@@ -156,19 +186,43 @@ class LessonNarrativeBubbleState {
   }
 }
 
-/// Manages narrative messages for speech bubbles
+/// Manages narrative messages for speech bubbles.
+///
+/// Only accepts [NarrationMessage] objects, ensuring that questions
+/// and evaluative content never appear in the chathead speech bubbles.
 class LessonNarrativeBubbleNotifier
     extends StateNotifier<LessonNarrativeBubbleState> {
   LessonNarrativeBubbleNotifier() : super(const LessonNarrativeBubbleState());
 
-  /// Start showing narrative messages
-  void showNarrative(List<String> messages, String lessonId) {
-    print('📢 showNarrative called: ${messages.length} messages for lesson $lessonId');
-    print('   First message preview: ${messages.isNotEmpty ? messages[0].substring(0, messages[0].length.clamp(0, 50)) : "empty"}...');
+  /// Start showing narrative messages in the speech bubble.
+  ///
+  /// Accepts [NarrationMessage] list to enforce channel separation.
+  /// In debug mode, asserts that no message content contains
+  /// question-like patterns that belong in the interaction channel.
+  void showNarrative(List<NarrationMessage> messages, String lessonId) {
+    // Phase 1: Assert narration messages don't contain question prompts
+    // that should be in the interaction channel
+    assert(() {
+      for (final msg in messages) {
+        if (msg.content.contains('Type your answer') ||
+            msg.content.contains('ASK QUESTION or TYPE')) {
+          debugPrint(
+            '⚠️ CHANNEL VIOLATION: Narration message contains interaction '
+            'prompt: "${msg.content.substring(0, msg.content.length.clamp(0, 60))}"',
+          );
+        }
+      }
+      return true;
+    }());
+
+    // Phase 5: Semantic splitting - split long messages at sentence boundaries
+    final splitMessages = NarrationMessage.semanticSplit(messages);
+
+    debugPrint('📢 showNarrative: ${messages.length} NarrationMessages → ${splitMessages.length} after semantic split for lesson $lessonId');
 
     state = LessonNarrativeBubbleState(
-      messages: messages,
-      currentIndex: 0, // Always start at the beginning
+      messages: splitMessages,
+      currentIndex: 0,
       isActive: true,
       lessonId: lessonId,
     );
@@ -177,11 +231,11 @@ class LessonNarrativeBubbleNotifier
   /// Move to next message in sequence
   void nextMessage() {
     if (!state.isActive || state.currentIndex >= state.messages.length - 1) {
-      print('⏭️ nextMessage: Already at end or inactive');
+      debugPrint('⏭️ nextMessage: Already at end or inactive');
       return;
     }
     final nextIndex = state.currentIndex + 1;
-    print('⏭️ nextMessage: Advancing from ${state.currentIndex} to $nextIndex');
+    debugPrint('⏭️ nextMessage: Advancing from ${state.currentIndex} to $nextIndex');
     state = state.copyWith(currentIndex: nextIndex);
   }
 
@@ -189,7 +243,7 @@ class LessonNarrativeBubbleNotifier
   void hideNarrative() {
     state = const LessonNarrativeBubbleState(
       isActive: false,
-      messages: [], // Clear messages to trigger greeting restart
+      messages: [],
     );
   }
 
@@ -290,11 +344,13 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
     final currentStep = _getCurrentStep();
     if (currentStep == null) return;
 
+    final requestId = _currentRequestId;
+
     // Clear waiting state
     _ref.read(guidedLessonProvider.notifier).clearWaiting();
 
-    // If current step is narrative and waiting for user acknowledgment
-    if (currentStep.messageType == MessageType.narrative &&
+    // If current step is narration and waiting for user acknowledgment
+    if (currentStep.channel == MessageChannel.narration &&
         currentStep.waitForUser) {
       // User acknowledged narrative (e.g., typed "Yes I notice")
       // DON'T add to main chat - keep it for Q&A only
@@ -305,6 +361,7 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
 
       // Small delay then advance
       await Future.delayed(const Duration(milliseconds: 500));
+      if (requestId != _currentRequestId) return;
       _advanceStep();
       return;
     }
@@ -322,23 +379,34 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
       await _sendGeneralResponse(text);
     }
 
+    if (requestId != _currentRequestId) return;
+
     // Advance to next step
     final nextIndex = state.currentStepIndex + 1;
     if (nextIndex < _script.length) {
       // Small delay so AI response and next step don't blend together
       await Future.delayed(const Duration(milliseconds: 800));
+      if (requestId != _currentRequestId) return;
       await _executeStep(nextIndex);
     }
   }
 
-  /// Clear all state
+  /// Clear all state and cancel any in-flight async operations.
+  /// Also clears narrative bubble and resets bubble mode to prevent
+  /// narration from leaking to other screens after navigation.
   void reset() {
+    _currentRequestId++; // Invalidate any running async chains
+    _isStarting = false; // Allow startModule() to be called again
     _conversationHistory.clear();
     _script = [];
     _currentCharacter = null;
     _currentModule = null;
     _currentLesson = null;
     state = const LessonChatState();
+
+    // Clear narrative state to prevent speech bubble leaks on back navigation
+    _ref.read(lessonNarrativeBubbleProvider.notifier).hideNarrative();
+    _ref.read(bubbleModeProvider.notifier).state = BubbleMode.greeting;
   }
 
   // -------------------------------------------------------------------------
@@ -353,6 +421,9 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
   /// Execute a script step: send bot messages, then wait if needed
   Future<void> _executeStep(int stepIndex) async {
     if (stepIndex >= _script.length) return;
+
+    // Capture request ID to detect if module changed during async gaps
+    final requestId = _currentRequestId;
 
     final step = _script[stepIndex];
     state = state.copyWith(currentStepIndex: stepIndex);
@@ -371,11 +442,23 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
       return;
     }
 
-    // Route messages based on type
-    if (step.messageType == MessageType.narrative) {
-      // Send to speech bubble (NOT central chat)
+    // Set bubble mode based on channel to keep FloatingChatButton in sync
+    if (step.channel == MessageChannel.narration) {
+      _ref.read(bubbleModeProvider.notifier).state = BubbleMode.narrative;
+    } else if (_ref.read(bubbleModeProvider) != BubbleMode.greeting) {
+      // Suppress bubbles during interaction steps (don't revert to greeting mid-lesson)
+      _ref.read(bubbleModeProvider.notifier).state = BubbleMode.waitingForNarrative;
+    }
+
+    // Route messages based on channel
+    if (step.channel == MessageChannel.narration) {
+      // Send to speech bubble (NOT central chat) - wrap as NarrationMessage
       _ref.read(lessonNarrativeBubbleProvider.notifier).showNarrative(
-        step.botMessages,
+        step.botMessages.map((msg) => NarrationMessage(
+          content: msg,
+          characterId: _currentCharacter?.id,
+          pacingHint: step.pacingHint,
+        )).toList(),
         _currentLesson?.id ?? 'unknown',
       );
 
@@ -392,21 +475,31 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
       }
 
       // Auto-advance if not waiting
-      // ✅ FIX: Increased timing from 4s to 6s per message for better readability
-      final displayTime = step.botMessages.length * 6000;
-      await Future.delayed(Duration(milliseconds: displayTime + 500));
+      // Phase 5: Variable timing based on message content length
+      int totalDisplayMs = 0;
+      for (final msg in step.botMessages) {
+        final wordCount = msg.split(RegExp(r'\s+')).length;
+        // ~300ms per word, min 2s, max 8s per message
+        totalDisplayMs += (wordCount * 300).clamp(2000, 8000);
+        // Add inter-bubble gap based on message length
+        final length = msg.length;
+        totalDisplayMs += length < 50 ? 800 : (length < 120 ? 1200 : 1800);
+      }
+      await Future.delayed(Duration(milliseconds: totalDisplayMs + 500));
+      if (requestId != _currentRequestId) return; // Module changed, stop
       _advanceStep();
     } else {
-      // MessageType.question: Add to central chat as usual
+      // MessageChannel.interaction: Add to central chat as usual
       for (int i = 0; i < step.botMessages.length; i++) {
         if (i > 0) {
           await Future.delayed(const Duration(milliseconds: 600));
+          if (requestId != _currentRequestId) return; // Module changed, stop
         }
         final message = LessonChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           role: 'assistant',
           content: step.botMessages[i],
-          messageType: MessageType.question,
+          channel: MessageChannel.interaction,
           timestamp: DateTime.now(),
         );
         state = state.copyWith(
@@ -451,6 +544,17 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
     // ✅ Capture request ID at start to validate response is still relevant
     final requestId = _currentRequestId;
 
+    // Phase 3: Show "checking" state for minimum 300ms before evaluation
+    state = state.copyWith(isChecking: true);
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    // Validate context hasn't changed during checking delay
+    if (requestId != _currentRequestId) {
+      state = state.copyWith(isChecking: false);
+      return;
+    }
+    state = state.copyWith(isChecking: false);
+
     // Build module context for scope checking
     final moduleContext = _currentModule != null && _currentLesson != null
         ? 'Current Lesson: ${_currentLesson!.title}\nCurrent Module: ${_currentModule!.title} (${_currentModule!.type.displayName})'
@@ -493,9 +597,9 @@ NO explanations, ONLY the short encouragement.''';
       return;
     }
 
-    // ✅ Show quick response in speech bubble
+    // ✅ Show quick response in speech bubble (as NarrationMessage)
     _ref.read(lessonNarrativeBubbleProvider.notifier).showNarrative(
-      [bubbleResponse],
+      [NarrationMessage(content: bubbleResponse, characterId: _currentCharacter?.id)],
       _currentLesson?.id ?? 'unknown',
     );
 
@@ -730,54 +834,73 @@ RESPONSE RULES:
   List<ScriptStep> _scriptFascinate() {
     return [
       // Step 0: Initial Greeting (NARRATIVE - Speech Bubble)
-      // Split into smaller, more readable chunks
+      // Each string is a separate bubble - no \n\n to avoid semanticSplit issues
       const ScriptStep(
         botMessages: [
-          'Hello, SCI-learner! 👋\n\nKumusta! Welcome to today\'s science journey here in Roxas City.',
+          'Hello, SCI-learner! Kumusta! Welcome to today\'s science journey here in Roxas City.',
           'Today, we\'ll explore how your body moves blood and exchanges gases.',
           'Just like boats carry goods from Culasi fish port to different barangays, your body has a transport system too!',
-          'This lesson is all about **Circulation and Gas Exchange** — your body\'s very own delivery network. 🫀',
+          'This lesson is all about **Circulation and Gas Exchange** — your body\'s very own delivery network.',
         ],
-        messageType: MessageType.narrative,
+        channel: MessageChannel.narration,
+        pacingHint: PacingHint.fast, // Excitement - welcoming energy
         waitForUser: false, // Auto-continue to next step
       ),
 
-      // Step 1: First Prompt (QUESTION - Main Chat)
+      // Step 1: First Prompt (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Ready to dive in? Let\'s get **Fa-SCI-nated**!',
         ],
-        messageType: MessageType.question,
+        channel: MessageChannel.interaction,
         waitForUser: true, // Wait for user acknowledgment
       ),
 
-      // Step 2: Scenario (NARRATIVE - Speech Bubble)
+      // Step 2: Scenario (NARRATIVE - Speech Bubble) - storytelling only, no question
       const ScriptStep(
         botMessages: [
-          'Imagine this...\n\n'
-              'You\'re biking along Roxas Boulevard during sunset or dancing '
-              'energetically during Sinadya Festival.\n\n'
-              'Have you noticed your heart beating faster?',
+          'Imagine this...',
+          'You\'re biking along Roxas Boulevard during sunset or dancing energetically during Sinadya Festival.',
         ],
-        messageType: MessageType.narrative,
-        waitForUser: true, // Wait for user response (e.g., "Yes I notice")
+        channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow, // Reflection - let student imagine
+        waitForUser: false, // Auto-continue to question in main chat
       ),
 
-      // Step 3: Transition to Question 1 (NARRATIVE - Speech Bubble)
+      // Step 3: Scenario Question (INTERACTION - Main Chat)
+      // Question must be in interaction channel so student can respond and get feedback
       const ScriptStep(
         botMessages: [
-          'That\'s a good observation! So here\'s a question:',
+          '**Have you noticed your heart beating faster when you exercise or dance?**',
         ],
-        messageType: MessageType.narrative,
+        channel: MessageChannel.interaction,
+        waitForUser: true,
+        aiEvalContext:
+            'The student is answering: "Have you noticed your heart beating faster when you exercise or dance?"\n'
+            'This is a personal observation question. ANY response is valid - they are sharing '
+            'their experience. The goal is to get them thinking about their body.\n'
+            'Response guidelines:\n'
+            '- If they say yes or share an experience: "Great observation! That\'s your body telling you something important."\n'
+            '- If they say no or are unsure: "That\'s okay! Next time you run or dance, try to feel your heartbeat. You\'ll notice it speeds up!"\n'
+            '- Briefly explain: Your heart beats faster during activity because your muscles need more oxygen and energy.\n'
+            'Keep response to 2-3 sentences.',
+      ),
+
+      // Step 4: Transition to Question 1 (NARRATIVE - Speech Bubble)
+      const ScriptStep(
+        botMessages: [
+          'That\'s interesting! So here\'s a deeper question:',
+        ],
+        channel: MessageChannel.narration,
         waitForUser: false, // Auto-continue to question
       ),
 
-      // Step 4: Question 1 (QUESTION - Main Chat)
+      // Step 5: Question 1 (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Why do you think your heart beats faster when you move?**',
         ],
-        messageType: MessageType.question,
+        channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
             'The student is answering: "Why does your heart beat faster when you move?"\n'
@@ -789,25 +912,24 @@ RESPONSE RULES:
             '- If correct: "Excellent thinking!" or "Ang galing! That\'s exactly right!"\n'
             '- If partially correct: "You\'re on the right track! [add what\'s missing]"\n'
             '- If wrong: "Good try! Think about what muscles need when you exercise."\n'
-            'Keep response to 1-2 sentences. This feedback will appear in the speech bubble.',
+            'Keep response to 2-3 sentences.',
       ),
 
-      // Step 5: Transition to Question 2 (NARRATIVE - Speech Bubble)
-      // This message will be dynamically generated based on answer correctness
+      // Step 6: Transition to Question 2 (NARRATIVE - Speech Bubble)
       const ScriptStep(
         botMessages: [
           'Here\'s another question:',
         ],
-        messageType: MessageType.narrative,
+        channel: MessageChannel.narration,
         waitForUser: false, // Auto-continue to question
       ),
 
-      // Step 6: Question 2 (QUESTION - Main Chat)
+      // Step 7: Question 2 (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**What do you think carries oxygen from your lungs to your muscles?**',
         ],
-        messageType: MessageType.question,
+        channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
             'The student is answering: "What carries oxygen from lungs to muscles?"\n'
@@ -818,29 +940,30 @@ RESPONSE RULES:
             '- If they say "blood": "Perfect! Blood is the correct answer!"\n'
             '- If they mention "red blood cells" or "hemoglobin": "Excellent! You know the details!"\n'
             '- If wrong: "Think about the red liquid flowing through your body."\n'
-            'Keep response to 1-2 sentences. This feedback will appear in the speech bubble.',
+            'Keep response to 2-3 sentences.',
       ),
 
-      // Step 7: Explanation (QUESTION - Main Chat)
+      // Step 8: Explanation (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Just like how delivery trucks distribute seafood from the port to the '
               'markets around Capiz, your body has a system that delivers oxygen, '
-              'nutrients, and energy to every cell.\n\n'
-              'That amazing system is called the **circulatory system**!',
+              'nutrients, and energy to every cell.',
+          'That amazing system is called the **circulatory system**!',
         ],
-        messageType: MessageType.question,
+        channel: MessageChannel.interaction,
         waitForUser: false, // Auto-continue to conclusion
       ),
 
-      // Step 8: Conclusion (NARRATIVE - Speech Bubble)
+      // Step 9: Conclusion (NARRATIVE - Speech Bubble)
       const ScriptStep(
+        pacingHint: PacingHint.fast, // Celebration - positive energy
         botMessages: [
           'Great job, SCI-learner! You\'ve completed this module.',
           'You\'re ready to move on to the next module where we\'ll set our learning goals.',
           'Tap **Next** when you\'re ready!',
         ],
-        messageType: MessageType.narrative,
+        channel: MessageChannel.narration,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -856,7 +979,7 @@ RESPONSE RULES:
           'Let\'s explore this module together! Read through the content below, '
               'and tap **Next** when you\'re ready to continue.',
         ],
-        messageType: MessageType.narrative,
+        channel: MessageChannel.narration,
         waitForUser: false,
         isModuleComplete: true,
       ),

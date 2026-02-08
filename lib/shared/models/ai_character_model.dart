@@ -29,6 +29,43 @@ class AiCharacter {
     required this.bubbleAccentColor,
   });
 
+  /// Conversation starters for empty chat welcome state.
+  /// Users tap these to quickly begin a conversation.
+  List<String> get conversationStarters {
+    switch (id) {
+      case 'aristotle':
+        return [
+          'What topics can I learn?',
+          'How is my progress so far?',
+          'Tell me a science fact!',
+        ];
+      case 'herophilus':
+        return [
+          'How does the heart pump blood?',
+          'Explain gas exchange simply',
+          'What are the parts of the circulatory system?',
+        ];
+      case 'mendel':
+        return [
+          'What is heredity?',
+          'How do Punnett squares work?',
+          'Why do I look like my parents?',
+        ];
+      case 'odum':
+        return [
+          'What is an ecosystem?',
+          'Explain how food chains work',
+          'How does energy flow in nature?',
+        ];
+      default:
+        return [
+          'What will I learn today?',
+          'Help me understand science',
+          'Tell me something interesting!',
+        ];
+    }
+  }
+
   /// Character-specific gradient for chat header
   LinearGradient get themeGradient => LinearGradient(
     begin: Alignment.topCenter,
@@ -41,7 +78,7 @@ class AiCharacter {
     id: 'aristotle',
     name: 'Aristotle',
     specialization: 'General Science',
-    avatarAsset: 'assets/icons/Aristotle_icon.png',
+    avatarAsset: 'assets/icons/chathead-icons/Aristotle_icon.png',
     greeting: 'Hello! I\'m Aristotle, your AI science companion. How can I help you learn today?',
     themeColor: Color(0xFF4A90A4),
     themeLightColor: Color(0xFF7BC9A4),
@@ -80,7 +117,7 @@ Scope:
     id: 'herophilus',
     name: 'Herophilus',
     specialization: 'Circulation & Gas Exchange',
-    avatarAsset: 'assets/icons/HEROPHILOS - FOR CIRCULATION AND GAS EXCHANGE.png',
+    avatarAsset: 'assets/icons/chathead-icons/HEROPHILOS - FOR CIRCULATION AND GAS EXCHANGE.png',
     greeting: 'Greetings! I am Herophilus, ancient physician and anatomist. Let me guide you through the wonders of the circulatory system!',
     themeColor: Color(0xFFC62828),
     themeLightColor: Color(0xFFEF5350),
@@ -120,7 +157,7 @@ Scope:
     id: 'mendel',
     name: 'Gregor Mendel',
     specialization: 'Heredity & Variation',
-    avatarAsset: 'assets/icons/GREGOR MENDEL - FOR HEREDITY AND VARIATION.png',
+    avatarAsset: 'assets/icons/chathead-icons/GREGOR MENDEL - FOR HEREDITY AND VARIATION.png',
     greeting: 'Welcome! I am Gregor Mendel, the father of genetics. Let us explore the fascinating world of heredity together!',
     themeColor: Color(0xFF2E7D32),
     themeLightColor: Color(0xFF66BB6A),
@@ -160,7 +197,7 @@ Scope:
     id: 'odum',
     name: 'Eugene Odum',
     specialization: 'Energy in the Ecosystem',
-    avatarAsset: 'assets/icons/EUEGENE ODUM - FOR ENERGY IN THE ECOSYSTEM.png',
+    avatarAsset: 'assets/icons/chathead-icons/EUEGENE ODUM - FOR ENERGY IN THE ECOSYSTEM.png',
     greeting: 'Hello! I\'m Eugene Odum, ecologist and systems thinker. Ready to explore how energy flows through nature?',
     themeColor: Color(0xFFE65100),
     themeLightColor: Color(0xFFFFB74D),

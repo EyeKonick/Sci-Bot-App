@@ -9,6 +9,11 @@ import '../../features/topics/presentation/topics_screen.dart';
 import '../../features/lessons/presentation/lessons_screen.dart';
 import '../../features/lessons/presentation/module_viewer_screen.dart';
 import '../../features/lessons/presentation/bookmarks_screen.dart';
+import '../../features/settings/presentation/learning_history_screen.dart';
+import '../../features/settings/presentation/progress_stats_screen.dart';
+import '../../features/settings/presentation/text_size_screen.dart';
+import '../../features/settings/presentation/help_screen.dart';
+import '../../features/settings/presentation/privacy_policy_screen.dart';
 import '../../features/error/presentation/not_found_screen.dart';
 import 'app_routes.dart';
 import 'bottom_nav_shell.dart';
@@ -80,6 +85,40 @@ class AppRouter {
         builder: (context, state) => const BookmarksScreen(),
       ),
 
+      // LEARNING HISTORY SCREEN
+      GoRoute(
+        path: AppRoutes.learningHistory,
+        name: AppRoutes.learningHistoryName,
+        builder: (context, state) => const LearningHistoryScreen(),
+      ),
+
+      // PROGRESS STATS SCREEN
+      GoRoute(
+        path: AppRoutes.progressStats,
+        name: AppRoutes.progressStatsName,
+        builder: (context, state) => const ProgressStatsScreen(),
+      ),
+
+      // TEXT SIZE SCREEN
+      GoRoute(
+        path: AppRoutes.textSize,
+        name: AppRoutes.textSizeName,
+        builder: (context, state) => const TextSizeScreen(),
+      ),
+
+      // HELP & SUPPORT SCREEN
+      GoRoute(
+        path: AppRoutes.help,
+        name: AppRoutes.helpName,
+        builder: (context, state) => const HelpScreen(),
+      ),
+
+      // PRIVACY POLICY SCREEN
+      GoRoute(
+        path: AppRoutes.privacyPolicy,
+        name: AppRoutes.privacyPolicyName,
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
 
       // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)
       StatefulShellRoute.indexedStack(

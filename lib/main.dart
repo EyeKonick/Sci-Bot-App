@@ -27,15 +27,17 @@ void main() async {
     print('💡 Make sure to add your API key to .env file');
   }
   
-  // Seed data on first launch - CORRECTED
-  final isDataSeeded = DataSeederService.isDataSeeded; // ← NO await, NO ()
-  if (!isDataSeeded) {
-    print('📦 First launch detected - seeding data...');
+  // Seed data on first launch or re-seed on version change
+  final isDataSeeded = DataSeederService.isDataSeeded;
+  final needsReseed = SharedPrefsService.needsReseed;
+  if (!isDataSeeded || needsReseed) {
+    print(needsReseed ? '🔄 Seed version changed - re-seeding data...' : '📦 First launch detected - seeding data...');
     final seeder = DataSeederService();
     await seeder.seedAllData();
+    await SharedPrefsService.setSeedVersion();
 
     testDataSeeding();
-    
+
     // Print stats
     final stats = await seeder.getSeedingStats();
     print('📊 Seeding complete:');
@@ -69,6 +71,8 @@ class SCIBotApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textScale = SharedPrefsService.textScaleFactor;
+
     return MaterialApp.router(
       title: 'SCI-Bot',
       debugShowCheckedModeBanner: false,
@@ -76,6 +80,14 @@ class SCIBotApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
       routerConfig: AppRouter.router,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }

@@ -69,6 +69,10 @@ flutter:
     - .env
     - assets/images/
     - assets/icons/
+    - assets/icons/chathead-icons/
+    - assets/icons/topic-icons/
+    - assets/icons/modules-icons/
+    - assets/icons/lessons-icons/
     - assets/data/
     - assets/data/topics.json           
     - assets/data/lessons/             

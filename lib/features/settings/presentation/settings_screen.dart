@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -89,21 +90,21 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.bookmark,
                   title: 'Bookmarks',
                   subtitle: 'Your saved lessons',
-                  onTap: () => _showComingSoon(context, 'Bookmarks'),
+                  onTap: () => context.push('/bookmarks'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.history,
                   title: 'Learning History',
                   subtitle: 'View your past lessons',
-                  onTap: () => _showComingSoon(context, 'Learning History'),
+                  onTap: () => context.push('/learning-history'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.leaderboard,
                   title: 'Progress Stats',
                   subtitle: 'Detailed progress analytics',
-                  onTap: () => _showComingSoon(context, 'Progress Stats'),
+                  onTap: () => context.push('/progress-stats'),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
@@ -111,24 +112,10 @@ class SettingsScreen extends StatelessWidget {
                 _buildSectionHeader('Preferences'),
                 _buildSettingsTile(
                   context,
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: 'Manage alerts and reminders',
-                  onTap: () => _showComingSoon(context, 'Notifications'),
-                ),
-                _buildSettingsTile(
-                  context,
                   icon: Icons.text_fields,
                   title: 'Text Size',
                   subtitle: 'Adjust reading comfort',
-                  onTap: () => _showComingSoon(context, 'Text Size'),
-                ),
-                _buildSettingsTile(
-                  context,
-                  icon: Icons.storage,
-                  title: 'Storage',
-                  subtitle: 'Manage offline content',
-                  onTap: () => _showComingSoon(context, 'Storage'),
+                  onTap: () => context.push('/text-size'),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
@@ -146,14 +133,14 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.help,
                   title: 'Help & Support',
                   subtitle: 'Get help with the app',
-                  onTap: () => _showComingSoon(context, 'Help & Support'),
+                  onTap: () => context.push('/help'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.privacy_tip,
                   title: 'Privacy Policy',
                   subtitle: 'How we protect your data',
-                  onTap: () => _showComingSoon(context, 'Privacy Policy'),
+                  onTap: () => context.push('/privacy-policy'),
                 ),
               ]),
             ),
@@ -220,15 +207,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon!'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -256,7 +234,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
-              '© 2025 SCI-Bot. All rights reserved.',
+              '© 2026 SCI-Bot. All rights reserved.',
               style: AppTextStyles.caption,
             ),
           ],
