@@ -1,14 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/ai_character_model.dart';
 import '../../../../shared/models/navigation_context_model.dart';
+import '../../../../shared/models/scenario_model.dart';
 
 /// AI Character Provider
 /// Manages which AI character is currently active based on navigation context
-/// Week 3, Day 3 Implementation
+/// Week 3, Day 3 Implementation + Phase 1 Scenario Architecture
 
 /// Current navigation context provider
 final navigationContextProvider = StateProvider<NavigationContext>((ref) {
   return NavigationContext.home();
+});
+
+/// Current active scenario provider.
+/// Tracks which ChatScenario is currently active across the app.
+final currentScenarioProvider = StateProvider<ChatScenario?>((ref) {
+  return null;
 });
 
 /// Active AI character provider
@@ -171,6 +178,20 @@ class CharacterContextManager {
   /// Get current context
   NavigationContext getCurrentContext() {
     return ref.read(navigationContextProvider);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scenario-aware navigation (Phase 1)
+  // ---------------------------------------------------------------------------
+
+  /// Set the active scenario in the provider state.
+  void setScenario(ChatScenario scenario) {
+    ref.read(currentScenarioProvider.notifier).state = scenario;
+  }
+
+  /// Get the current active scenario.
+  ChatScenario? getScenario() {
+    return ref.read(currentScenarioProvider);
   }
 }
 

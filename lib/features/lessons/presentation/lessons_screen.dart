@@ -10,6 +10,10 @@ import '../../topics/data/repositories/topic_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../chat/data/repositories/chat_repository.dart';
+import '../../chat/data/services/expert_greeting_service.dart';
+import '../../../shared/models/scenario_model.dart';
+import '../../../shared/models/ai_character_model.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 
 /// Lesson List Screen - Shows all lessons for a selected topic
@@ -39,11 +43,31 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
   void initState() {
     super.initState();
     _loadData();
-    
-    // Update navigation context when screen loads
+
+    // Update navigation context and activate expert scenario when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterContextManagerProvider).navigateToTopic(widget.topicId);
+      _activateExpertScenario();
     });
+  }
+
+  /// Activate the expert's lessonMenu scenario for this topic.
+  /// The expert character greets the student via chathead bubbles.
+  Future<void> _activateExpertScenario() async {
+    final expert = AiCharacter.getCharacterForTopic(widget.topicId);
+    final scenario = ChatScenario.expertLessonMenu(
+      expertId: expert.id,
+      topicId: widget.topicId,
+    );
+
+    // Invalidate cached greeting so a fresh one is generated every visit
+    ExpertGreetingService().invalidateScenario(scenario.id);
+
+    // Set scenario in provider for FloatingChatButton awareness
+    ref.read(currentScenarioProvider.notifier).state = scenario;
+
+    // Activate scenario in repository (creates history + greeting if new)
+    await ChatRepository().setScenario(scenario);
   }
 
   Future<void> _loadData() async {
@@ -124,7 +148,14 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
       backgroundColor: topicColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: AppColors.white),
-        onPressed: () => context.pop(),
+        onPressed: () {
+          // Clear expert scenario when leaving lesson menu
+          final expert = AiCharacter.getCharacterForTopic(widget.topicId);
+          final scenarioId = '${expert.id}_lesson_menu_${widget.topicId}';
+          ChatRepository().clearScenario(scenarioId);
+          ref.read(currentScenarioProvider.notifier).state = null;
+          context.pop();
+        },
       ),
       flexibleSpace: FlexibleSpaceBar(
         // Centered title for collapsed state
@@ -152,30 +183,33 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Topic Name
-                  Text(
-                    _topic?.name ?? 'Lessons',
-                    style: AppTextStyles.headingMedium.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text(
+                      _topic?.name ?? 'Lessons',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.s8),
-                  
+                  const SizedBox(height: AppSizes.s4),
+
                   // Topic Description
                   Text(
                     _topic?.description ?? '',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.white.withOpacity(0.95),
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.s8),
-                  
+                  const SizedBox(height: AppSizes.s4),
+
                   // Lesson Count
                   Row(
                     children: [

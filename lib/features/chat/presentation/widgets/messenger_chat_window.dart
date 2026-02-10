@@ -6,6 +6,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_feedback.dart';
 import '../../../../shared/models/chat_message_extended.dart';
+import '../../../../shared/models/scenario_model.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/providers/character_provider.dart';
 import 'chat_bubble.dart';
@@ -48,14 +49,15 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // ✅ PHASE 3.1: Update repository when character changes
-    // ✅ PHASE 3.4: Pass contextual greeting for returning characters
-    final character = ref.read(activeCharacterProvider);
-    final contextManager = ref.read(characterContextManagerProvider);
-    final greeting = contextManager.getPersonalizedGreeting();
-    // Only pass greeting if it differs from default (meaning there's context)
-    final contextGreeting = greeting != character.greeting ? greeting : null;
-    _chatRepo.setCharacter(character, contextGreeting: contextGreeting);
+    // Ensure scenario is active. On home/topics screens this will be
+    // aristotle_general (already set by HomeScreen). On topic-specific
+    // screens the scenario will be set by the host screen in later phases.
+    final currentScenario = _chatRepo.currentScenario;
+    if (currentScenario == null) {
+      // Fallback: if no scenario active yet, activate aristotle_general
+      final scenario = ChatScenario.aristotleGeneral();
+      _chatRepo.setScenario(scenario);
+    }
   }
 
   /// ✅ PHASE 3.1: Listen to message stream for character switching

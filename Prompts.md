@@ -55,3 +55,19 @@ Critical rules:
 - Always check completion records to know where we are in the roadmap
 
 Let's begin. Read the plan, check progress, and tell me which phase we should work on next.
+
+=========================
+
+I've attached the SCENARIO_CHATBOT_DEVELOPMENT_SPEC.md file for a Flutter app chatbot architecture redesign. Before we begin any implementation, I need you to:
+
+1. **Read and analyze the entire specification document thoroughly**
+2. **Identify all key requirements and constraints**
+3. **Create a summary of the project structure** including:
+   - The problem we're solving
+   - The 3 types of scenarios we'll implement
+   - The 6-phase implementation plan
+   - Critical success factors
+4. **List any questions or clarifications you need** before starting Phase 1
+5. **Confirm your understanding** of the scenario-based isolation concept
+
+Please take your time to understand this completely. Do NOT start any implementation yet - just analyze and confirm understanding.

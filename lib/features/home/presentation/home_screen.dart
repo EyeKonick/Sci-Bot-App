@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -12,6 +13,7 @@ import '../../../features/lessons/data/repositories/lesson_repository.dart';
 import '../../../features/lessons/data/repositories/progress_repository.dart';
 import '../../../features/lessons/data/repositories/bookmark_repository.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/models/scenario_model.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
@@ -23,6 +25,7 @@ import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
 import '../../chat/presentation/widgets/floating_chat_button.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../chat/data/repositories/chat_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -50,9 +53,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onSearchFocusChanged);
     
-    // Update navigation context to home
+    // Update navigation context to home and activate aristotle_general scenario
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterContextManagerProvider).navigateToHome();
+      final scenario = ChatScenario.aristotleGeneral();
+      ref.read(characterContextManagerProvider).setScenario(scenario);
+      ChatRepository().setScenario(scenario);
     });
   }
 
@@ -157,7 +163,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topics = _topicRepo.getAllTopics();
     final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
     
-    return GestureDetector(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showExitConfirmation();
+        if (shouldExit && mounted) {
+          SystemNavigator.pop();
+        }
+      },
+      child: GestureDetector(
       onTap: () {
         // Dismiss search when tapping outside
         if (_isSearchActive) {
@@ -437,8 +452,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ), // Close Scaffold
         ], // Close Stack children
       ), // Close Stack
-      ); // Close GestureDetector
-    
+      ), // Close GestureDetector
+    ); // Close PopScope
+  }
+
+  /// Show exit confirmation dialog with Aristotle's personality
+  Future<bool> _showExitConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primary.withOpacity(0.15),
+              child: const Icon(
+                Icons.school,
+                color: AppColors.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s12),
+            Text(
+              'Exit SCI-Bot?',
+              style: AppTextStyles.headingSmall,
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to leave? I'll be here when you return!",
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.grey600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Stay',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Exit App',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   /// Parse hex color string to Color

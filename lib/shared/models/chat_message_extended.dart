@@ -30,6 +30,11 @@ class ChatMessage extends HiveObject {
   @HiveField(7)
   final String? characterId; // 'aristotle', 'herophilus', 'mendel', 'odum'
 
+  /// Scenario ID this message belongs to (e.g. 'aristotle_general',
+  /// 'herophilus_lesson_menu_circulation'). Used for scenario-based isolation.
+  @HiveField(8)
+  final String? scenarioId;
+
   /// Transient flag (not persisted to Hive) indicating this message is an error.
   /// Used by chat UI to render error cards with Retry button.
   final bool isError;
@@ -43,11 +48,12 @@ class ChatMessage extends HiveObject {
     this.context,
     this.isStreaming = false,
     this.characterId,
+    this.scenarioId,
     this.isError = false,
   });
 
   /// Create user message
-  factory ChatMessage.user(String content, {String? context, String? characterId}) {
+  factory ChatMessage.user(String content, {String? context, String? characterId, String? scenarioId}) {
     return ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       role: 'user',
@@ -55,6 +61,7 @@ class ChatMessage extends HiveObject {
       timestamp: DateTime.now(),
       context: context,
       characterId: characterId,
+      scenarioId: scenarioId,
     );
   }
 
@@ -65,6 +72,7 @@ class ChatMessage extends HiveObject {
     String? context,
     bool isStreaming = false,
     String? characterId,
+    String? scenarioId,
     bool isError = false,
   }) {
     return ChatMessage(
@@ -76,6 +84,7 @@ class ChatMessage extends HiveObject {
       context: context,
       isStreaming: isStreaming,
       characterId: characterId,
+      scenarioId: scenarioId,
       isError: isError,
     );
   }
@@ -108,6 +117,7 @@ class ChatMessage extends HiveObject {
     String? context,
     bool? isStreaming,
     String? characterId,
+    String? scenarioId,
     bool? isError,
   }) {
     return ChatMessage(
@@ -119,6 +129,7 @@ class ChatMessage extends HiveObject {
       context: context ?? this.context,
       isStreaming: isStreaming ?? this.isStreaming,
       characterId: characterId ?? this.characterId,
+      scenarioId: scenarioId ?? this.scenarioId,
       isError: isError ?? this.isError,
     );
   }

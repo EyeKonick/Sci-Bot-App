@@ -7,6 +7,8 @@ import '../../../core/constants/app_sizes.dart';
 import '../data/repositories/topic_repository.dart';
 import '../../lessons/data/repositories/progress_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../chat/data/repositories/chat_repository.dart';
+import '../../../shared/models/scenario_model.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 
 /// Full-screen topic browsing
@@ -166,9 +168,12 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                           // Update character context before navigating
                           ref.read(characterContextManagerProvider).navigateToTopic(topic.id);
                           await context.push('/topics/${topic.id}/lessons');
-                          // Reset to Aristotle when returning
+                          // Restore aristotle_general scenario when returning
                           if (mounted) {
                             ref.read(characterContextManagerProvider).navigateToHome();
+                            final aristotleScenario = ChatScenario.aristotleGeneral();
+                            ref.read(currentScenarioProvider.notifier).state = aristotleScenario;
+                            await ChatRepository().setScenario(aristotleScenario);
                           }
                         },
                       ),

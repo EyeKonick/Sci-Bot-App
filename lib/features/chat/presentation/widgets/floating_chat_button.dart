@@ -7,8 +7,10 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_feedback.dart';
 import '../../../../shared/models/ai_character_model.dart';
 import '../../../../services/preferences/shared_prefs_service.dart';
+import '../../../../shared/models/scenario_model.dart';
 import '../../data/providers/character_provider.dart';
 import '../../data/services/aristotle_greeting_service.dart';
+import '../../data/services/expert_greeting_service.dart';
 import '../../../lessons/data/providers/lesson_chat_provider.dart';
 import 'messenger_chat_window.dart';
 
@@ -108,12 +110,17 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     _loadPosition();
 
-    // For Aristotle: don't show any bubbles until AI greeting is ready.
-    // For other characters: show static bubbles after delay.
+    // For Aristotle: invalidate cached greeting and fetch fresh AI greeting.
+    // For experts on lesson menu: fetch scenario-aware AI greeting.
+    // For other contexts: show static bubbles after delay.
     final character = ref.read(activeCharacterProvider);
+    final scenario = ref.read(currentScenarioProvider);
     if (character.id == 'aristotle') {
-      // Only fetch AI greeting - bubbles show when it arrives
+      // Always invalidate cache on init so every app launch gets fresh greetings
+      AristotleGreetingService().invalidateCache();
       _fetchAristotleGreeting();
+    } else if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
+      _fetchExpertGreeting();
     } else {
       final gen = _timerGeneration;
       Future.delayed(const Duration(milliseconds: 800), () {
@@ -180,6 +187,51 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     });
   }
 
+  /// Fetch dynamic AI greeting for an expert character's chathead bubbles.
+  /// Uses ExpertGreetingService keyed by scenario ID.
+  Future<void> _fetchExpertGreeting() async {
+    final scenario = ref.read(currentScenarioProvider);
+    if (scenario == null || scenario.type != ScenarioType.lessonMenu) return;
+
+    final character = ref.read(activeCharacterProvider);
+    if (character.id == 'aristotle') return;
+
+    final gen = _timerGeneration;
+    final service = ExpertGreetingService();
+    final topicId = scenario.context['topicId'] ?? '';
+
+    // Derive a display-friendly topic name from the topicId
+    final topicName = switch (topicId) {
+      'topic_body_systems' => 'Body Systems',
+      'topic_heredity' => 'Heredity',
+      'topic_energy' => 'Energy in Ecosystems',
+      _ => topicId,
+    };
+
+    await service.generateGreeting(
+      scenarioId: scenario.id,
+      character: character,
+      topicName: topicName,
+    );
+
+    // Only show bubbles if we haven't been cancelled/disposed
+    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+
+    _cancelAllBubbleTimers();
+
+    setState(() {
+      _currentBubbleIndex = 0;
+      _bubbleCycleCount = 0;
+      _currentIdleBubble = null;
+    });
+
+    final gen2 = _timerGeneration;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (gen2 != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+      _showNextBubble();
+    });
+  }
+
   /// Handle bubble mode transitions. Called from build() when mode changes.
   void _handleBubbleModeTransition(BubbleMode mode) {
     if (mode == _lastBubbleMode) return;
@@ -202,12 +254,16 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             _currentIdleBubble = null;
           });
           final character = ref.read(activeCharacterProvider);
+          final scenario = ref.read(currentScenarioProvider);
           if (character.id == 'aristotle') {
             // For Aristotle: fetch fresh AI greeting
             AristotleGreetingService().invalidateCache();
             _fetchAristotleGreeting();
+          } else if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
+            // For experts on lesson menu: fetch scenario-aware AI greeting
+            _fetchExpertGreeting();
           } else {
-            // For experts: show static bubbles after delay
+            // Fallback: show static bubbles after delay
             final gen = _timerGeneration;
             Future.delayed(const Duration(milliseconds: 500), () {
               if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
@@ -253,14 +309,6 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     // Otherwise, build contextual greetings as NarrationMessages
     final character = ref.read(activeCharacterProvider);
-    final prevContext = ref.read(previousContextProvider);
-    final previousCharacter = prevContext?.currentTopicId != null
-        ? AiCharacter.getCharacterForTopic(prevContext!.currentTopicId!)
-        : null;
-
-    // Check if user just came from a lesson/module in the same topic
-    final wasInLesson = prevContext?.currentLessonId != null;
-    final sameCharacter = previousCharacter?.id == character.id;
 
     // Phase 6: Determine outgoing character for handoff messages
     final switchedFrom = _switchedFromCharacterId != null
@@ -292,7 +340,12 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
         // Return placeholder - actual bubbles will show when AI greeting arrives
         return narrate(['...']);
       } else {
-        // Switching to a topic expert - introduction handoff
+        // Switching to a topic expert - fetch AI greeting via service
+        final scenario = ref.read(currentScenarioProvider);
+        if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
+          _fetchExpertGreeting();
+        }
+        // Show introduction handoff while AI greeting loads
         return narrate([
           'Meet ${character.name}, your specialist in ${character.specialization.toLowerCase()}!',
           character.greeting,
@@ -301,86 +354,31 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       }
     }
 
-    switch (character.id) {
-      case 'aristotle':
-        // ONLY show AI-generated greetings - no static text
-        final service = AristotleGreetingService();
-        if (service.hasGreeting) {
-          return service.cachedGreeting!;
-        }
-        // AI greeting not ready yet - return single invisible placeholder
-        // (bubbles won't show because _showNextBubble is not called until fetch completes)
-        return narrate(['...']);
-
-      case 'herophilus':
-        if (wasInLesson && sameCharacter) {
-          return narrate([
-            'So, how was the lesson? Did it make sense?',
-            'Learning about circulation can be tricky! Need any clarification?',
-            'Ready to continue with another module? I\'m here if you need help!',
-          ]);
-        }
-        if (previousCharacter != null && previousCharacter.id != 'herophilus') {
-          return narrate([
-            'Hello! Coming from ${previousCharacter.name}\'s class? Let\'s study circulation!',
-            'Did you know the heart beats about 100,000 times a day? Let me tell you more!',
-            'Tap me if you want to learn how blood flows through your body.',
-          ]);
-        }
-        return narrate([
-          'I\'m Herophilus, your guide to the circulatory system!',
-          'Did you know your blood vessels could wrap around the Earth twice?',
-          'Ask me anything about how your heart and lungs work together!',
-        ]);
-
-      case 'mendel':
-        if (wasInLesson && sameCharacter) {
-          return narrate([
-            'How was the lesson? Genetics can be fascinating!',
-            'Did everything make sense? I can clarify anything you found confusing.',
-            'Ready to explore more? Pick another module or ask me questions!',
-          ]);
-        }
-        if (previousCharacter != null && previousCharacter.id != 'mendel') {
-          return narrate([
-            'Welcome! Finished studying ${previousCharacter.specialization.toLowerCase()}? Now let\'s explore heredity!',
-            'Ever wonder why you look like your parents? I can explain the science behind it!',
-            'Tap me and let\'s discover how traits pass from one generation to the next.',
-          ]);
-        }
-        return narrate([
-          'Hello! I\'m Gregor Mendel, the father of genetics.',
-          'Did you know I studied over 28,000 pea plants to discover inheritance patterns?',
-          'Ask me about dominant traits, Punnett squares, or anything about heredity!',
-        ]);
-
-      case 'odum':
-        if (wasInLesson && sameCharacter) {
-          return narrate([
-            'So, how did you find the lesson?',
-            'Energy flow and ecosystems can be complex! Any questions?',
-            'Ready for the next module? I\'m here to help!',
-          ]);
-        }
-        if (previousCharacter != null && previousCharacter.id != 'odum') {
-          return narrate([
-            'Hi there! Coming from ${previousCharacter.name}\'s lesson? Perfect timing!',
-            'Let me show you how energy flows through every living thing in an ecosystem.',
-            'Tap me to learn about food chains, energy pyramids, and more!',
-          ]);
-        }
-        return narrate([
-          'I\'m Eugene Odum, your ecosystem expert!',
-          'Everything in nature is connected through energy. Want to see how?',
-          'Ask me about food chains, photosynthesis, or how ecosystems work!',
-        ]);
-
-      default:
-        return narrate([
-          'Hey! I\'m ${character.name}. Ask me anything.',
-          'Tap on me to start a conversation about science!',
-        ]);
+    // Aristotle: always use AI-generated greetings
+    if (character.id == 'aristotle') {
+      final service = AristotleGreetingService();
+      if (service.hasGreeting) {
+        return service.cachedGreeting!;
+      }
+      return narrate(['...']);
     }
+
+    // Expert characters: use ExpertGreetingService when on lesson menu scenario
+    final scenario = ref.read(currentScenarioProvider);
+    if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
+      final expertService = ExpertGreetingService();
+      if (expertService.hasGreeting(scenario.id)) {
+        return expertService.getCachedGreeting(scenario.id)!;
+      }
+      // AI greeting not ready yet - placeholder
+      return narrate(['...']);
+    }
+
+    // Fallback for experts outside lesson menu (e.g. module context)
+    return narrate([
+      'Hey! I\'m ${character.name}. Ask me anything.',
+      'Tap on me to start a conversation about science!',
+    ]);
   }
 
   /// Show next speech bubble message with animation.

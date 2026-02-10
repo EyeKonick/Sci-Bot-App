@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_feedback.dart';
 import '../../../shared/models/chat_message_extended.dart';
 import '../../../shared/models/ai_character_model.dart';
+import '../../../shared/models/scenario_model.dart';
 import '../data/repositories/chat_repository.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/typing_indicator.dart';
@@ -48,11 +49,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _listenToMessageUpdates();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Chat screen ALWAYS uses Aristotle regardless of active expert
-    _chatRepo.setCharacter(AiCharacter.aristotle);
+  /// Ensure the aristotle_general scenario is active when this screen opens.
+  void _ensureAristotleScenario() {
+    final scenario = ChatScenario.aristotleGeneral();
+    _chatRepo.setScenario(scenario);
   }
 
   /// ✅ Listen to message stream for real-time updates from other interfaces
@@ -78,6 +78,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Future<void> _initialize() async {
     try {
+      _ensureAristotleScenario();
       await _chatRepo.initialize();
       
       if (!mounted) return;

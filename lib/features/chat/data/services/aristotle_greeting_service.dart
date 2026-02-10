@@ -1,3 +1,4 @@
+import 'dart:math';
 import '../../../../services/ai/openai_service.dart';
 import '../../../../shared/models/channel_message.dart';
 
@@ -94,6 +95,7 @@ class AristotleGreetingService {
       _cachedGreeting = messages;
       return messages;
     } catch (e) {
+      print('⚠️ AI greeting failed, using fallback: $e');
       final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
       _cachedGreeting = fallback;
       return fallback;
@@ -147,9 +149,11 @@ class AristotleGreetingService {
     }
   }
 
-  /// Invalidate greeting cache (call on navigation context change)
+  /// Invalidate greeting cache (call on navigation context change or app restart)
   void invalidateCache() {
     _cachedGreeting = null;
+    _idleBubbleQueue.clear();
+    _idleFetchCount = 0;
   }
 
   /// Build system prompt for greeting generation
@@ -171,23 +175,24 @@ class AristotleGreetingService {
 TASK: Generate exactly 3 short speech bubble messages. One message per line.
 
 RULES:
-- Each message MUST be under 60 characters
+- Each message MUST be under 80 characters
 - No numbering, no quotes, no bullets, no formatting
 - Just plain text, one message per line
-- The FIRST message MUST be a time-appropriate greeting that includes your name (e.g. "Good $timeOfDay! I'm Aristotle...")
-- The SECOND message should briefly state your role as their SCI-Bot AI science companion
+- The FIRST message MUST be a time-appropriate greeting that includes your name AND "Father of Biology" (e.g. "Good $timeOfDay! I'm Aristotle, the Father of Biology!")
+- The SECOND message should mention you are their AI companion in SCI-Bot and briefly state your role
 - The THIRD message should encourage them to start learning or continue
+- IMPORTANT: Always identify yourself as both the "Father of Biology" AND an "AI companion" of SCI-Bot
 
 CONTEXT:
 - Time of day: $timeOfDay (use this in your greeting!)
-- First time opening app: ${isFirstLaunch ? 'YES - introduce yourself' : 'NO - welcome them back'}
+- First time opening app: ${isFirstLaunch ? 'YES - introduce yourself warmly' : 'NO - welcome them back, vary your greeting style'}
 - $topicLine$avoidLine
 
-Be warm, natural, and NEVER generic. Every greeting must feel fresh and unique.''';
+Be warm, natural, and NEVER generic. Every greeting must feel fresh and unique. Vary your sentence structure and word choice.''';
   }
 
   /// System prompt for generating idle bubble batches
-  static const String _idleBubblePrompt = '''You are Aristotle (384-322 BC), the Father of Biology, AI companion in SCI-Bot for Grade 9 Filipino students.
+  static const String _idleBubblePrompt = '''You are Aristotle (384-322 BC), the Father of Biology and AI companion in SCI-Bot, a Grade 9 Science app for Filipino students.
 
 TASK: Generate exactly 5 short speech bubble messages. One per line.
 
@@ -204,8 +209,10 @@ Each message should be ONE of these (mix them up):
 
 Be varied, interesting, and warm. Each message must be completely different from the others.''';
 
-  /// Offline-only fallback - only used when OpenAI is not configured
+  /// Offline-only fallback - only used when OpenAI is not configured.
+  /// Uses randomized greeting sets so messages vary across app restarts.
   List<NarrationMessage> _offlineFallback(bool isFirstLaunch, String timeOfDay) {
+    final rng = Random();
     final greeting = timeOfDay == 'morning'
         ? 'Good morning!'
         : timeOfDay == 'afternoon'
@@ -213,40 +220,62 @@ Be varied, interesting, and warm. Each message must be completely different from
             : 'Good evening!';
 
     if (isFirstLaunch) {
-      return [
-        NarrationMessage(
-          content: "$greeting I'm Aristotle, your SCI-Bot guide.",
-          characterId: 'aristotle',
-          pacingHint: PacingHint.slow,
-        ),
-        const NarrationMessage(
-          content: "I'll help you explore Grade 9 Science!",
-          characterId: 'aristotle',
-          pacingHint: PacingHint.slow,
-        ),
-        const NarrationMessage(
-          content: 'Pick a topic and let\'s get started!',
-          characterId: 'aristotle',
-          pacingHint: PacingHint.slow,
-        ),
+      final sets = [
+        [
+          "$greeting I'm Aristotle, the Father of Biology and your AI companion here in SCI-Bot.",
+          "I'll guide you through Grade 9 Science!",
+          "Pick a topic and let's get started!",
+        ],
+        [
+          "$greeting Welcome to SCI-Bot! I'm Aristotle, your AI science companion.",
+          "As the Father of Biology, I've been studying nature for centuries!",
+          "Ready to explore science together? Choose a topic!",
+        ],
+        [
+          "$greeting I'm Aristotle, known as the Father of Biology.",
+          "I'm your AI companion here in SCI-Bot, ready to help you learn Grade 9 Science!",
+          "Let's begin your science journey. Tap a topic!",
+        ],
       ];
+      final chosen = sets[rng.nextInt(sets.length)];
+      return chosen
+          .map((t) => NarrationMessage(
+                content: t,
+                characterId: 'aristotle',
+                pacingHint: PacingHint.slow,
+              ))
+          .toList();
     }
-    return [
-      NarrationMessage(
-        content: '$greeting Welcome back, young scholar!',
-        characterId: 'aristotle',
-        pacingHint: PacingHint.slow,
-      ),
-      const NarrationMessage(
-        content: 'Ready to continue your science journey?',
-        characterId: 'aristotle',
-        pacingHint: PacingHint.slow,
-      ),
-      const NarrationMessage(
-        content: 'Tap on me if you need any help!',
-        characterId: 'aristotle',
-        pacingHint: PacingHint.slow,
-      ),
+
+    final sets = [
+      [
+        '$greeting Welcome back, young scholar!',
+        'Ready to continue your science journey?',
+        'Tap on me if you need any help!',
+      ],
+      [
+        '$greeting Great to see you again!',
+        'Your curiosity is what drives discovery!',
+        "Let's pick up where we left off!",
+      ],
+      [
+        "$greeting Aristotle here, your AI companion!",
+        'Every return to learning is a step forward.',
+        'What topic shall we explore today?',
+      ],
+      [
+        '$greeting Welcome back to SCI-Bot!',
+        'A curious mind never stops asking questions.',
+        'Choose a topic or ask me anything!',
+      ],
     ];
+    final chosen = sets[rng.nextInt(sets.length)];
+    return chosen
+        .map((t) => NarrationMessage(
+              content: t,
+              characterId: 'aristotle',
+              pacingHint: PacingHint.slow,
+            ))
+        .toList();
   }
 }

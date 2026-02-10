@@ -77,9 +77,9 @@ class AiCharacter {
   static const aristotle = AiCharacter(
     id: 'aristotle',
     name: 'Aristotle',
-    specialization: 'General Science',
+    specialization: 'Father of Biology - AI Companion',
     avatarAsset: 'assets/icons/chathead-icons/Aristotle_icon.png',
-    greeting: 'Hello! I\'m Aristotle, your AI science companion. How can I help you learn today?',
+    greeting: 'Hello! I\'m Aristotle, the Father of Biology and your AI companion here in SCI-Bot. How can I help you learn today?',
     themeColor: Color(0xFF4A90A4),
     themeLightColor: Color(0xFF7BC9A4),
     bubbleAccentColor: Color(0xFFE0F2F1),

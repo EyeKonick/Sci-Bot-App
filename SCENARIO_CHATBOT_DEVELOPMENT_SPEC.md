@@ -22,12 +22,78 @@ After completing each phase, update this section with:
 
 | Phase | Status | Completion Date | Notes |
 |-------|--------|----------------|-------|
-| Phase 1: Aristotle General | 🔴 Not Started | - | - |
-| Phase 2: Topic Menu Experts | 🔴 Not Started | - | - |
+| Phase 1: Aristotle General | ✅ Completed | Feb 11, 2026 | See detailed notes below |
+| Phase 2: Topic Menu Experts | ✅ Completed | Feb 11, 2026 | See detailed notes below |
 | Phase 3: Single Module (T1L1M1) | 🔴 Not Started | - | - |
 | Phase 4: Complete Lesson 1 | 🔴 Not Started | - | - |
 | Phase 5: Topic 1 Other Lessons | 🔴 Not Started | - | - |
 | Phase 6: Topics 2 & 3 | 🔴 Not Started | - | - |
+
+### Phase 1 Implementation Notes
+
+**Date Completed:** February 11, 2026
+
+**Summary:**
+Implemented core scenario management infrastructure with `ChatScenario` model, refactored `ChatRepository` from character-based to scenario-based storage, and added `aristotle_general` scenario activation across all home/navigation screens. Added exit confirmation dialog on home screen back button with Aristotle's personality. Built pause/resume infrastructure for future module scenario support.
+
+**New Files Created:**
+- `lib/shared/models/scenario_model.dart` - `ChatScenario` model with `ScenarioType` enum (general, lessonMenu, module) and 3 factory constructors (`aristotleGeneral`, `expertLessonMenu`, `expertModule`)
+
+**Files Modified:**
+- `lib/shared/models/chat_message_extended.dart` - Added `scenarioId` field (`@HiveField(8)`) to all constructors and `copyWith`
+- `lib/features/chat/data/repositories/chat_repository.dart` - Full refactor: replaced `_characterHistories` with `_scenarioHistories` map, added `setScenario()`, `pauseCurrentScenario()`, `resumeScenario()`, `clearScenario()`, `clearCurrentScenario()`, generation counter (`_scenarioGeneration`) for stale API response invalidation
+- `lib/features/chat/data/providers/character_provider.dart` - Added `currentScenarioProvider` StateProvider, `setScenario()`/`getScenario()` methods on `CharacterContextManager`
+- `lib/features/home/presentation/home_screen.dart` - Activates `aristotle_general` scenario in `initState` via `addPostFrameCallback`; added `PopScope` with exit confirmation dialog (Aristotle avatar, "Exit SCI-Bot?" title, Stay/Exit App buttons, `SystemNavigator.pop()`)
+- `lib/features/chat/presentation/chat_screen.dart` - Replaced `didChangeDependencies` `setCharacter` with `_ensureAristotleScenario()` using `ChatRepository().setScenario()`
+- `lib/features/chat/presentation/widgets/messenger_chat_window.dart` - Scenario-aware `didChangeDependencies` with fallback to `aristotle_general` if no scenario active
+- `lib/core/routes/bottom_nav_shell.dart` - Chat tab now activates `aristotle_general` scenario via both provider and repository
+- `lib/features/chat/presentation/widgets/floating_chat_button.dart` - Invalidates greeting cache on `initState` for fresh greetings on every app launch
+- `lib/features/chat/data/services/aristotle_greeting_service.dart` - Randomized offline fallback (3 first-launch + 4 returning-user greeting sets), updated AI prompt to always include "Father of Biology" + "AI companion" identity, added debug logging on API failure, enhanced `invalidateCache()` to also clear idle bubbles
+- `lib/shared/models/ai_character_model.dart` - Updated Aristotle's greeting to include "Father of Biology and your AI companion", specialization changed to "Father of Biology - AI Companion"
+
+**Key Architecture Decisions:**
+- Scenario-based isolation replaces character-based storage; messages keyed by scenario ID string
+- Pause/resume infrastructure built from Phase 1 for future module support (Phase 3+)
+- Generation counter pattern invalidates in-flight API responses on scenario switch
+- Legacy `setCharacter()` and `startNewScenario()` preserved for backward compatibility
+- Singleton `ChatRepository` pattern maintained
+
+**Issues Encountered & Resolved:**
+- Dangling library doc comment in `scenario_model.dart` - fixed by adding `library;` directive
+- Unused import warnings during incremental edits - resolved as code was added to reference them
+- `PopScope` closing bracket alignment - fixed bracket structure for proper nesting
+
+**Testing Status:** Build passes with no compilation errors. Ready for manual testing per Phase 1 Testing Checklist.
+
+### Phase 2 Implementation Notes
+
+**Date Completed:** February 11, 2026
+
+**Summary:**
+Implemented expert character greetings and scenario isolation on all three topic lesson menu screens. Each expert (Herophilus, Mendel, Odum) now introduces themselves in first person when a student enters their topic, mentioning their name, title, what they're famous for, and declaring themselves as the student's AI chatbot companion. Greetings are generated dynamically via OpenAI API with offline fallbacks. Fresh greetings are generated on every visit (cache invalidated on entry).
+
+**New Files Created:**
+- `lib/features/chat/data/services/expert_greeting_service.dart` - Singleton service for dynamic AI-powered expert greetings, keyed by scenario ID. OpenAI API integration with personality-specific prompts per expert. 3 offline fallback greeting sets per character. Returns `List<NarrationMessage>` with `PacingHint.slow`. Includes `invalidateScenario()`, `invalidateAll()`, `hasGreeting()`, `getCachedGreeting()` methods.
+
+**Files Modified:**
+- `lib/features/chat/data/repositories/chat_repository.dart` - Implemented `ScenarioType.lessonMenu` case in `_generateScenarioGreeting()` to add expert's greeting message to scenario chat history on creation
+- `lib/features/lessons/presentation/lessons_screen.dart` - Added `_activateExpertScenario()` method called in `initState` via `addPostFrameCallback`: creates `ChatScenario.expertLessonMenu`, invalidates cached greeting for fresh generation every visit, sets `currentScenarioProvider`, calls `ChatRepository().setScenario()`. Back button clears expert scenario and nulls provider. Fixed RenderFlex overflow in app bar by adding `mainAxisSize: MainAxisSize.min`, wrapping topic name in `Flexible`, reducing description to `maxLines: 1`, and tightening spacing.
+- `lib/features/topics/presentation/topics_screen.dart` - Added imports for `ChatRepository` and `ChatScenario`. Topic card `onTap` now restores `ChatScenario.aristotleGeneral()` via both `currentScenarioProvider` and `ChatRepository().setScenario()` when returning from lessons screen.
+- `lib/features/chat/presentation/widgets/floating_chat_button.dart` - Added imports for `ScenarioModel` and `ExpertGreetingService`. New `_fetchExpertGreeting()` method mirrors `_fetchAristotleGreeting()` pattern with scenario-aware topic name derivation. Updated `initState`, `_handleBubbleModeTransition`, and `_getBubbleMessages()` to check `currentScenarioProvider` for `ScenarioType.lessonMenu` scenarios. Removed static expert greeting arrays in favor of `ExpertGreetingService`. Handoff sequence fetches AI greeting via service when switching to expert on lesson menu.
+
+**Key Architecture Decisions:**
+- Expert greetings keyed by scenario ID (not character ID) for proper isolation
+- Cache invalidated on every lesson menu visit so greetings feel fresh each time
+- ExpertGreetingService follows same singleton + OpenAI + offline fallback pattern as AristotleGreetingService
+- Greeting content speaks in first person: expert introduces themselves by name/title, mentions what they're famous for, declares themselves as the student's AI chatbot companion
+- Scenario lifecycle: created on lessons_screen entry, cleared on back button press, Aristotle restored on topics_screen return
+
+**Issues Encountered & Resolved:**
+- RenderFlex overflow (1-32px) in lessons_screen app bar - fixed by tightening layout constraints (Flexible wrapper, reduced spacing, single-line description)
+- OpenAI API timeouts (30s) when no internet - offline fallbacks kick in correctly, this is expected behavior
+- Unused import warnings during incremental edits - resolved as code was added to reference them
+
+**Testing Status:** Build passes with no compilation errors. Scenario switches logged correctly in console (e.g., `Scenario switch: null -> herophilus_lesson_menu_topic_body_systems (gen 6)`). Ready for manual testing per Phase 2 Testing Checklist.
 
 **Status Legend:**  
 🔴 Not Started | 🟡 In Progress | ✅ Completed & Tested | ⚠️ Blocked

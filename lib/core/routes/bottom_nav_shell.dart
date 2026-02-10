@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../constants/app_colors.dart';
 import '../../features/chat/presentation/widgets/floating_chat_button.dart';
 import '../../features/chat/data/providers/character_provider.dart';
+import '../../features/chat/data/repositories/chat_repository.dart';
 import '../../shared/models/navigation_context_model.dart';
+import '../../shared/models/scenario_model.dart';
 
 /// Bottom Navigation Shell for persistent navigation
 /// Used as parent widget for Home, Chat, and More tabs
@@ -36,9 +38,12 @@ class BottomNavShell extends ConsumerWidget {
         child: BottomNavigationBar(
           currentIndex: navigationShell.currentIndex,
           onTap: (index) {
-            // Chat tab ALWAYS uses Aristotle, regardless of current expert
+            // Chat tab ALWAYS uses Aristotle's general scenario
             if (index == 1) {
               ref.read(navigationContextProvider.notifier).state = NavigationContext.home();
+              final scenario = ChatScenario.aristotleGeneral();
+              ref.read(characterContextManagerProvider).setScenario(scenario);
+              ChatRepository().setScenario(scenario);
             }
             navigationShell.goBranch(
               index,
