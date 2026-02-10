@@ -243,8 +243,10 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
             ),
           ],
         ),
-        child: ClipRRect(
+        child: Material(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          clipBehavior: Clip.antiAlias,
+          color: Colors.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

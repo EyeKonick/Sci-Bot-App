@@ -6,7 +6,9 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_feedback.dart';
 import '../../../../shared/models/ai_character_model.dart';
+import '../../../../services/preferences/shared_prefs_service.dart';
 import '../../data/providers/character_provider.dart';
+import '../../data/services/aristotle_greeting_service.dart';
 import '../../../lessons/data/providers/lesson_chat_provider.dart';
 import 'messenger_chat_window.dart';
 
@@ -45,6 +47,9 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   // Bubble mode state machine
   BubbleMode? _lastBubbleMode;
   int _timerGeneration = 0; // Cancellation token for Future.delayed callbacks
+
+  // Dynamic greeting: single idle bubble for display
+  NarrationMessage? _currentIdleBubble;
 
   late AnimationController _snapAnimationController;
   late Animation<Offset> _snapAnimation;
@@ -103,12 +108,19 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     _loadPosition();
 
-    // Show first speech bubble after a short delay (only if still in greeting mode)
-    final gen = _timerGeneration;
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
-      _showNextBubble();
-    });
+    // For Aristotle: don't show any bubbles until AI greeting is ready.
+    // For other characters: show static bubbles after delay.
+    final character = ref.read(activeCharacterProvider);
+    if (character.id == 'aristotle') {
+      // Only fetch AI greeting - bubbles show when it arrives
+      _fetchAristotleGreeting();
+    } else {
+      final gen = _timerGeneration;
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+        _showNextBubble();
+      });
+    }
   }
 
   /// Cancel all bubble timers and invalidate in-flight Future.delayed callbacks
@@ -118,6 +130,54 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     _idleTimer?.cancel();
     _idleTimer = null;
     _timerGeneration++; // All pending Future.delayed callbacks become no-ops
+  }
+
+  /// Fetch dynamic AI greeting for Aristotle's chathead bubbles.
+  /// Waits for AI response, then starts the bubble display cycle.
+  /// No static bubbles are shown before this completes.
+  Future<void> _fetchAristotleGreeting() async {
+    final character = ref.read(activeCharacterProvider);
+    if (character.id != 'aristotle') return;
+
+    final gen = _timerGeneration;
+    final service = AristotleGreetingService();
+    final isFirstLaunch = SharedPrefsService.isFirstLaunch;
+    final hour = DateTime.now().hour;
+    final timeOfDay = hour < 12
+        ? 'morning'
+        : (hour < 18 ? 'afternoon' : 'evening');
+    final prevContext = ref.read(previousContextProvider);
+    final lastTopic = prevContext?.currentTopicId;
+
+    await service.generateGreeting(
+      isFirstLaunch: isFirstLaunch,
+      timeOfDay: timeOfDay,
+      lastTopicExplored: lastTopic,
+    );
+
+    // Mark first launch complete after first greeting generated
+    if (isFirstLaunch) {
+      await SharedPrefsService.setFirstLaunchComplete();
+    }
+
+    // Only show bubbles if we haven't been cancelled/disposed
+    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+
+    // Cancel any existing timers before starting fresh
+    _cancelAllBubbleTimers();
+
+    setState(() {
+      _currentBubbleIndex = 0;
+      _bubbleCycleCount = 0;
+      _currentIdleBubble = null;
+    });
+
+    // Small delay before first bubble appears (feels natural)
+    final gen2 = _timerGeneration;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (gen2 != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+      _showNextBubble();
+    });
   }
 
   /// Handle bubble mode transitions. Called from build() when mode changes.
@@ -139,12 +199,21 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             _currentBubbleIndex = 0;
             _bubbleCycleCount = 0;
             _showSpeechBubble = false;
+            _currentIdleBubble = null;
           });
-          final gen = _timerGeneration;
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
-            _showNextBubble();
-          });
+          final character = ref.read(activeCharacterProvider);
+          if (character.id == 'aristotle') {
+            // For Aristotle: fetch fresh AI greeting
+            AristotleGreetingService().invalidateCache();
+            _fetchAristotleGreeting();
+          } else {
+            // For experts: show static bubbles after delay
+            final gen = _timerGeneration;
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+              _showNextBubble();
+            });
+          }
 
         case BubbleMode.waitingForNarrative:
           // Immediately hide everything — no greetings, no narrative yet
@@ -217,12 +286,11 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       _justSwitchedCharacter = false;
 
       if (character.id == 'aristotle') {
-        // Returning to Aristotle - acknowledgment of learning journey
-        return narrate([
-          'Welcome back! How did your lesson with ${switchedFrom.name} go?',
-          'I hope you learned something great about ${switchedFrom.specialization.toLowerCase()}!',
-          'Starting fresh conversation with me. What would you like to explore next?',
-        ], pacing: PacingHint.normal);
+        // Invalidate cache and fetch fresh AI greeting for return context
+        AristotleGreetingService().invalidateCache();
+        _fetchAristotleGreeting();
+        // Return placeholder - actual bubbles will show when AI greeting arrives
+        return narrate(['...']);
       } else {
         // Switching to a topic expert - introduction handoff
         return narrate([
@@ -235,18 +303,14 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     switch (character.id) {
       case 'aristotle':
-        if (previousCharacter != null && previousCharacter.id != 'aristotle') {
-          return narrate([
-            'Welcome back! You just studied ${previousCharacter.specialization.toLowerCase()} with ${previousCharacter.name}.',
-            'So how did it go? Did you learn something new about ${previousCharacter.specialization.toLowerCase()}?',
-            'If you want, I can help you review what you learned or explore a new topic!',
-          ]);
+        // ONLY show AI-generated greetings - no static text
+        final service = AristotleGreetingService();
+        if (service.hasGreeting) {
+          return service.cachedGreeting!;
         }
-        return narrate([
-          'Hey! I\'m ${character.name}, your science guide.',
-          'Ready to explore some Grade 9 Science? Pick a topic and let\'s get started!',
-          'Tap on me if you have any questions about your lessons.',
-        ]);
+        // AI greeting not ready yet - return single invisible placeholder
+        // (bubbles won't show because _showNextBubble is not called until fetch completes)
+        return narrate(['...']);
 
       case 'herophilus':
         if (wasInLesson && sameCharacter) {
@@ -384,7 +448,11 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
           if (_isDisposed || !mounted || gen != _timerGeneration) return;
           setState(() => _showSpeechBubble = false);
           _bubbleCycleCount++;
-          if (_bubbleCycleCount < 3) {
+          // Aristotle: show greeting once, then switch to idle AI bubbles
+          // Other characters: allow up to 3 cycles of static greetings
+          final character = ref.read(activeCharacterProvider);
+          final maxCycles = character.id == 'aristotle' ? 1 : 3;
+          if (_bubbleCycleCount < maxCycles) {
             _startIdleTimer();
           }
         });
@@ -414,17 +482,49 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     // BubbleMode.waitingForNarrative: do nothing (bubbles suppressed)
   }
 
-  /// Start idle timer - after period of inactivity, show bubbles again
+  /// Start idle timer - after period of inactivity, show bubbles again.
+  /// For Aristotle: fetches a dynamic AI-generated idle bubble.
+  /// For experts: restarts the static greeting cycle.
   void _startIdleTimer() {
     if (_isDisposed) return;
     _idleTimer?.cancel();
     final gen = _timerGeneration;
-    _idleTimer = Timer(const Duration(seconds: 30), () {
+    // Randomize idle interval between 30-60 seconds
+    final idleSeconds = 30 + (DateTime.now().second % 31);
+    _idleTimer = Timer(Duration(seconds: idleSeconds), () async {
       if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen || _showSpeechBubble) return;
-      setState(() {
-        _currentBubbleIndex = 0;
-      });
-      _showNextBubble();
+
+      final character = ref.read(activeCharacterProvider);
+      if (character.id == 'aristotle') {
+        // Fetch AI-generated idle bubble for Aristotle
+        final bubble = await AristotleGreetingService().generateIdleBubble();
+        if (bubble != null && mounted && !_isDisposed && gen == _timerGeneration && !_isChatOpen) {
+          _currentIdleBubble = bubble;
+          setState(() {
+            _currentBubbleIndex = 0;
+            _showSpeechBubble = true;
+          });
+          _speechBubbleController.forward(from: 0.0);
+          // Auto-hide after display duration
+          _bubbleCycleTimer?.cancel();
+          _bubbleCycleTimer = Timer(Duration(milliseconds: bubble.displayMs), () {
+            if (_isDisposed || !mounted || gen != _timerGeneration) return;
+            _speechBubbleController.reverse().then((_) {
+              if (_isDisposed || !mounted) return;
+              setState(() => _showSpeechBubble = false);
+              _currentIdleBubble = null;
+              _bubbleCycleCount++;
+              if (_bubbleCycleCount < 5) _startIdleTimer();
+            });
+          });
+        }
+      } else {
+        // Non-Aristotle: existing behavior - restart greeting cycle
+        setState(() {
+          _currentBubbleIndex = 0;
+        });
+        _showNextBubble();
+      }
     });
   }
 
@@ -771,9 +871,15 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   /// Build speech bubble tooltip next to the FAB
   Widget _buildSpeechBubble(bool isOnRight) {
     final character = ref.watch(activeCharacterProvider);
-    final messages = _getBubbleMessages();
-    final safeIndex = _currentBubbleIndex.clamp(0, messages.length - 1);
-    final currentMessage = messages[safeIndex].content;
+    // Use idle bubble if available, otherwise use greeting cycle messages
+    final String currentMessage;
+    if (_currentIdleBubble != null) {
+      currentMessage = _currentIdleBubble!.content;
+    } else {
+      final messages = _getBubbleMessages();
+      final safeIndex = _currentBubbleIndex.clamp(0, messages.length - 1);
+      currentMessage = messages[safeIndex].content;
+    }
 
     return GestureDetector(
       onTap: () {

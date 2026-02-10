@@ -6,8 +6,8 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_feedback.dart';
 import '../../../shared/models/chat_message_extended.dart';
+import '../../../shared/models/ai_character_model.dart';
 import '../data/repositories/chat_repository.dart';
-import '../data/providers/character_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
@@ -51,13 +51,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // ✅ PHASE 3.1: Update repository when character changes
-    // ✅ PHASE 3.4: Pass contextual greeting for returning characters
-    final character = ref.read(activeCharacterProvider);
-    final contextManager = ref.read(characterContextManagerProvider);
-    final greeting = contextManager.getPersonalizedGreeting();
-    final contextGreeting = greeting != character.greeting ? greeting : null;
-    _chatRepo.setCharacter(character, contextGreeting: contextGreeting);
+    // Chat screen ALWAYS uses Aristotle regardless of active expert
+    _chatRepo.setCharacter(AiCharacter.aristotle);
   }
 
   /// ✅ Listen to message stream for real-time updates from other interfaces
@@ -69,13 +64,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
           // If no messages for this character, show greeting
           if (messages.isEmpty) {
-            final character = ref.read(activeCharacterProvider);
-            final contextManager = ref.read(characterContextManagerProvider);
-            final personalizedGreeting = contextManager.getPersonalizedGreeting();
-
             _messages.add(_chatRepo.getGreeting(
-              character: character,
-              personalizedGreeting: personalizedGreeting,
+              character: AiCharacter.aristotle,
             ));
           } else {
             _messages.addAll(messages);
@@ -92,17 +82,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       
       if (!mounted) return;
       
-      // Get active character and context manager
-      final character = ref.read(activeCharacterProvider);
-      final contextManager = ref.read(characterContextManagerProvider);
-      final personalizedGreeting = contextManager.getPersonalizedGreeting();
-
       setState(() {
         // Load conversation history or show greeting
         if (_chatRepo.conversationHistory.isEmpty) {
           _messages.add(_chatRepo.getGreeting(
-            character: character,
-            personalizedGreeting: personalizedGreeting,
+            character: AiCharacter.aristotle,
           ));
         } else {
           _messages.addAll(_chatRepo.conversationHistory);
@@ -116,14 +100,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       
       if (!mounted) return;
       
-      final character = ref.read(activeCharacterProvider);
-      final contextManager = ref.read(characterContextManagerProvider);
-      final personalizedGreeting = contextManager.getPersonalizedGreeting();
-
       setState(() {
         _messages.add(_chatRepo.getGreeting(
-          character: character,
-          personalizedGreeting: personalizedGreeting,
+          character: AiCharacter.aristotle,
         ));
         _isLoading = false;
       });
@@ -144,10 +123,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     
     _scrollToBottom();
 
-    // Get current character
-    final character = ref.read(activeCharacterProvider);
-    
-    await for (final message in _chatRepo.sendMessageStream(text, character: character)) {
+    await for (final message in _chatRepo.sendMessageStream(text, character: AiCharacter.aristotle)) {
       // Messages are automatically synced via stream listener
       if (!message.isStreaming && message.role == 'assistant') {
         setState(() {
@@ -212,7 +188,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     if (confirmed == true) {
       await _chatRepo.clearHistory();
-      final character = ref.read(activeCharacterProvider);
+      const character = AiCharacter.aristotle;
       setState(() {
         _messages.add(_chatRepo.getGreeting(character: character));
       });
@@ -258,8 +234,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildAppBar() {
-    // Get current character from provider
-    final character = ref.watch(activeCharacterProvider);
+    // Chat screen always uses Aristotle
+    const character = AiCharacter.aristotle;
     
     return Container(
       decoration: BoxDecoration(
@@ -421,7 +397,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         // Typing indicator at the end
         final msgCount = displayMessages.length + (_isWelcomeState ? 1 : 0);
         if (index == msgCount && _isStreaming) {
-          final character = ref.read(activeCharacterProvider);
+          const character = AiCharacter.aristotle;
           return TypingIndicator(
             color: character.themeColor,
             characterName: character.name,
@@ -481,7 +457,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// Phase 4: Conversation starter chips below greeting
   Widget _buildConversationStarters() {
-    final character = ref.read(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -531,7 +507,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// Phase 4: Error card with Retry button
   Widget _buildErrorCard(ChatMessage errorMessage) {
-    final character = ref.read(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -609,7 +585,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// Phase 4: Retry the last failed message
   Future<void> _retryLastMessage() async {
-    final character = ref.read(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
     final retryStream = _chatRepo.retryLastMessage(character: character);
 
     if (retryStream == null) return;
@@ -628,7 +604,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildInputArea() {
-    final character = ref.watch(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
     final bool isDisabled = _isStreaming;
 
     // Contextual hint text based on state
@@ -723,7 +699,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showMenu() {
-    final character = ref.read(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
 
     showModalBottomSheet(
       context: context,
@@ -754,7 +730,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _showAboutDialog() {
-    final character = ref.read(activeCharacterProvider);
+    const character = AiCharacter.aristotle;
 
     showDialog(
       context: context,
