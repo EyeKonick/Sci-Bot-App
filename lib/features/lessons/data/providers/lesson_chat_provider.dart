@@ -1327,28 +1327,27 @@ RESPONSE RULES:
   /// -----------------------------------------------------------------------
   List<ScriptStep> _scriptGoalScitting() {
     return [
-      // Step 0: Greeting with Transition Acknowledgment (NARRATION)
+      // Step 0: Initial Greeting (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'Excellent work on Fa-SCI-nate! You learned about how your heart beats faster when you move.',
-          'Now let\'s set our learning goals for this entire lesson.',
+          'Now that you\'re Fa-SCI-nated, let\'s set our learning goals!',
           'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast, // Excitement
-        waitForUser: false,
+        pacingHint: PacingHint.fast, // Welcoming excitement
+        waitForUser: false, // Auto-continue
       ),
 
-      // Step 1: Ready Prompt (INTERACTION)
+      // Step 1: First Prompt (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Ready to see what you\'ll master today?',
         ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
+        waitForUser: true, // Acknowledgment
       ),
 
-      // Step 2: Present 3 Learning Objectives (NARRATION)
+      // Step 2: Present Learning Objectives (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:',
@@ -1356,44 +1355,11 @@ RESPONSE RULES:
           '**2.** Describe the parts of the circulatory system and their functions—the heart, blood vessels, and more',
           '**3.** Explain the components of blood and how they help maintain homeostasis in your body',
         ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 3: Reflection Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Which of these goals are you most excited to learn about?**',
-        ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is sharing which learning goal they are most excited about.\n'
-            'This is a personal reflection question. ANY response is valid.\n'
-            'Response guidelines:\n'
-            '- Acknowledge their choice positively\n'
-            '- Briefly explain why that goal is important (1-2 sentences)\n'
-            '- Show enthusiasm for their curiosity\n'
-            'Examples:\n'
-            '- If they choose goal 1 (circulatory types): "Great choice! Understanding why our system works the way it does helps us appreciate how amazing our bodies are!"\n'
-            '- If they choose goal 2 (parts and functions): "Excellent! Knowing how your heart and blood vessels work will blow your mind!"\n'
-            '- If they choose goal 3 (blood components): "Perfect! Blood is like a delivery service—each component has a special job!"\n'
-            'Keep response to 2-3 sentences.',
+        waitForUser: false, // Auto-continue after displaying
       ),
 
-      // Step 4: Motivation Message (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Remember: Learning is a journey, not a race.',
-          'Take your time, ask questions, and enjoy discovering how amazing your body really is!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Reflection
-        waitForUser: false,
-      ),
-
-      // Step 5: Transition (NARRATION)
+      // Step 3: Motivation Message (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
           'Think of these goals as your science destination—let\'s get there step by step!',
@@ -1403,7 +1369,17 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 6: Mandatory End-of-Module Q&A (INTERACTION)
+      // Step 4: Transition to Q&A (NARRATION - Speech Bubbles)
+      const ScriptStep(
+        botMessages: [
+          'Great! You\'ve completed Goal SCI-tting!',
+        ],
+        channel: MessageChannel.narration,
+        pacingHint: PacingHint.fast, // Celebration
+        waitForUser: false,
+      ),
+
+      // Step 5: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about our learning goals?',
@@ -1414,23 +1390,25 @@ RESPONSE RULES:
         aiEvalContext:
             'CONTEXT: This is a LOOPING Q&A session. The student can ask multiple questions.\n'
             '\n'
-            'The student is either asking a question about the learning goals or signaling readiness to proceed.\n'
+            'The student is either asking a question about the learning goals '
+            '(circulatory system types, parts and functions, blood components and homeostasis) '
+            'or signaling readiness to proceed.\n'
             '\n'
-            'If they ask a question: Answer it clearly (2-3 sentences). '
+            'If they ask a question: Answer it thoroughly (3-4 sentences) using Grade 9 appropriate language and Roxas City context. '
             'DO NOT say "Tap Next" and DO NOT ask "Do you have another question?" - the system handles this.\n'
             '\n'
             'If they say "ready", "ok", "no questions", "let\'s go", or similar: '
-            'Say "Excellent! You\'ve completed Goal SCI-tting. Tap Next to build your foundation!"\n'
+            'Say "Excellent! You\'ve completed Goal SCI-tting. Tap Next to explore Pre-SCI-ntation!"\n'
             '\n'
-            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness to proceed.',
+            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness to proceed (e.g., "ready", "no questions", "let\'s continue").',
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 7: Completion (NARRATION)
+      // Step 6: Completion Marker (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'Great! You\'re ready to move forward.',
-          'Tap **Next** when you\'re ready to explore!',
+          'You\'re ready to move forward!',
+          'Tap **Next** to explore Pre-SCI-ntation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast,
@@ -1447,11 +1425,11 @@ RESPONSE RULES:
   /// -----------------------------------------------------------------------
   List<ScriptStep> _scriptPreScintation() {
     return [
-      // Step 0: Greeting with Transition (NARRATION)
+      // Step 0: Greeting (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
           'Great job setting your learning goals!',
-          'Now let\'s build the foundation you need to understand circulation.',
+          'Now let\'s build the foundation.',
           'Welcome to **Pre-SCI-ntation** — let\'s start with the basics!',
         ],
         channel: MessageChannel.narration,
@@ -1459,139 +1437,66 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 1: Homeostasis Introduction (NARRATION)
+      // Step 1: Homeostasis Introduction (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Your body needs balance to survive.',
-          'This balance is called **homeostasis**.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 2: Homeostasis Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**What do you think homeostasis means?**',
+          'Let\'s start with the basics.',
+          'Your body needs balance to survive—this balance is called **homeostasis**.',
+          '**Homeostasis means:**\n• Nutrients are delivered to cells\n• Oxygen is supplied\n• Wastes like carbon dioxide are removed',
         ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is answering: "What is homeostasis?"\n'
-            'Correct concept: Homeostasis is the body maintaining stable internal conditions/balance.\n'
-            'Key points: balance, stable conditions, regulation.\n'
-            'Response guidelines:\n'
-            '- If correct (mentions balance/stability/regulation): "Exactly right! Homeostasis means your body maintains stable conditions."\n'
-            '- If partially correct: "You\'re on the right track! [add missing concept]"\n'
-            '- If wrong: "Good try! Think about what your body needs to stay balanced."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 3: Homeostasis Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Homeostasis means your body maintains stable conditions by:',
-          '• **Delivering nutrients** to cells',
-          '• **Supplying oxygen** where it\'s needed',
-          '• **Removing wastes** like carbon dioxide',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-      // Step 4: Small Organisms Comparison (NARRATION)
+      // Step 2: Why We Need Circulatory System (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Small organisms like bacteria can rely on simple **diffusion** to get what they need.',
-          'But humans, like active students in Roxas City who swim, bike, and play basketball, need something faster and stronger!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 5: Why Circulatory System Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Why do you think we need a circulatory system?**',
+          'Small organisms rely on **diffusion**, but humans, like active students in Roxas City, need something faster and stronger.',
+          'That\'s why we have a **circulatory system** powered by the heart, blood, and blood vessels.',
         ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is answering: "Why do we need a circulatory system?"\n'
-            'Correct concepts: humans are too large for diffusion alone, need quick delivery, '
-            'have trillions of cells to feed, active lifestyle requires fast oxygen transport.\n'
-            'Response guidelines:\n'
-            '- If correct (mentions size/complexity/speed/activity): "Perfect! Our bodies are too large and active for simple diffusion!"\n'
-            '- If partially correct: "Good thinking! [add what\'s missing]"\n'
-            '- If wrong: "Think about how big and active your body is compared to a tiny bacterium."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 6: Circulatory System Components (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'That\'s why we have a **circulatory system** powered by:',
-          '❤️ The **heart** (your pump)',
-          '🩸 **Blood** (the transport medium)',
-          '🛣️ **Blood vessels** (the highways and roads)',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-      // Step 7: Analogy with Roxas City (NARRATION)
+      // Step 3: Transition to Q&A (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'Think of it this way:',
-          'If your body were Roxas City, the circulatory system would be the roads, vehicles, and cargo delivering everything from the port to every barangay.',
-          'Without it, nothing would get where it needs to go!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Let them visualize
-        waitForUser: false,
-      ),
-
-      // Step 8: Transition (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Ready to explore each part in detail?',
+          'Great! You\'ve completed Pre-SCI-ntation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast,
         waitForUser: false,
       ),
 
-      // Step 9: Mandatory End-of-Module Q&A (INTERACTION)
+      // Step 4: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Before we investigate deeper, do you have any questions about homeostasis or why we need a circulatory system?',
-          'Type your question, or type "ready" to continue.',
+          'Before we investigate deeper, do you have any questions about homeostasis or the circulatory system?',
+          'Type your question, or type "ready" if you\'re ready to continue.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
             'CONTEXT: This is a LOOPING Q&A session. The student can ask multiple questions.\n'
             '\n'
-            'The student is either asking a question about homeostasis/circulatory system basics or signaling readiness.\n'
+            'The student is either asking a question about homeostasis (nutrients delivered, oxygen supplied, wastes removed) '
+            'or the circulatory system basics (heart, blood, blood vessels) or signaling readiness.\n'
             '\n'
-            'If question: Answer clearly (2-4 sentences). '
+            'If they ask a question: Answer it thoroughly (3-4 sentences) using Grade 9 appropriate language and Roxas City context. '
             'DO NOT say "Tap Next" and DO NOT ask "Do you have another question?" - the system handles this.\n'
             '\n'
-            'If ready: Say "Excellent! You\'ve completed Pre-SCI-ntation. Tap Next to investigate!"\n'
+            'If they say "ready", "ok", "no questions", "let\'s go", or similar: '
+            'Say "Excellent! You\'ve completed Pre-SCI-ntation. Tap Next to start Inve-SCI-tigation!"\n'
             '\n'
-            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness.',
+            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness to proceed.',
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 10: Completion (NARRATION)
+      // Step 4: Completion Marker (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'Great foundation! You\'re ready to investigate.',
-          'Tap **Next** when you\'re ready!',
+          'You\'re ready to investigate!',
+          'Tap **Next** to explore Inve-SCI-tigation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast,
@@ -1623,109 +1528,38 @@ RESPONSE RULES:
       // Step 1: Ready Prompt (INTERACTION)
       const ScriptStep(
         botMessages: [
-          'Want to learn more?',
+          'Ready for bonus content?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
 
-      // Step 2: Extension Activities Intro (NARRATION)
+      // Step 2: Health Tips and Experiment (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Here are some ways to deepen your understanding:',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 3: Pulse Experiment Instructions (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**Try this at home!**',
-          '**Experiment: Feel Your Pulse**',
-          '1. Place two fingers on your wrist (below your thumb)',
-          '2. Count beats for 15 seconds',
-          '3. Multiply by 4 to get beats per minute',
-          '4. Do jumping jacks for 1 minute',
-          '5. Check pulse again — what changed?',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 4: Engagement Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Have you ever tried feeling your pulse? What did you notice?**',
+          '**Tips to Keep Your Circulatory System Healthy:**',
+          '✅ **Exercise regularly** — At least 30 minutes daily\n✅ **Eat nutritious food** — Fruits, vegetables, lean protein (like bangus from Roxas!)\n✅ **Stay hydrated** — Drink 8 glasses of water daily\n✅ **Get enough sleep** — 8-10 hours for teenagers\n✅ **Avoid smoking** — It damages blood vessels',
+          '**Try This Experiment:**',
+          '**Feel Your Pulse!**\n1. Place two fingers on your wrist (below your thumb)\n2. Count beats for 15 seconds\n3. Multiply by 4 to get beats per minute\n4. Do jumping jacks for 1 minute\n5. Check pulse again — what changed?',
+          'Your pulse rate increases during exercise because your muscles need more oxygen!',
         ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Student sharing pulse experiment experience.\n'
-            'This is engagement/sharing question. ANY response is valid.\n'
-            'Response guidelines:\n'
-            '- Acknowledge their experience positively\n'
-            '- If they haven\'t tried: "That\'s okay! Try it now or later. You\'ll be amazed!"\n'
-            '- If they have: "Great observation! [Explain why pulse changes: during activity, '
-            'your heart beats faster to pump more oxygen-rich blood to your muscles]"\n'
-            'Keep response to 2-3 sentences.',
+        waitForUser: false, // Auto-continue after displaying
       ),
 
-      // Step 5: Health Tips Presentation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Here are some tips to keep your circulatory system healthy:',
-          '✅ **Exercise regularly** — At least 30 minutes daily',
-          '✅ **Eat nutritious food** — Fruits, vegetables, lean protein (like bangus from Roxas!)',
-          '✅ **Stay hydrated** — Drink 8 glasses of water daily',
-          '✅ **Get enough sleep** — 8-10 hours for teenagers',
-          '✅ **Avoid smoking** — It damages blood vessels',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 6: Application Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Which of these health tips will you try first?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Student choosing which health tip to try.\n'
-            'This is application/commitment question. ANY tip choice is valid.\n'
-            'Response guidelines:\n'
-            '- Affirm their choice enthusiastically\n'
-            '- Explain why that tip is beneficial (1-2 sentences)\n'
-            '- Examples:\n'
-            '  - Exercise: "Excellent! Regular exercise strengthens your heart and blood vessels!"\n'
-            '  - Nutrition: "Great choice! Healthy food gives your blood the nutrients it needs to deliver to cells!"\n'
-            '  - Hydration: "Perfect! Water helps maintain blood volume and keeps circulation smooth!"\n'
-            '  - Sleep: "Smart! During sleep, your heart rate slows and your body repairs blood vessels!"\n'
-            '- Encourage them to start small and build the habit\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 7: Celebration Summary (NARRATION)
+      // Step 3: Celebration Summary (NARRATION)
       const ScriptStep(
         botMessages: [
           'You\'ve completed the lesson on **The Circulation System**!',
-          'You now understand:',
-          '✅ How your heart pumps blood',
-          '✅ The role of blood vessels',
-          '✅ What blood contains and why',
-          '✅ Why this system is essential for life',
+          'You now understand how your heart pumps blood, the role of blood vessels, and why this system is essential for life.',
+          'Keep taking care of your circulatory system!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast, // Celebration
         waitForUser: false,
       ),
 
-      // Step 8: Mandatory End-of-Module Q&A (INTERACTION)
+      // Step 4: Mandatory End-of-Module Q&A (INTERACTION)
       const ScriptStep(
         botMessages: [
           'Any final questions before we finish this lesson?',
@@ -1747,7 +1581,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 9: Final Completion (NARRATION)
+      // Step 5: Final Completion (NARRATION)
       const ScriptStep(
         botMessages: [
           'Keep exploring, keep questioning, and keep learning!',
@@ -1839,103 +1673,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences.',
       ),
 
-      // Step 5: Assessment Question 4 (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Question 4: What is the main function of red blood cells?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Assessment Question 4: Main function of red blood cells?\n'
-            'Correct answer: Carry oxygen from lungs to body cells (and carry carbon dioxide back).\n'
-            'Response guidelines:\n'
-            '- If mentions oxygen transport: "Perfect! Red blood cells are oxygen carriers with hemoglobin!"\n'
-            '- If wrong: "Red blood cells carry oxygen from lungs to cells using hemoglobin, and carry CO₂ back!"\n'
-            'Keep response to 2 sentences.',
-      ),
-
-      // Step 6: Assessment Question 5 (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Question 5: Name the three types of blood vessels and their main functions.**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Assessment Question 5: Three blood vessels and functions?\n'
-            'Correct answer:\n'
-            '- Arteries: carry blood away from heart (thick walls, high pressure)\n'
-            '- Veins: bring blood back to heart (thinner walls, have valves)\n'
-            '- Capillaries: exchange oxygen/nutrients/waste with cells (one cell thick)\n'
-            'Response guidelines:\n'
-            '- If all 3 correct: "Outstanding! You know all three vessel types and their jobs perfectly!"\n'
-            '- If 2 correct: "Good! You got [X] right. [Explain missing one]."\n'
-            '- If 1 or none: "The three are: arteries (away from heart), veins (back to heart), capillaries (exchange with cells)."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 7: Reflection Questions Intro (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Great work on those knowledge checks!',
-          'Now let\'s reflect deeper on what you\'ve learned.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 8: Reflection Question 1 (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Reflection: How does your circulatory system support you during Sinadya Festival dancing?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Reflection question about circulatory system during festival dancing.\n'
-            'This is open-ended reflection. Accept any thoughtful response.\n'
-            'Correct concepts: heart beats faster, pumps more oxygen-rich blood to dancing muscles, removes CO₂ from muscles.\n'
-            'Response guidelines:\n'
-            '- Acknowledge their thinking positively\n'
-            '- Add educational insight: "During dancing, your heart pumps faster to deliver oxygen to your leg and arm muscles, and removes CO₂ so you can keep going!"\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 9: Reflection Question 2 (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Reflection: What would happen if your heart valves didn\'t work properly?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Reflection question about valve malfunction.\n'
-            'Correct concept: Blood would flow backward, heart wouldn\'t pump efficiently, could cause fatigue/weakness.\n'
-            'Response guidelines:\n'
-            '- If mentions backflow/inefficiency: "Exactly! Valves prevent backflow to keep blood moving forward efficiently!"\n'
-            '- If unsure: "Good thinking! Valves prevent blood from flowing backward. If they fail, the heart can\'t pump efficiently, causing fatigue."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 10: Reflection Question 3 (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Reflection: Why is it important to keep your circulatory system healthy?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Reflection question about importance of heart health.\n'
-            'Accept any thoughtful response about health, longevity, disease prevention, quality of life.\n'
-            'Response guidelines:\n'
-            '- Affirm their understanding positively\n'
-            '- Add practical tip: "Exactly! A healthy circulatory system helps you live longer and stay active. Exercise, good diet, and avoiding smoking keep your heart strong!"\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 11: Encouragement (NARRATION)
+      // Step 5: Encouragement (NARRATION)
       const ScriptStep(
         botMessages: [
           'If you can answer these questions, you\'re doing SCI-mazing!',
@@ -1946,7 +1684,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 12: Mandatory End-of-Module Q&A (INTERACTION)
+      // Step 6: Mandatory End-of-Module Q&A (INTERACTION)
       const ScriptStep(
         botMessages: [
           'Any final questions about what we\'ve covered in this assessment?',
@@ -1968,7 +1706,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 13: Completion (NARRATION)
+      // Step 7: Completion (NARRATION)
       const ScriptStep(
         botMessages: [
           'You\'ve completed your assessment! Well done!',
@@ -1989,13 +1727,11 @@ RESPONSE RULES:
   /// -----------------------------------------------------------------------
   List<ScriptStep> _scriptInveScitigation() {
     return [
-      // ========== PART 1: CIRCULATORY SYSTEM TYPES (4 steps) ==========
-
-      // Step 0: Greeting with Transition (NARRATION)
+      // Step 0: Greeting (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'You now have a solid foundation! Time to investigate deeper.',
-          'In this module, we\'ll explore the heart, blood vessels, and blood itself.',
+          'You now have a solid foundation!',
+          'Time to investigate deeper.',
           'Welcome to **Inve-SCI-tigation** — let\'s discover the details!',
         ],
         channel: MessageChannel.narration,
@@ -2003,416 +1739,111 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 1: Circulatory System Types Explanation (NARRATION)
+      // Step 1: Part 1 - Types of Circulatory Systems (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'There are **two types** of circulatory systems in the animal kingdom:',
-          '🦗 **Open Circulatory System** (insects, crabs) - Blood flows freely through body cavities. Slow and indirect.',
-          '👤 **Closed Circulatory System** (humans, mammals) - Blood stays inside vessels at all times. Fast and efficient!',
+          '**Part 1: Types of Circulatory Systems**',
+          'There are two types of circulatory systems:',
+          '**1. Open Circulatory System**\n• Found in insects like crabs and grasshoppers\n• Blood flows freely and slowly\n• Best for small, less active animals',
+          '**2. Closed Circulatory System (Humans!)**\n• Blood stays inside vessels\n• Pumped by the heart\n• Faster and more efficient—perfect for active lifestyles like swimming in Baybay or playing basketball after school',
         ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
+        channel: MessageChannel.interaction,
         waitForUser: false,
       ),
 
-      // Step 2: Circulatory Type Question (INTERACTION)
+      // Step 2: Part 2 - The Heart (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          '**Which type of circulatory system do humans have, and why is it better for us?**',
+          '**Part 2: The Heart – Your Body\'s Pump**',
+          'Your heart is about the size of your clenched fist ✊',
+          'It beats over 100,000 times a day—even while you sleep!',
+          '**Key parts of the heart:**\n• **Atria** – receive blood\n• **Ventricles** – pump blood out\n• **Valves** – prevent backflow\n• **Septum** – separates left and right sides',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+      ),
+
+      // Step 3: Quick Check Question (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
+          '**Quick Check:** Which chamber do you think has thicker walls—the atria or ventricles?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
-            'The student is answering: "Which circulatory system do humans have and why?"\n'
-            'Correct answer: Humans have a closed circulatory system. It\'s better because blood stays in vessels, '
-            'flow is fast and efficient, can deliver oxygen quickly to active tissues like muscles during exercise.\n'
+            'The student is answering: "Which chamber has thicker walls—atria or ventricles?"\n'
+            'Correct answer: Ventricles have thicker walls because they need to pump blood out of the heart with more force.\n'
             'Response guidelines:\n'
-            '- If correct (mentions closed + efficiency/speed/activity): "Excellent! Closed systems are perfect for our active lifestyles!"\n'
-            '- If partially correct (only says closed): "Correct! Can you explain why it\'s better for active humans?"\n'
-            '- If wrong: "Think about which system keeps blood in vessels at all times for fast delivery."\n'
+            '- If correct (ventricles): "Correct! Ventricles have thicker walls because they pump blood with more force!"\n'
+            '- If wrong (atria): "Good try! Think about which chambers need more muscle to pump blood out of the heart."\n'
             'Keep response to 2-3 sentences.',
       ),
 
-      // Step 3: Transition to Heart (NARRATION)
+      // Step 4: Part 3 - Blood Vessels (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Perfect! Now let\'s explore the heart — the amazing pump at the center of your closed circulatory system.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast,
-        waitForUser: false,
-      ),
-
-      // ========== PART 2: THE HEART (10 steps) ==========
-
-      // Step 4: Heart Size and Beats (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Your heart is about the **size of your clenched fist** ✊',
-          'It beats over **100,000 times a day** — even while you sleep!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 5: Atria Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'The heart has 4 chambers. Let\'s start with the upper chambers:',
-          '**Atria (Upper Chambers)**',
-          '• Right atrium ← receives deoxygenated blood from body',
-          '• Left atrium ← receives oxygenated blood from lungs',
-          'Their job: **Receive** blood returning to the heart.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 6: Ventricles Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Now the lower chambers:',
-          '**Ventricles (Lower Chambers)**',
-          '• Right ventricle → pumps blood to lungs (to get oxygen)',
-          '• Left ventricle → pumps blood to entire body (the hardest worker!)',
-          'Their job: **Pump** blood OUT of the heart.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 7: Chamber Thickness Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Which chamber do you think has thicker walls — the atria or ventricles? Why?**',
+          '**Part 3: Blood Vessels – The Body\'s Roads**',
+          'Think of blood vessels like the roads connecting barangays in Roxas City:',
+          '**Arteries** – carry blood away from the heart\n**Veins** – bring blood back to the heart\n**Capillaries** – tiny paths where oxygen and nutrients are exchanged',
+          'Without these "roads," cells would never receive what they need to survive.',
         ],
         channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is answering: "Which chamber has thicker walls and why?"\n'
-            'Correct answer: Ventricles have thicker walls, especially the left ventricle, because they pump blood out of the heart (requires more force). '
-            'The left ventricle works hardest pumping to the entire body.\n'
-            'Response guidelines:\n'
-            '- If fully correct (ventricles + pumping/force reason): "Perfect answer! Ventricles need strong walls to pump blood far!"\n'
-            '- If partially correct (only ventricles): "Right! Can you explain why they need thicker walls?"\n'
-            '- If wrong: "Think about which chambers do the heavy lifting of pumping blood out."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 8: Valves Introduction (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'The heart also has **valves** — like one-way doors.',
-          'They open to let blood through, then close to **prevent backflow**.',
-          'This ensures blood moves in only ONE direction!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-      // Step 9: Septum Explanation (NARRATION)
+      // Step 5: Part 4 - Blood Components (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Finally, the **septum** is a wall that separates the left and right sides of your heart.',
-          'It keeps oxygenated and deoxygenated blood from mixing.',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 10: Heart Summary (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'So the heart has:',
-          '• 4 chambers (2 atria, 2 ventricles)',
-          '• Valves (prevent backflow)',
-          '• Septum (separates left and right)',
-          'All working together to pump blood 24/7!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast,
-        waitForUser: false,
-      ),
-
-      // Step 11: Transition to Vessels (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Now that blood is pumped by the heart, where does it go?',
-          'It travels through **blood vessels** — the highways of your body!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast,
-        waitForUser: false,
-      ),
-
-      // ========== PART 3: BLOOD VESSELS (10 steps) ==========
-
-      // Step 12: Arteries Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Think of blood vessels like roads connecting barangays in Roxas City.',
-          'There are three types:',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 13: Arteries Details (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**1. Arteries** 🔴',
-          '• Carry blood AWAY from the heart',
-          '• Thick, elastic walls (handle high pressure)',
-          '• Mostly carry oxygenated blood',
-          '• Exception: Pulmonary artery (carries deoxygenated blood to lungs)',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 14: Veins Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**2. Veins** 🔵',
-          '• Bring blood BACK to the heart',
-          '• Thinner walls (lower pressure)',
-          '• Have valves to prevent backflow',
-          '• Mostly carry deoxygenated blood',
-          '• Exception: Pulmonary veins (carry oxygenated blood from lungs)',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 15: Capillaries Introduction (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**3. Capillaries** 🟣',
-          '• Tiny paths where the real action happens!',
-          '• Walls are only **ONE cell thick**',
-          '• Where oxygen and nutrients are exchanged with body cells',
-          '• Where carbon dioxide and wastes are picked up',
-          '• Connect arteries to veins',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 16: Capillary Thickness Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Why do you think capillaries are only one cell thick?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is answering: "Why are capillaries only one cell thick?"\n'
-            'Correct answer: Thin walls allow easy exchange/diffusion of oxygen, nutrients, and wastes between blood and body cells.\n'
-            'Response guidelines:\n'
-            '- If mentions exchange/diffusion/thin for passing substances: "Excellent! Thin walls make it easy for oxygen and nutrients to pass through!"\n'
-            '- If partially correct: "You\'re on the right track! Think about what needs to pass through the capillary wall."\n'
-            '- If wrong: "Thin walls allow oxygen and nutrients to easily diffuse from blood into cells, and wastes to move back into blood."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 17: Blood Vessels Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**Can you name the three types of blood vessels and their main jobs?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'The student is naming the three blood vessels and functions.\n'
-            'Correct:\n'
-            '- Arteries: carry blood away from heart\n'
-            '- Veins: bring blood back to heart\n'
-            '- Capillaries: exchange oxygen/nutrients/waste with cells\n'
-            'Response guidelines:\n'
-            '- If all 3 correct: "Perfect! You understand the three vessel types and their roles!"\n'
-            '- If 2 correct: "Good job! You got [X]. [Explain missing one]."\n'
-            '- If 1 or wrong: "Arteries take blood away from heart, veins bring it back, and capillaries exchange with cells."\n'
-            'Keep response to 2-3 sentences.',
-      ),
-
-      // Step 18: Vessels Summary (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Without these "roads," cells would never receive what they need to survive!',
-          'Arteries → Capillaries → Veins → back to Heart. The cycle continues!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast,
-        waitForUser: false,
-      ),
-
-      // Step 19: Transition to Blood (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Now we know HOW blood travels. But what IS blood made of?',
-          'Let\'s explore the four components!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.fast,
-        waitForUser: false,
-      ),
-
-      // ========== PART 4: BLOOD COMPONENTS (10 steps) ==========
-
-      // Step 20: Blood Composition Intro (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          'Blood makes up about **7-8% of your body weight**.',
-          'It has FOUR main components:',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 21: Plasma Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**1. Plasma** 💧 (55% of blood)',
-          '• Mostly water (90%)',
-          '• Contains proteins, salts, nutrients',
-          '• Carries nutrients (glucose, amino acids, fats)',
-          '• Transports hormones',
-          '• Carries waste products (urea, CO₂)',
-          '• Helps regulate body temperature',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 22: Red Blood Cells Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**2. Red Blood Cells** 🔴 (Erythrocytes)',
-          '• Disc-shaped, no nucleus',
-          '• Contain **hemoglobin** (iron-rich protein)',
-          '• Give blood its red color',
-          'Fun fact: You have about **25 trillion** red blood cells!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 23: Red Blood Cell Function Question (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          '**What is the main function of red blood cells?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Assessment: Main function of red blood cells?\n'
-            'Correct answer: Carry oxygen from lungs to body cells using hemoglobin (and carry CO₂ back to lungs).\n'
-            'Response guidelines:\n'
-            '- If mentions oxygen transport/hemoglobin: "Perfect! Red blood cells are oxygen carriers using hemoglobin!"\n'
-            '- If vague: "Think about what your cells need from the air you breathe."\n'
-            '- If wrong: "Red blood cells carry oxygen from lungs to cells using hemoglobin, and bring CO₂ back to lungs!"\n'
-            'Keep response to 2 sentences.',
-      ),
-
-      // Step 24: White Blood Cells Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**3. White Blood Cells** ⚪ (Leukocytes)',
-          '• Defend against infection',
-          '• Fight bacteria, viruses, and foreign invaders',
-          '• Part of your immune system',
-          '• Several types, each with specific defense roles',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 25: Platelets Explanation (NARRATION)
-      const ScriptStep(
-        botMessages: [
-          '**4. Platelets** 🩹 (Thrombocytes)',
-          '• Help blood clot when you get a wound',
-          '• Form a "plug" to stop bleeding',
-          '• Prevent excessive blood loss',
-          'Process: Cut → Platelets rush → Stick together → Clot forms → Scab heals!',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.normal,
-        waitForUser: false,
-      ),
-
-      // Step 26: Blood Components Summary (NARRATION)
-      const ScriptStep(
-        botMessages: [
+          '**Part 4: Blood – The Transport Medium**',
+          'Blood makes up about 7–8% of your body weight.',
+          '**Plasma (55%)**\n• Mostly water\n• Carries nutrients, hormones, and wastes',
+          '**Red Blood Cells** – carry oxygen using hemoglobin\n**White Blood Cells** – defend against infection\n**Platelets** – help blood clot when you get a wound',
           'Every drop of blood plays a role in keeping you healthy and active!',
-          '• Plasma carries nutrients and wastes',
-          '• Red blood cells deliver oxygen',
-          '• White blood cells fight infection',
-          '• Platelets stop bleeding',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+      ),
+
+      // Step 6: Transition to Q&A (NARRATION - Speech Bubbles)
+      const ScriptStep(
+        botMessages: [
+          'Amazing work, investigator!',
+          'You\'ve completed Inve-SCI-tigation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast,
         waitForUser: false,
       ),
 
-      // Step 27: Complete Summary (NARRATION)
+      // Step 7: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
-          'Your circulatory system works 24/7 to:',
-          '• Deliver oxygen and nutrients',
-          '• Remove waste products',
-          '• Fight infections',
-          '• Regulate temperature',
-          '• Maintain homeostasis',
-          'All without you even thinking about it! Amazing, right? 🤩',
-        ],
-        channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Reflection on the entire system
-        waitForUser: false,
-      ),
-
-      // ========== FINAL: END-OF-MODULE Q&A (2 steps) ==========
-
-      // Step 28: Mandatory End-of-Module Q&A (INTERACTION)
-      const ScriptStep(
-        botMessages: [
-          'Before we finish this investigation, any questions about the heart, blood vessels, or blood?',
-          'Type your question, or type "ready" to complete this module.',
+          'Before we move on, do you have any questions about circulatory systems, the heart, blood vessels, or blood?',
+          'Type your question, or type "ready" if you\'re ready to continue.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
             'CONTEXT: This is a LOOPING Q&A session. The student can ask multiple questions.\n'
             '\n'
-            'The student is either asking a question about heart/vessels/blood or signaling readiness.\n'
+            'The student is either asking a question about circulatory system types, heart parts, blood vessels, or blood components '
+            'or signaling readiness.\n'
             '\n'
-            'If question: Answer thoroughly (3-5 sentences). '
+            'If they ask a question: Answer it thoroughly (3-4 sentences) using Grade 9 appropriate language and Roxas City context. '
             'DO NOT say "Tap Next" and DO NOT ask "Do you have another question?" - the system handles this.\n'
             '\n'
-            'If ready: Say "Amazing work! You\'ve completed Inve-SCI-tigation. Tap Next to assess your understanding!"\n'
+            'If they say "ready", "ok", "no questions", "let\'s go", or similar: '
+            'Say "Excellent! You\'ve completed Inve-SCI-tigation. Tap Next to test your knowledge in Self-A-SCI-ssment!"\n'
             '\n'
-            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness.',
+            'IMPORTANT: Only say "Tap Next" if they explicitly signal readiness to proceed.',
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 29: Completion (NARRATION)
+      // Step 8: Completion Marker (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
-          'You\'ve mastered the investigation! Well done!',
-          'Tap **Next** to test your knowledge!',
+          'You\'re ready to test your knowledge!',
+          'Tap **Next** to take the Self-A-SCI-ssment!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.fast,
