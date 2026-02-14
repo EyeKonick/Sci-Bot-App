@@ -10,7 +10,9 @@
       "Bash(python -c:*)",
       "Bash(pip install:*)",
       "Bash(git checkout:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(dart analyze:*)",
+      "Bash(python:*)"
     ]
   }
 }
