@@ -566,7 +566,13 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     // Clear all module state when leaving.
     // reset() handles: incrementing requestId (cancels async chains),
     // hiding narrative bubbles, and setting bubble mode back to greeting.
-    ref.read(lessonChatProvider.notifier).reset();
+    try {
+      ref.read(lessonChatProvider.notifier).reset();
+      // Clear scenario to prevent bubble leak on backward navigation
+      ref.read(currentScenarioProvider.notifier).state = null;
+    } catch (e) {
+      // Ignore error if ref is already invalid during disposal
+    }
 
     _inputPulseController.dispose();
     _nextButtonPulseController.dispose();
@@ -574,6 +580,65 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     _inputController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Show educational exit confirmation dialog with character avatar
+  Future<bool> _showLessonExitConfirmation(AiCharacter character) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: character.themeColor.withValues(alpha: 0.15),
+              child: Image.asset(
+                character.avatarAsset,
+                width: 24,
+                height: 24,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s12),
+            Text(
+              'End the Lesson?',
+              style: AppTextStyles.headingSmall,
+            ),
+          ],
+        ),
+        content: Text(
+          "You're making great progress, ${character.name} is proud! "
+          "Are you sure you want to end this lesson now?",
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.grey600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Keep Learning',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: character.themeColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'End Lesson',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   @override
@@ -681,16 +746,116 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
     final moduleColor = _getModuleColor(module);
     final guidedState = ref.watch(guidedLessonProvider);
+    final activeCharacter = ref.watch(activeCharacterProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.grey50,
-      appBar: AppBar(
-        backgroundColor: moduleColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.white),
-          onPressed: () => context.pop(),
-        ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        debugPrint('🔙 [POPSCOPE] Back button pressed - pausing script');
+        // Pause script execution while dialog is showing
+        if (mounted) {
+          try {
+            ref.read(lessonChatProvider.notifier).pause();
+            debugPrint('🔙 [POPSCOPE] pause() called successfully');
+          } catch (e) {
+            debugPrint('🔙 [POPSCOPE] ERROR calling pause(): $e');
+          }
+        } else {
+          debugPrint('🔙 [POPSCOPE] Widget not mounted, skipping pause()');
+        }
+
+        debugPrint('🔙 [POPSCOPE] Showing exit confirmation dialog');
+        final shouldExit = await _showLessonExitConfirmation(activeCharacter);
+        debugPrint('🔙 [POPSCOPE] Dialog result: shouldExit=$shouldExit');
+
+        if (!mounted) {
+          debugPrint('🔙 [POPSCOPE] Widget unmounted after dialog, aborting');
+          return;
+        }
+
+        if (shouldExit) {
+          if (!context.mounted) {
+            debugPrint('🔙 [POPSCOPE] Context unmounted, aborting navigation');
+            return;
+          }
+          debugPrint('🔙 [POPSCOPE] User chose "End Lesson" - clearing state and popping screen');
+          // Clear scenario and reset state BEFORE popping to prevent bubble leak
+          try {
+            ref.read(lessonChatProvider.notifier).reset();
+            ref.read(currentScenarioProvider.notifier).state = null;
+            debugPrint('🔙 [POPSCOPE] Scenario cleared successfully');
+          } catch (e) {
+            debugPrint('🔙 [POPSCOPE] ERROR clearing scenario: $e');
+          }
+          // User confirmed exit - state is already cleared above
+          context.pop();
+        } else {
+          debugPrint('🔙 [POPSCOPE] User chose "Keep Learning" - resuming script');
+          // User clicked "Keep Learning" - resume where they left off
+          try {
+            ref.read(lessonChatProvider.notifier).resume();
+            debugPrint('🔙 [POPSCOPE] resume() called successfully');
+          } catch (e) {
+            debugPrint('🔙 [POPSCOPE] ERROR calling resume(): $e');
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.grey50,
+        appBar: AppBar(
+          backgroundColor: moduleColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close, color: AppColors.white),
+            onPressed: () async {
+              debugPrint('❌ [CLOSE BUTTON] Pressed - pausing script');
+              // Pause script execution while dialog is showing
+              if (mounted) {
+                try {
+                  ref.read(lessonChatProvider.notifier).pause();
+                  debugPrint('❌ [CLOSE BUTTON] pause() called successfully');
+                } catch (e) {
+                  debugPrint('❌ [CLOSE BUTTON] ERROR calling pause(): $e');
+                }
+              }
+
+              final shouldExit = await _showLessonExitConfirmation(activeCharacter);
+              debugPrint('❌ [CLOSE BUTTON] Dialog result: shouldExit=$shouldExit');
+
+              if (!mounted) {
+                debugPrint('❌ [CLOSE BUTTON] Widget unmounted after dialog, aborting');
+                return;
+              }
+
+              if (shouldExit) {
+                if (!context.mounted) {
+                  debugPrint('❌ [CLOSE BUTTON] Context unmounted, aborting navigation');
+                  return;
+                }
+                debugPrint('❌ [CLOSE BUTTON] User chose "End Lesson" - clearing state and popping');
+                // Clear scenario and reset state BEFORE popping to prevent bubble leak
+                try {
+                  ref.read(lessonChatProvider.notifier).reset();
+                  ref.read(currentScenarioProvider.notifier).state = null;
+                  debugPrint('❌ [CLOSE BUTTON] Scenario cleared successfully');
+                } catch (e) {
+                  debugPrint('❌ [CLOSE BUTTON] ERROR clearing scenario: $e');
+                }
+                context.pop();
+              } else {
+                debugPrint('❌ [CLOSE BUTTON] User chose "Keep Learning" - resuming');
+                // User clicked "Keep Learning" - resume
+                try {
+                  ref.read(lessonChatProvider.notifier).resume();
+                  debugPrint('❌ [CLOSE BUTTON] resume() called successfully');
+                } catch (e) {
+                  debugPrint('❌ [CLOSE BUTTON] ERROR calling resume(): $e');
+                }
+              }
+            },
+          ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -760,7 +925,8 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           _buildNavigationButtons(moduleColor, guidedState),
         ],
       ),
-    );
+      ), // Scaffold
+    ); // PopScope
   }
 
   /// Module Header - compact design with module icon

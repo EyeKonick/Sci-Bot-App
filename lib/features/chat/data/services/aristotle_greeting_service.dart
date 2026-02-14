@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import '../../../../services/ai/openai_service.dart';
 import '../../../../shared/models/channel_message.dart';
 
@@ -15,34 +17,77 @@ class AristotleGreetingService {
 
   final _openAI = OpenAIService();
 
-  // Cached greeting for current session display
-  List<NarrationMessage>? _cachedGreeting;
+  // Cached greetings per scenario ID (scenario-aware caching)
+  final Map<String, List<NarrationMessage>> _cachedGreetings = {};
+
+  // Track latest generation token per scenario (for staleness validation)
+  final Map<String, int> _scenarioGenerations = {};
+
+  // Track in-flight generation requests per scenario (prevent duplicate API calls)
+  final Set<String> _inFlightScenarios = {};
+
+  // Completers for in-flight generations (allow waiting for shared result)
+  final Map<String, Completer<List<NarrationMessage>>> _inFlightCompleters = {};
 
   // Pre-generated idle bubble queue (batch-fetched for efficiency)
   final List<NarrationMessage> _idleBubbleQueue = [];
   int _idleFetchCount = 0;
-  static const int _maxIdleFetches = 3;
+  static const int _maxIdleFetches = 10;  // Allow up to 50 unique messages (10 batches × 5)
 
   // Track previously generated greetings to avoid repetition
   final List<String> _previousGreetings = [];
 
-  /// Get cached greeting (synchronous, for use in build methods)
-  List<NarrationMessage>? get cachedGreeting => _cachedGreeting;
+  /// Get cached greeting for a specific scenario (synchronous, for use in build methods)
+  List<NarrationMessage>? getCachedGreeting(String scenarioId) =>
+      _cachedGreetings[scenarioId];
 
-  /// Whether a greeting has been fetched and is ready
-  bool get hasGreeting => _cachedGreeting != null && _cachedGreeting!.isNotEmpty;
+  /// Whether a greeting has been fetched for a specific scenario
+  bool hasGreeting(String scenarioId) =>
+      _cachedGreetings.containsKey(scenarioId) &&
+      _cachedGreetings[scenarioId]!.isNotEmpty;
 
   /// Generate contextual greeting for Aristotle's chathead speech bubbles.
   /// Always generates a FRESH greeting - never serves stale cached content.
   /// Returns 2-3 short NarrationMessages.
   Future<List<NarrationMessage>> generateGreeting({
+    required String scenarioId,
+    int? generationToken,
     required bool isFirstLaunch,
     required String timeOfDay,
     String? lastTopicExplored,
   }) async {
+    debugPrint('🤖 [GREETING SERVICE] Starting Aristotle greeting generation for scenario: $scenarioId (token: $generationToken)');
+
+    // Check if generation already in flight for this scenario
+    if (_inFlightCompleters.containsKey(scenarioId)) {
+      debugPrint('🤖 [GREETING SERVICE] ⚠️ Generation already in flight for $scenarioId, waiting for result...');
+      // Wait for the in-flight generation to complete and return its result
+      return await _inFlightCompleters[scenarioId]!.future;
+    }
+
+    debugPrint('🤖 [GREETING SERVICE] - First Launch: $isFirstLaunch');
+    debugPrint('🤖 [GREETING SERVICE] - Time of Day: $timeOfDay');
+    debugPrint('🤖 [GREETING SERVICE] - Last Topic: ${lastTopicExplored ?? "none"}');
+
+    // Create completer for this generation
+    final completer = Completer<List<NarrationMessage>>();
+    _inFlightCompleters[scenarioId] = completer;
+    _inFlightScenarios.add(scenarioId);
+    debugPrint('🤖 [GREETING SERVICE] Marked $scenarioId as in-flight');
+
+    // Update generation token for this scenario
+    if (generationToken != null) {
+      _scenarioGenerations[scenarioId] = generationToken;
+      debugPrint('🤖 [GREETING SERVICE] Updated generation token for $scenarioId: $generationToken');
+    }
+
     if (!_openAI.isConfigured) {
+      debugPrint('🤖 [GREETING SERVICE] ⚠️ OpenAI not configured, using offline fallback');
       final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
-      _cachedGreeting = fallback;
+      _cachedGreetings[scenarioId] = fallback;
+      _inFlightScenarios.remove(scenarioId);
+      _inFlightCompleters.remove(scenarioId);
+      completer.complete(fallback);
       return fallback;
     }
 
@@ -53,6 +98,9 @@ class AristotleGreetingService {
         lastTopicExplored: lastTopicExplored,
       );
 
+      debugPrint('🤖 [GREETING SERVICE] Calling OpenAI API...');
+      final apiStartTime = DateTime.now();
+
       final response = await _openAI.chatCompletion(
         messages: [
           {'role': 'system', 'content': systemPrompt},
@@ -62,6 +110,9 @@ class AristotleGreetingService {
         maxTokens: 200,
       );
 
+      final apiDuration = DateTime.now().difference(apiStartTime);
+      debugPrint('🤖 [GREETING SERVICE] ✅ OpenAI responded in ${apiDuration.inMilliseconds}ms');
+
       // Parse: each line is one bubble message
       final lines = response
           .split('\n')
@@ -70,9 +121,18 @@ class AristotleGreetingService {
           .take(3)
           .toList();
 
+      debugPrint('🤖 [GREETING SERVICE] Parsed ${lines.length} greeting messages:');
+      for (int i = 0; i < lines.length; i++) {
+        debugPrint('🤖 [GREETING SERVICE]   [$i] "${lines[i]}"');
+      }
+
       if (lines.isEmpty) {
+        debugPrint('🤖 [GREETING SERVICE] ⚠️ No valid lines parsed, using fallback');
         final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
-        _cachedGreeting = fallback;
+        _cachedGreetings[scenarioId] = fallback;
+        _inFlightScenarios.remove(scenarioId);
+        _inFlightCompleters.remove(scenarioId);
+        completer.complete(fallback);
         return fallback;
       }
 
@@ -92,12 +152,32 @@ class AristotleGreetingService {
         _previousGreetings.removeAt(0);
       }
 
-      _cachedGreeting = messages;
+      // Validate generation token before caching
+      if (generationToken != null) {
+        final currentToken = _scenarioGenerations[scenarioId];
+        if (currentToken != null && currentToken != generationToken) {
+          debugPrint('🤖 [GREETING SERVICE] ⚠️ Generation $generationToken stale (current: $currentToken), not caching');
+          _inFlightScenarios.remove(scenarioId);
+          _inFlightCompleters.remove(scenarioId);
+          completer.complete(messages);
+          return messages;  // Return but don't cache
+        }
+      }
+
+      _cachedGreetings[scenarioId] = messages;
+      _inFlightScenarios.remove(scenarioId);
+      _inFlightCompleters.remove(scenarioId);
+      completer.complete(messages);
+      debugPrint('🤖 [GREETING SERVICE] ✅ Greeting cached successfully for $scenarioId');
       return messages;
     } catch (e) {
-      print('⚠️ AI greeting failed, using fallback: $e');
+      debugPrint('🤖 [GREETING SERVICE] ❌ AI greeting failed: $e');
       final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
-      _cachedGreeting = fallback;
+      _cachedGreetings[scenarioId] = fallback;
+      _inFlightScenarios.remove(scenarioId);
+      _inFlightCompleters.remove(scenarioId);
+      completer.complete(fallback);
+      debugPrint('🤖 [GREETING SERVICE] Using offline fallback');
       return fallback;
     }
   }
@@ -149,11 +229,16 @@ class AristotleGreetingService {
     }
   }
 
-  /// Invalidate greeting cache (call on navigation context change or app restart)
+  /// Invalidate all greeting caches (call on app restart)
   void invalidateCache() {
-    _cachedGreeting = null;
+    _cachedGreetings.clear();
     _idleBubbleQueue.clear();
     _idleFetchCount = 0;
+  }
+
+  /// Invalidate greeting for a specific scenario
+  void invalidateScenario(String scenarioId) {
+    _cachedGreetings.remove(scenarioId);
   }
 
   /// Build system prompt for greeting generation
@@ -201,13 +286,25 @@ RULES:
 - No numbering, no quotes, no bullets, no formatting
 - Just plain text, one message per line
 
-Each message should be ONE of these (mix them up):
-- A fun Grade 9 science fact about Circulation, Heredity, or Ecosystems
-- A warm study encouragement from Aristotle
-- A curious question that makes students want to learn more
-- A reference to Aristotle's historical observations of nature
+AVAILABLE TOPICS IN THE APP (reference these in your suggestions):
+1. Body Systems - Lessons about Circulation, Gas Exchange, Respiratory & Circulatory systems
+2. Heredity & Variation - Lessons about Genetics, DNA, Inheritance, Punnett Squares
+3. Energy in Ecosystems - Lessons about Food Chains, Food Webs, Energy Pyramids
 
-Be varied, interesting, and warm. Each message must be completely different from the others.''';
+Each message should be ONE of these types (mix them up for variety):
+- A fun Grade 9 science fact about Circulation, Heredity, or Ecosystems
+- A warm study encouragement ("Knowledge grows with every step!", "Your curiosity leads to discovery!")
+- A curious question that sparks interest ("Did you know your heart beats 100,000 times a day?")
+- A specific topic suggestion ("How about exploring Body Systems today?", "Ready to learn about Heredity?", "Want to discover Energy in Ecosystems?")
+- A specific lesson encouragement ("Let's dive into how blood circulates!", "Curious about Punnett Squares?", "Want to explore food chains?")
+- A motivational quote from Aristotle's philosophy ("The more you know, the more you realize you don't know.")
+- A reference to Aristotle's historical observations ("I once studied 500 species. What will you discover?")
+- An invitation to start learning ("Tap on Body Systems to begin!", "Heredity awaits your curiosity!", "Ready to explore Ecosystems?")
+- A fun connection to everyday life ("Your body has 37 trillion cells working right now!")
+
+IMPORTANT: When suggesting topics or lessons, mention them by their actual names (Body Systems, Heredity, Energy in Ecosystems). Make students excited to tap on the topics and start learning!
+
+Be warm, encouraging, varied, and inspiring. Every message should feel fresh and actionable. Mix encouragement with specific suggestions. Never be repetitive.''';
 
   /// Offline-only fallback - only used when OpenAI is not configured.
   /// Uses randomized greeting sets so messages vary across app restarts.

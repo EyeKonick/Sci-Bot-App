@@ -1,10 +1,10 @@
 # SCI-BOT SCENARIO-BASED CHATBOT ARCHITECTURE
 ## Development Specification Document
 
-**Project:** SCI-Bot Flutter Application - Chatbot Architecture Redesign  
-**Date Created:** February 11, 2026  
-**Last Updated:** February 11, 2026  
-**Purpose:** Implement scenario-based isolation to eliminate chat data leakage across screens  
+**Project:** SCI-Bot Flutter Application - Chatbot Architecture Redesign
+**Date Created:** February 11, 2026
+**Last Updated:** February 14, 2026
+**Purpose:** Implement scenario-based isolation to eliminate chat data leakage across screens
 **Approach:** Incremental phased development with testing approval gates  
 
 ---
@@ -27,7 +27,21 @@ After completing each phase, update this section with:
 | Phase 3: Single Module (T1L1M1) | ✅ Completed | Feb 12, 2026 | See detailed notes below |
 | Phase 4: Complete Lesson 1 | ✅ Completed | Feb 12, 2026 | See detailed notes below |
 | Phase 5: Topic 1 Other Lessons | ✅ Completed | Feb 12, 2026 | See detailed notes below |
-| Phase 6: Topics 2 & 3 | 🔴 Not Started | - | - |
+| **POLISHING PHASES** | | | **Topic 1 UX Enhancement** |
+| Polish Phase 0: Foundation | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 1: Two-Channel Enforcement | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 2: Chat Input Clarity | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 3: Feedback Consistency | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 4: Empty/Error States | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 5: Bubble Pacing | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 6: Character Transitions | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 7: Progress Feedback | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| Polish Phase 8: Loading States | ✅ Completed | Feb 13, 2026 | See detailed notes below |
+| **EXIT & NAVIGATION** | | | **User Safety Features** |
+| Exit Confirmations & Bubble Leak Fix | ✅ Completed | Feb 14, 2026 | See detailed notes below |
+| Lesson Menu Chat Access | ✅ Completed | Feb 14, 2026 | See detailed notes below |
+| **EXPANSION PHASES** | | | |
+| Phase 6: Topics 2 & 3 | 🔴 Not Started | - | Ready to apply polished patterns |
 
 ### Phase 1 Implementation Notes
 
@@ -225,7 +239,156 @@ None (all script content integrated into ModuleScriptService)
 
 **Testing Status:** Phase 5 completely tested. All 18 modules across 3 lessons working with unified experience. Lesson transitions smooth. Module progression logical. Scenario isolation verified across all lessons. Herophilus character consistency maintained throughout Topic 1. All answers evaluated appropriately. End-of-module Q&A functional. Next button navigation correct. Exit confirmations working. Build passes with no errors. Topic 1 fully interactive and educationally sound.
 
-**Status Legend:**  
+---
+
+### Exit Confirmations & Bubble Leak Fix Implementation Notes
+
+**Date Completed:** February 14, 2026
+
+**Summary:**
+Implemented educational exit confirmation dialogs for module viewer and lessons screen to prevent accidental exits and improve learning continuity. Fixed critical bubble leak bug where module speech bubbles would appear on lesson menu screen after backward navigation. Added comprehensive debug logging for pause/resume mechanism troubleshooting.
+
+**Problem Addressed:**
+When navigating backward from module viewer to lessons screen, the module's chathead speech bubbles would "leak" and appear on the lesson menu screen. This occurred because `module_viewer_screen.dart` was clearing the scenario in `dispose()` which fired AFTER the screen popped, causing the `FloatingChatButton` to briefly render with stale scenario data.
+
+**Solution Implemented:**
+- Moved scenario clearing from `dispose()` to happen BEFORE navigation in the PopScope callback
+- When user chooses "End Lesson" → scenario is cleared synchronously, THEN navigation occurs
+- Added pause/resume mechanism for "Keep Learning" functionality
+
+**New Files Created:**
+None (modifications only)
+
+**Files Modified:**
+- `lib/features/lessons/presentation/module_viewer_screen.dart` - Added `PopScope` with `canPop: false` pattern, implemented `_showLessonExitConfirmation()` dialog method with expert avatar and themed colors, added scenario clearing before `context.pop()`, added comprehensive debug logging (lines 751-804), updated dispose() to clear scenario with try-catch protection
+- `lib/features/lessons/presentation/lessons_screen.dart` - Added `PopScope` wrapper with exit confirmation dialog, maintained existing scenario cleanup logic on back navigation
+- `lib/features/home/presentation/home_screen.dart` - Polished existing exit dialog to use Aristotle's avatar instead of school icon, updated messaging to be more Aristotle-like ("Leaving so soon? Your learning journey awaits!")
+- `lib/features/lessons/data/providers/lesson_chat_provider.dart` - Added `_isPaused` flag to `LessonChatNotifier`, added separate `isPaused` field to `LessonNarrativeBubbleState`, implemented `pause()` and `resume()` methods with debug logging, added pause checks in `_executeStep()`, `nextMessage()`, and async delay points
+- `lib/features/chat/presentation/widgets/floating_chat_button.dart` - Added `isPaused` detection in timer callbacks, added comprehensive debug logging for timer lifecycle, implemented isPaused transition detection for resume functionality
+
+**Key Architecture Decisions:**
+- Exit dialogs use character avatars and themed colors for educational appeal
+- "Keep Learning" button is visually emphasized (bold, character theme color)
+- "End Lesson" button is de-emphasized (gray color)
+- Scenario clearing happens synchronously BEFORE navigation (critical fix)
+- Pause mechanism separates `_isPaused` flag from `isActive` to preserve bubble position
+- All `ref.read()` calls wrapped in try-catch to handle widget disposal edge cases
+
+**Dialog Design Pattern:**
+```dart
+AlertDialog(
+  title: Row(
+    children: [
+      CircleAvatar(
+        backgroundColor: character.themeColor.withOpacity(0.15),
+        child: Image.asset(character.avatarAsset),
+      ),
+      Text('End the Lesson?'),
+    ],
+  ),
+  content: Text("You're making great progress, ${character.name} is proud!"),
+  actions: [
+    TextButton('Keep Learning'), // Emphasized
+    TextButton('End Lesson'),    // De-emphasized
+  ],
+)
+```
+
+**Issues Encountered & Resolved:**
+- Initial bubble leak persisted despite dispose() clearing - **Fixed:** Moved clearing to PopScope callback before navigation
+- Widget disposal errors when ref.read() called during unmount - **Fixed:** Wrapped all ref.read() in try-catch blocks
+- BuildContext async gap warnings from linter - **Fixed:** Added proper `context.mounted` checks after dialog
+- Pause mechanism timing issues - **Fixed:** Added comprehensive debug logging to trace execution flow
+
+**Testing Status:** Fully tested. Module exit confirmation works correctly. Bubble leak eliminated. "Keep Learning" preserves lesson state. "End Lesson" clears scenario properly. No widget lifecycle errors. All debug logging in place for future troubleshooting. Build passes with no errors.
+
+---
+
+### Lesson Menu Chat Access Implementation Notes
+
+**Date Completed:** February 14, 2026
+
+**Summary:**
+Enabled messenger chat window access for expert characters when on lesson selection screens, allowing students to ask clarifying questions before starting lessons. Previously, only Aristotle could open the messenger window; expert characters were hard-coded to block access. Now experts can chat in lesson menus but remain blocked in modules (preserving narration-only behavior).
+
+**Problem Addressed:**
+Students needed to ask exploratory questions about topics before committing to lessons, but the `FloatingChatButton._openChat()` method had a hard-coded character ID check (`if (character.id != 'aristotle') return;`) that blocked all expert characters from opening the messenger window, regardless of context.
+
+**Solution Implemented:**
+- Replaced character ID check with scenario type check
+- Messenger opens when `ScenarioType.general` (Aristotle) OR `ScenarioType.lessonMenu` (experts)
+- Messenger blocked when `ScenarioType.module` (experts in narration-only mode)
+- Added cross-expert recommendation system for out-of-scope questions
+- Implemented topic-specific conversation starters per expert
+
+**New Files Created:**
+None (modifications only)
+
+**Files Modified:**
+- `lib/features/chat/presentation/widgets/floating_chat_button.dart` - Added `_canOpenMessenger()` helper method with scenario type checking (lines 773-791), replaced hard-coded character check with scenario-based logic, updated `_toggleChat()` to use openability check, added fallback for null scenario with Aristotle (handles home screen timing issue)
+- `lib/features/chat/data/repositories/chat_repository.dart` - Added `_relatedExperts` mapping constant with cross-topic recommendations (lines 23-67), created `_buildEnhancedSystemPrompt()` method for dynamic context injection (lines 413-437), updated `_prepareAPIMessages()` to use enhanced prompts (line 447)
+- `lib/features/chat/presentation/widgets/messenger_chat_window.dart` - Added `_expertConversationStarters` map with 4 topic-specific questions per expert (lines 32-57), updated `_buildConversationStarters()` to use static map instead of dynamic property, added `_getContextualPlaceholder()` for dynamic input hints based on scenario type, added `_getTopicNameFromId()` helper for topic display names
+
+**Scenario-Based Openability Logic:**
+```dart
+bool _canOpenMessenger() {
+  final scenario = ref.read(currentScenarioProvider);
+
+  // Fallback for Aristotle if scenario not yet loaded
+  if (scenario == null) {
+    final character = ref.read(activeCharacterProvider);
+    return character.id == 'aristotle';
+  }
+
+  // Allow messenger in general context and lesson menus
+  return scenario.type == ScenarioType.general ||
+         scenario.type == ScenarioType.lessonMenu;
+}
+```
+
+**Cross-Expert Recommendation System:**
+When students ask questions outside an expert's scope (e.g., asking Herophilus about genetics), the AI now provides actionable redirects:
+- **Enhanced System Prompt Injection:** Adds topic-specific recommendations dynamically
+- **Example Response:** "That's a great question for Gregor Mendel! You can find them in the 'Heredity and Variation' topic from the Topics screen."
+- **Maps Expert-to-Expert:** Herophilus → Mendel/Odum, Mendel → Herophilus/Odum, Odum → Herophilus/Mendel
+
+**Conversation Starters Per Expert:**
+- **Herophilus:** "How does blood flow through the heart?", "Explain arteries vs veins", "What is gas exchange?", "Why is circulation important?"
+- **Mendel:** "How do traits pass to offspring?", "What is a Punnett square?", "Explain dominant/recessive alleles", "What causes variation?"
+- **Odum:** "How does energy flow in ecosystems?", "Food chain vs food web?", "Why are decomposers important?", "Explain energy pyramids"
+- **Aristotle:** "What topics to study?", "How to navigate lessons?", "About AI tutors", "Progress tracking"
+
+**Contextual Placeholder Text:**
+- Lesson menu: "Ask Herophilus about Body Systems..."
+- General context: "Ask Aristotle a question..."
+- Based on `ScenarioType` and topic context from scenario
+
+**Key Architecture Decisions:**
+- Scenario type check is context-aware: same expert, different behavior based on screen
+- Zero changes needed to `lessons_screen.dart` (scenario infrastructure already perfect)
+- Cross-expert recommendations use dynamic injection (no hardcoded prompts to maintain)
+- Conversation starters are static (easily expandable per expert)
+- Maintains two-channel architecture (narration vs interaction)
+
+**Issues Encountered & Resolved:**
+- Aristotle messenger blocked on home screen - **Fixed:** Added null scenario fallback with character ID check for timing edge case
+- Linter warnings during incremental edits - **Resolved:** All references added, warnings cleared
+
+**Verification:**
+✅ Messenger opens when tapping FAB on any lesson menu screen
+✅ Messenger blocked when tapping FAB inside module viewer
+✅ Each expert shows topic-specific conversation starters
+✅ Experts provide actionable cross-topic redirects with navigation hints
+✅ Chat history persists per expert per topic (scenario-scoped)
+✅ Character switching works smoothly (no history bleeding)
+✅ No regressions in existing module narration flow
+✅ Code follows design tokens, Riverpod patterns, type safety
+
+**Testing Status:** Fully tested. Lesson menu chat access working for all experts (Herophilus, Mendel, Odum). Module viewer remains narration-only. Cross-expert recommendations tested with out-of-scope questions. Conversation starters appear correctly. Placeholder text updates based on context. Aristotle fallback working. Build passes with no errors.
+
+---
+
+**Status Legend:**
 🔴 Not Started | 🟡 In Progress | ✅ Completed & Tested | ⚠️ Blocked
 
 ---

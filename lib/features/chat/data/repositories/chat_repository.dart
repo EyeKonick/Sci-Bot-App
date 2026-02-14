@@ -19,6 +19,53 @@ class ChatRepository {
   factory ChatRepository() => _instance;
   ChatRepository._internal();
 
+  /// Maps each expert to other experts they can recommend for out-of-scope questions
+  static const Map<String, List<Map<String, String>>> _relatedExperts = {
+    'herophilus': [
+      {
+        'id': 'mendel',
+        'name': 'Gregor Mendel',
+        'expertise': 'heredity and variation',
+        'topic': 'Heredity and Variation',
+      },
+      {
+        'id': 'odum',
+        'name': 'Eugene Odum',
+        'expertise': 'energy and ecosystems',
+        'topic': 'Energy in Ecosystems',
+      },
+    ],
+    'mendel': [
+      {
+        'id': 'herophilus',
+        'name': 'Herophilus',
+        'expertise': 'circulation and gas exchange',
+        'topic': 'Body Systems',
+      },
+      {
+        'id': 'odum',
+        'name': 'Eugene Odum',
+        'expertise': 'energy and ecosystems',
+        'topic': 'Energy in Ecosystems',
+      },
+    ],
+    'odum': [
+      {
+        'id': 'herophilus',
+        'name': 'Herophilus',
+        'expertise': 'circulation and gas exchange',
+        'topic': 'Body Systems',
+      },
+      {
+        'id': 'mendel',
+        'name': 'Gregor Mendel',
+        'expertise': 'heredity and variation',
+        'topic': 'Heredity and Variation',
+      },
+    ],
+    'aristotle': [], // General guide has no specific redirects
+  };
+
   // Async mutex to prevent concurrent message history corruption
   Completer<void>? _lock;
 
@@ -363,6 +410,33 @@ class ChatRepository {
     }
   }
 
+  /// Builds an enhanced system prompt with cross-expert recommendations.
+  /// Only applies to expert characters in lesson menu scenarios.
+  String _buildEnhancedSystemPrompt() {
+    String prompt = _currentCharacter.systemPrompt;
+
+    // Add expert recommendations for lesson menu contexts
+    if (_currentScenario?.type == ScenarioType.lessonMenu &&
+        _currentCharacter.id != 'aristotle') {
+      final related = _relatedExperts[_currentCharacter.id] ?? [];
+      if (related.isNotEmpty) {
+        final recommendations = related
+            .map((expert) =>
+                "  - For questions about ${expert['expertise']}, politely redirect: "
+                "\"That's a great question for ${expert['name']}! You can find them "
+                "in the '${expert['topic']}' topic from the Topics screen.\"")
+            .join('\n');
+
+        prompt += "\n\n### CROSS-TOPIC GUIDANCE ###\n"
+            "If a student asks about topics outside your expertise:\n"
+            "$recommendations\n"
+            "Always be encouraging and help them navigate to the right expert.";
+      }
+    }
+
+    return prompt;
+  }
+
   /// Prepare messages for API call.
   List<Map<String, dynamic>> _prepareAPIMessages({
     required String context,
@@ -371,7 +445,7 @@ class ChatRepository {
   }) {
     final messages = <Map<String, dynamic>>[];
 
-    String systemPrompt = _currentCharacter.systemPrompt;
+    String systemPrompt = _buildEnhancedSystemPrompt();
 
     if (_currentCharacter.id == 'aristotle' && contextDetails != null) {
       systemPrompt = '$systemPrompt\n\nADDITIONAL CONTEXT:\n$contextDetails';

@@ -91,48 +91,123 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.grey50,
-      body: CustomScrollView(
-        slivers: [
-          // App Bar with Topic Info
-          _buildAppBar(),
-
-          // Loading State - Phase 8: Skeleton cards instead of bare spinner
-          if (_isLoading)
-            SliverPadding(
-              padding: const EdgeInsets.all(AppSizes.s20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => const Padding(
-                    padding: EdgeInsets.only(bottom: AppSizes.s16),
-                    child: SkeletonLessonCard(),
-                  ),
-                  childCount: 3,
-                ),
+  /// Show educational exit confirmation dialog with character avatar
+  Future<bool> _showLessonExitConfirmation(AiCharacter character) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: character.themeColor.withValues(alpha: 0.15),
+              child: Image.asset(
+                character.avatarAsset,
+                width: 24,
+                height: 24,
               ),
             ),
-
-          // Error State (Topic not found)
-          if (!_isLoading && _topic == null)
-            SliverFillRemaining(
-              child: _buildErrorState(),
+            const SizedBox(width: AppSizes.s12),
+            Text(
+              'End the Lesson?',
+              style: AppTextStyles.headingSmall,
             ),
-
-          // Empty State (No lessons)
-          if (!_isLoading && _topic != null && _lessons.isEmpty)
-            SliverFillRemaining(
-              child: _buildEmptyState(),
+          ],
+        ),
+        content: Text(
+          "You're making great progress, ${character.name} is proud! "
+          "Are you sure you want to end this lesson now?",
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.grey600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Keep Learning',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: character.themeColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-
-          // Lessons List
-          if (!_isLoading && _topic != null && _lessons.isNotEmpty)
-            _buildLessonsList(),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'End Lesson',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+          ),
         ],
       ),
     );
+    return result ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeCharacter = ref.watch(activeCharacterProvider);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showLessonExitConfirmation(activeCharacter);
+        if (shouldExit && mounted) {
+          // Clear expert scenario when leaving lesson menu
+          final scenarioId = '${activeCharacter.id}_lesson_menu_${widget.topicId}';
+          ChatRepository().clearScenario(scenarioId);
+          ref.read(currentScenarioProvider.notifier).state = null;
+          context.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.grey50,
+        body: CustomScrollView(
+          slivers: [
+            // App Bar with Topic Info
+            _buildAppBar(),
+
+            // Loading State - Phase 8: Skeleton cards instead of bare spinner
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.all(AppSizes.s20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const Padding(
+                      padding: EdgeInsets.only(bottom: AppSizes.s16),
+                      child: SkeletonLessonCard(),
+                    ),
+                    childCount: 3,
+                  ),
+                ),
+              ),
+
+            // Error State (Topic not found)
+            if (!_isLoading && _topic == null)
+              SliverFillRemaining(
+                child: _buildErrorState(),
+              ),
+
+            // Empty State (No lessons)
+            if (!_isLoading && _topic != null && _lessons.isEmpty)
+              SliverFillRemaining(
+                child: _buildEmptyState(),
+              ),
+
+            // Lessons List
+            if (!_isLoading && _topic != null && _lessons.isNotEmpty)
+              _buildLessonsList(),
+          ],
+        ),
+      ), // Scaffold
+    ); // PopScope
   }
 
   /// App Bar with gradient and topic info - FIXED LAYOUT
@@ -148,13 +223,17 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
       backgroundColor: topicColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: AppColors.white),
-        onPressed: () {
-          // Clear expert scenario when leaving lesson menu
-          final expert = AiCharacter.getCharacterForTopic(widget.topicId);
-          final scenarioId = '${expert.id}_lesson_menu_${widget.topicId}';
-          ChatRepository().clearScenario(scenarioId);
-          ref.read(currentScenarioProvider.notifier).state = null;
-          context.pop();
+        onPressed: () async {
+          // Show exit confirmation dialog
+          final character = ref.read(activeCharacterProvider);
+          final shouldExit = await _showLessonExitConfirmation(character);
+          if (shouldExit && mounted) {
+            // Clear expert scenario when leaving lesson menu
+            final scenarioId = '${character.id}_lesson_menu_${widget.topicId}';
+            ChatRepository().clearScenario(scenarioId);
+            ref.read(currentScenarioProvider.notifier).state = null;
+            if (mounted) context.pop();
+          }
         },
       ),
       flexibleSpace: FlexibleSpaceBar(

@@ -45,13 +45,21 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   Timer? _bubbleCycleTimer;
   Timer? _idleTimer;
   int _bubbleCycleCount = 0; // Track how many full cycles we've shown
+  bool _isGeneratingGreeting = false; // Show "Thinking..." while generating greeting
 
   // Bubble mode state machine
   BubbleMode? _lastBubbleMode;
+  String? _lastScenarioId; // Track scenario to detect screen changes within same mode
   int _timerGeneration = 0; // Cancellation token for Future.delayed callbacks
+  bool _lastNarrativeIsPaused = false; // Track pause state to detect resume
 
   // Dynamic greeting: single idle bubble for display
   NarrationMessage? _currentIdleBubble;
+
+  // Drag interruption state - preserves bubble sequence
+  int? _bubbleIndexWhenDragStarted;
+  BubbleMode? _bubbleModeWhenDragStarted;
+  List<NarrationMessage>? _messagesWhenDragStarted;
 
   late AnimationController _snapAnimationController;
   late Animation<Offset> _snapAnimation;
@@ -76,7 +84,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       end: _position,
     ).animate(CurvedAnimation(
       parent: _snapAnimationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutCubic,
     ));
 
     // Open/close animation controller
@@ -117,7 +125,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     final scenario = ref.read(currentScenarioProvider);
     if (character.id == 'aristotle') {
       // Always invalidate cache on init so every app launch gets fresh greetings
-      AristotleGreetingService().invalidateCache();
+      AristotleGreetingService().invalidateCache();  // Clear all scenarios on app launch
       _fetchAristotleGreeting();
     } else if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
       _fetchExpertGreeting();
@@ -141,13 +149,25 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
   /// Fetch dynamic AI greeting for Aristotle's chathead bubbles.
   /// Waits for AI response, then starts the bubble display cycle.
-  /// No static bubbles are shown before this completes.
+  /// Shows "Thinking..." bubble while generating.
   Future<void> _fetchAristotleGreeting() async {
     final character = ref.read(activeCharacterProvider);
     if (character.id != 'aristotle') return;
 
     final gen = _timerGeneration;
+    debugPrint('🤖 [ARISTOTLE] Starting greeting generation... (gen: $gen, _isGeneratingGreeting: $_isGeneratingGreeting)');
+
+    // Show "Thinking..." bubble while generating
+    setState(() {
+      _isGeneratingGreeting = true;
+      _showSpeechBubble = true;
+    });
+    _speechBubbleController.forward();
+    debugPrint('🤖 [ARISTOTLE] Showing "Thinking..." bubble');
+
     final service = AristotleGreetingService();
+    final scenario = ref.read(currentScenarioProvider);
+    final scenarioId = scenario?.id ?? 'aristotle_general';
     final isFirstLaunch = SharedPrefsService.isFirstLaunch;
     final hour = DateTime.now().hour;
     final timeOfDay = hour < 12
@@ -156,19 +176,38 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     final prevContext = ref.read(previousContextProvider);
     final lastTopic = prevContext?.currentTopicId;
 
+    debugPrint('🤖 [ARISTOTLE] Context - Scenario: $scenarioId, First Launch: $isFirstLaunch, Time: $timeOfDay, Last Topic: $lastTopic');
+
+    final startTime = DateTime.now();
     await service.generateGreeting(
+      scenarioId: scenarioId,
+      generationToken: gen,
       isFirstLaunch: isFirstLaunch,
       timeOfDay: timeOfDay,
       lastTopicExplored: lastTopic,
     );
+    final duration = DateTime.now().difference(startTime);
+    debugPrint('🤖 [ARISTOTLE] Greeting generated in ${duration.inMilliseconds}ms');
 
     // Mark first launch complete after first greeting generated
     if (isFirstLaunch) {
       await SharedPrefsService.setFirstLaunchComplete();
+      debugPrint('🤖 [ARISTOTLE] First launch marked complete');
     }
 
     // Only show bubbles if we haven't been cancelled/disposed
-    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) {
+      debugPrint('🤖 [ARISTOTLE] ⚠️ Greeting cancelled (widget state changed)');
+      setState(() => _isGeneratingGreeting = false);
+      return;
+    }
+
+    // Stop showing "Thinking..." and hide bubble to prepare for smooth fade-in
+    setState(() {
+      _isGeneratingGreeting = false;
+      _showSpeechBubble = false;  // Hide bubble so _showNextBubble can animate it in cleanly
+    });
+    debugPrint('🤖 [ARISTOTLE] ✅ Ready to display greeting bubbles');
 
     // Cancel any existing timers before starting fresh
     _cancelAllBubbleTimers();
@@ -181,14 +220,20 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
     // Small delay before first bubble appears (feels natural)
     final gen2 = _timerGeneration;
+    debugPrint('🤖 [ARISTOTLE] Scheduling bubble display in 500ms...');
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (gen2 != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+      if (gen2 != _timerGeneration || _isDisposed || !mounted || _isChatOpen) {
+        debugPrint('🤖 [ARISTOTLE] ⚠️ Bubble display cancelled (gen2: $gen2, _timerGeneration: $_timerGeneration, disposed: $_isDisposed, mounted: $mounted, chatOpen: $_isChatOpen)');
+        return;
+      }
+      debugPrint('🤖 [ARISTOTLE] Calling _showNextBubble() now...');
       _showNextBubble();
     });
   }
 
   /// Fetch dynamic AI greeting for an expert character's chathead bubbles.
   /// Uses ExpertGreetingService keyed by scenario ID.
+  /// Shows "Thinking..." bubble while generating.
   Future<void> _fetchExpertGreeting() async {
     final scenario = ref.read(currentScenarioProvider);
     if (scenario == null || scenario.type != ScenarioType.lessonMenu) return;
@@ -197,6 +242,15 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     if (character.id == 'aristotle') return;
 
     final gen = _timerGeneration;
+    debugPrint('🤖 [${character.name.toUpperCase()}] Starting greeting generation... (gen: $gen, _isGeneratingGreeting: $_isGeneratingGreeting)');
+
+    // Show "Thinking..." bubble while generating
+    setState(() {
+      _isGeneratingGreeting = true;
+      _showSpeechBubble = true;
+    });
+    _speechBubbleController.forward();
+
     final service = ExpertGreetingService();
     final topicId = scenario.context['topicId'] ?? '';
 
@@ -215,7 +269,16 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     );
 
     // Only show bubbles if we haven't been cancelled/disposed
-    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+    if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) {
+      setState(() => _isGeneratingGreeting = false);
+      return;
+    }
+
+    // Stop showing "Thinking..." and hide bubble to prepare for smooth fade-in
+    setState(() {
+      _isGeneratingGreeting = false;
+      _showSpeechBubble = false;  // Hide bubble so _showNextBubble can animate it in cleanly
+    });
 
     _cancelAllBubbleTimers();
 
@@ -252,12 +315,14 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             _bubbleCycleCount = 0;
             _showSpeechBubble = false;
             _currentIdleBubble = null;
+            _isDragging = false; // Reset drag state to allow bubbles to show
           });
           final character = ref.read(activeCharacterProvider);
           final scenario = ref.read(currentScenarioProvider);
           if (character.id == 'aristotle') {
-            // For Aristotle: fetch fresh AI greeting
-            AristotleGreetingService().invalidateCache();
+            // For Aristotle: fetch fresh AI greeting for current scenario
+            final scenarioId = scenario?.id ?? 'aristotle_general';
+            AristotleGreetingService().invalidateScenario(scenarioId);
             _fetchAristotleGreeting();
           } else if (scenario != null && scenario.type == ScenarioType.lessonMenu) {
             // For experts on lesson menu: fetch scenario-aware AI greeting
@@ -273,14 +338,19 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
         case BubbleMode.waitingForNarrative:
           // Immediately hide everything — no greetings, no narrative yet
-          _speechBubbleController.reverse();
-          setState(() => _showSpeechBubble = false);
+          // Set local state INSTANTLY to prevent flash
+          setState(() {
+            _showSpeechBubble = false;
+            _isDragging = false; // Reset drag state for clean module entry
+          });
+          _speechBubbleController.reverse(); // Animation happens AFTER state update
 
         case BubbleMode.narrative:
           // Narrative started — show first message
           setState(() {
             _currentBubbleIndex = 0;
             _showSpeechBubble = false;
+            _isDragging = false; // Reset drag state to allow bubbles to show
           });
           final gen = _timerGeneration;
           Future.delayed(const Duration(milliseconds: 200), () {
@@ -335,7 +405,9 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
       if (character.id == 'aristotle') {
         // Invalidate cache and fetch fresh AI greeting for return context
-        AristotleGreetingService().invalidateCache();
+        final scenario = ref.read(currentScenarioProvider);
+        final scenarioId = scenario?.id ?? 'aristotle_general';
+        AristotleGreetingService().invalidateScenario(scenarioId);
         _fetchAristotleGreeting();
         // Return placeholder - actual bubbles will show when AI greeting arrives
         return narrate(['...']);
@@ -354,11 +426,14 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       }
     }
 
-    // Aristotle: always use AI-generated greetings
+    // Aristotle: always use AI-generated greetings (scenario-aware)
     if (character.id == 'aristotle') {
       final service = AristotleGreetingService();
-      if (service.hasGreeting) {
-        return service.cachedGreeting!;
+      final scenario = ref.read(currentScenarioProvider);
+      final scenarioId = scenario?.id ?? 'aristotle_general';
+
+      if (service.hasGreeting(scenarioId)) {
+        return service.getCachedGreeting(scenarioId)!;
       }
       return narrate(['...']);
     }
@@ -384,11 +459,19 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   /// Show next speech bubble message with animation.
   /// Uses _timerGeneration to cancel stale callbacks from previous mode transitions.
   void _showNextBubble() {
-    if (_isDisposed || !mounted || _isChatOpen || _isDragging) return;
+    debugPrint('💬 _showNextBubble() called');
+
+    if (_isDisposed || !mounted || _isChatOpen || _isDragging) {
+      debugPrint('💬 _showNextBubble() blocked: disposed=$_isDisposed, mounted=$mounted, chatOpen=$_isChatOpen, dragging=$_isDragging');
+      return;
+    }
 
     final gen = _timerGeneration;
     final mode = ref.read(bubbleModeProvider);
+    debugPrint('💬 Current bubble mode: $mode');
+
     final messages = _getBubbleMessages();
+    debugPrint('💬 Got ${messages.length} messages to display');
 
     // Narrative mode: use narrative provider's index
     if (mode == BubbleMode.narrative) {
@@ -397,12 +480,11 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       debugPrint('💬 _showNextBubble: Narrative mode, index $currentIndex of ${messages.length}');
 
       if (currentIndex >= messages.length) {
-        debugPrint('💬 Narrative finished - hiding bubble');
-        _speechBubbleController.reverse().then((_) {
-          if (!_isDisposed && mounted) {
-            setState(() => _showSpeechBubble = false);
-          }
-        });
+        debugPrint('💬 Narrative finished - hiding bubble smoothly');
+        // Instantly hide bubble (no blink effect) when transitioning to next step
+        if (!_isDisposed && mounted) {
+          setState(() => _showSpeechBubble = false);
+        }
         return;
       }
 
@@ -428,13 +510,45 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       final currentMsg = messages[currentIndex];
       final displayDuration = Duration(milliseconds: currentMsg.displayMs);
       _bubbleCycleTimer = Timer(displayDuration, () {
-        if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
+        debugPrint('⏰ [TIMER] Display timer fired for bubble $currentIndex');
+        if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) {
+          debugPrint('⏰ [TIMER] Cancelled - disposed/unmounted/chatOpen/staleGen');
+          return;
+        }
+
+        // Check if narrative is paused (e.g., exit dialog showing)
+        final narrativeState = ref.read(lessonNarrativeBubbleProvider);
+        debugPrint('⏰ [TIMER] Checking isPaused: ${narrativeState.isPaused}');
+        if (narrativeState.isPaused) {
+          debugPrint('⏰ [TIMER] BLOCKED - narrative is paused, not advancing');
+          return;
+        }
+
+        debugPrint('⏰ [TIMER] Starting bubble reverse animation');
         _speechBubbleController.reverse().then((_) {
-          if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
+          if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) {
+            debugPrint('⏰ [TIMER] Animation complete but widget disposed/unmounted/chatOpen/staleGen');
+            return;
+          }
+
+          // Check again before advancing
+          final narrativeState2 = ref.read(lessonNarrativeBubbleProvider);
+          debugPrint('⏰ [TIMER] Animation complete, checking isPaused again: ${narrativeState2.isPaused}');
+          if (narrativeState2.isPaused) {
+            debugPrint('⏰ [TIMER] BLOCKED after animation - narrative is paused');
+            return;
+          }
+
+          debugPrint('⏰ [TIMER] Calling nextMessage() to advance bubble');
           ref.read(lessonNarrativeBubbleProvider.notifier).nextMessage();
           final gapDuration = Duration(milliseconds: currentMsg.gapMs);
           Future.delayed(gapDuration, () {
             if (gen != _timerGeneration || _isDisposed || !mounted) return;
+
+            // Check if paused before showing next bubble
+            final narrativeState3 = ref.read(lessonNarrativeBubbleProvider);
+            if (narrativeState3.isPaused) return;
+
             _showNextBubble();
           });
         });
@@ -442,34 +556,47 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     } else if (mode == BubbleMode.greeting) {
       // Greeting cycling logic
       if (_currentBubbleIndex >= messages.length) {
+        debugPrint('💬 _showNextBubble: Greeting finished - all ${messages.length} bubbles shown');
         _speechBubbleController.reverse().then((_) {
           if (_isDisposed || !mounted || gen != _timerGeneration) return;
           setState(() => _showSpeechBubble = false);
-          _bubbleCycleCount++;
-          // Aristotle: show greeting once, then switch to idle AI bubbles
-          // Other characters: allow up to 3 cycles of static greetings
+
           final character = ref.read(activeCharacterProvider);
-          final maxCycles = character.id == 'aristotle' ? 1 : 3;
-          if (_bubbleCycleCount < maxCycles) {
+
+          // Aristotle: always start idle timer to show encouraging messages
+          if (character.id == 'aristotle') {
             _startIdleTimer();
+          } else {
+            // Other characters: allow up to 3 cycles of static greetings
+            _bubbleCycleCount++;
+            if (_bubbleCycleCount < 3) {
+              _startIdleTimer();
+            }
           }
         });
         return;
       }
+
+      final currentMsg = messages[_currentBubbleIndex.clamp(0, messages.length - 1)];
+      final msgPreview = currentMsg.content.substring(0, currentMsg.content.length.clamp(0, 50));
+      debugPrint('💬 _showNextBubble: Greeting mode, bubble ${_currentBubbleIndex + 1}/${messages.length}');
+      debugPrint('💬   Content: "$msgPreview${currentMsg.content.length > 50 ? '...' : ''}"');
+      debugPrint('💬   Display: ${currentMsg.displayMs}ms, Gap: ${currentMsg.gapMs}ms, Pacing: ${currentMsg.pacingHint.name}');
 
       setState(() => _showSpeechBubble = true);
 
       _speechBubbleController.forward(from: 0.0);
 
       _bubbleCycleTimer?.cancel();
-      final currentMsg = messages[_currentBubbleIndex.clamp(0, messages.length - 1)];
       final displayDuration = Duration(milliseconds: currentMsg.displayMs);
       _bubbleCycleTimer = Timer(displayDuration, () {
         if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
+        debugPrint('💬   Hiding bubble after ${currentMsg.displayMs}ms display time');
         _speechBubbleController.reverse().then((_) {
           if (_isDisposed || !mounted || _isChatOpen || gen != _timerGeneration) return;
           final gapDuration = Duration(milliseconds: currentMsg.gapMs);
           setState(() => _currentBubbleIndex++);
+          debugPrint('💬   Waiting ${currentMsg.gapMs}ms gap before next bubble');
           Future.delayed(gapDuration, () {
             if (gen != _timerGeneration || _isDisposed || !mounted) return;
             _showNextBubble();
@@ -480,6 +607,57 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     // BubbleMode.waitingForNarrative: do nothing (bubbles suppressed)
   }
 
+  /// Resume bubble sequence after drag interruption.
+  /// Maintains continuity - doesn't restart from beginning.
+  void _resumeBubbleSequenceAfterDrag() {
+    if (_isDisposed || !mounted || _isChatOpen) {
+      _clearDragState();
+      return;
+    }
+
+    if (_bubbleModeWhenDragStarted != null && _bubbleIndexWhenDragStarted != null) {
+      final currentMode = ref.read(bubbleModeProvider);
+      final gen = _timerGeneration;
+
+      // Mode changed during drag - let new mode handle it
+      if (currentMode != _bubbleModeWhenDragStarted) {
+        debugPrint('💬 Mode changed during drag - deferring to new mode');
+        _clearDragState();
+        return;
+      }
+
+      // Same mode - resume from where we left off
+      debugPrint('💬 Resuming bubble sequence from index $_bubbleIndexWhenDragStarted');
+
+      // Capture the value before clearing drag state to avoid null race condition
+      final resumeIndex = _bubbleIndexWhenDragStarted;
+      _clearDragState();
+
+      if (resumeIndex == null) return;
+
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen) return;
+
+        setState(() {
+          _currentBubbleIndex = resumeIndex;
+        });
+
+        _showNextBubble();
+      });
+
+      return;
+    }
+
+    _clearDragState();
+  }
+
+  /// Clear drag state after resuming or when not needed.
+  void _clearDragState() {
+    _bubbleIndexWhenDragStarted = null;
+    _bubbleModeWhenDragStarted = null;
+    _messagesWhenDragStarted = null;
+  }
+
   /// Start idle timer - after period of inactivity, show bubbles again.
   /// For Aristotle: fetches a dynamic AI-generated idle bubble.
   /// For experts: restarts the static greeting cycle.
@@ -487,32 +665,43 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     if (_isDisposed) return;
     _idleTimer?.cancel();
     final gen = _timerGeneration;
-    // Randomize idle interval between 30-60 seconds
-    final idleSeconds = 30 + (DateTime.now().second % 31);
-    _idleTimer = Timer(Duration(seconds: idleSeconds), () async {
-      if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen || _showSpeechBubble) return;
+    // Show idle encouragement every 15 seconds
+    const idleSeconds = 15;
+    debugPrint('⏰ [IDLE TIMER] Starting idle timer for 15 seconds (gen: $gen)');
+    _idleTimer = Timer(const Duration(seconds: idleSeconds), () async {
+      debugPrint('⏰ [IDLE TIMER] Timer fired! Checking conditions...');
+      if (gen != _timerGeneration || _isDisposed || !mounted || _isChatOpen || _showSpeechBubble) {
+        debugPrint('⏰ [IDLE TIMER] ❌ Conditions failed - gen:$gen vs $_timerGeneration, disposed:$_isDisposed, mounted:$mounted, chatOpen:$_isChatOpen, bubbleShowing:$_showSpeechBubble');
+        return;
+      }
 
+      debugPrint('⏰ [IDLE TIMER] ✅ Conditions passed, fetching idle bubble...');
       final character = ref.read(activeCharacterProvider);
       if (character.id == 'aristotle') {
         // Fetch AI-generated idle bubble for Aristotle
         final bubble = await AristotleGreetingService().generateIdleBubble();
+        debugPrint('⏰ [IDLE TIMER] Generated bubble: ${bubble != null ? "\"${bubble.content}\"" : "null"}');
         if (bubble != null && mounted && !_isDisposed && gen == _timerGeneration && !_isChatOpen) {
+          debugPrint('⏰ [IDLE TIMER] 🎉 Displaying idle bubble!');
           _currentIdleBubble = bubble;
           setState(() {
             _currentBubbleIndex = 0;
             _showSpeechBubble = true;
           });
           _speechBubbleController.forward(from: 0.0);
-          // Auto-hide after display duration
+          // Auto-hide after display duration (minimum 5 seconds for idle bubbles)
           _bubbleCycleTimer?.cancel();
-          _bubbleCycleTimer = Timer(Duration(milliseconds: bubble.displayMs), () {
+          final displayDuration = bubble.displayMs < 5000 ? 5000 : bubble.displayMs;
+          debugPrint('⏰ [IDLE TIMER] Displaying for ${displayDuration}ms');
+          _bubbleCycleTimer = Timer(Duration(milliseconds: displayDuration), () {
             if (_isDisposed || !mounted || gen != _timerGeneration) return;
             _speechBubbleController.reverse().then((_) {
               if (_isDisposed || !mounted) return;
               setState(() => _showSpeechBubble = false);
               _currentIdleBubble = null;
               _bubbleCycleCount++;
-              if (_bubbleCycleCount < 5) _startIdleTimer();
+              // Keep showing idle encouragements indefinitely
+              _startIdleTimer();
             });
           });
         }
@@ -574,7 +763,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       end: snapPosition,
     ).animate(CurvedAnimation(
       parent: _snapAnimationController,
-      curve: Curves.elasticOut,
+      curve: Curves.easeOutCubic,
     ));
     
     _snapAnimationController.forward(from: 0.0).then((_) {
@@ -586,19 +775,41 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     });
   }
 
+  /// Check if messenger window can open based on current scenario context.
+  ///
+  /// Allows messenger in:
+  /// - ScenarioType.general (Aristotle on home/topics)
+  /// - ScenarioType.lessonMenu (Expert on lesson selection screen)
+  /// - null scenario with Aristotle (fallback for home screen before scenario loads)
+  ///
+  /// Blocks messenger in:
+  /// - ScenarioType.module (Expert in module - narration only)
+  /// - null scenario with expert character
+  bool _canOpenMessenger() {
+    final scenario = ref.read(currentScenarioProvider);
+
+    // If no scenario set yet, allow messenger for Aristotle only
+    // (handles timing issue on home screen before scenario loads)
+    if (scenario == null) {
+      final character = ref.read(activeCharacterProvider);
+      return character.id == 'aristotle';
+    }
+
+    // Allow messenger in general context and lesson menus
+    // Block in modules and other restricted contexts
+    return scenario.type == ScenarioType.general ||
+           scenario.type == ScenarioType.lessonMenu;
+  }
+
   /// Open chat window - move bubble to top-right
-  /// ✅ ONLY works for Aristotle - experts use inline chat only
+  /// Works for Aristotle (general) and experts in lesson menus
   void _openChat() {
     if (_isDragging || _isChatOpen) return;
 
-    // ✅ FIX: Only allow messenger popup for Aristotle
-    final character = ref.read(activeCharacterProvider);
-    if (character.id != 'aristotle') {
-      // For experts, just hide bubble and do nothing
-      // (Expert guidance happens inline in modules)
-      setState(() {
-        _showSpeechBubble = false;
-      });
+    // Check if messenger can open based on context (not just character ID)
+    if (!_canOpenMessenger()) {
+      // For modules/restricted contexts, just hide bubble silently
+      setState(() => _showSpeechBubble = false);
       return;
     }
 
@@ -683,11 +894,17 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   /// Toggle chat open/close
   void _toggleChat() {
     if (_isDragging) return;
-    
+
     if (_isChatOpen) {
       _closeChat();
     } else {
-      _openChat();
+      // Use same openability check for consistency
+      if (_canOpenMessenger()) {
+        _openChat();
+      } else {
+        // In modules, tap just hides bubble
+        setState(() => _showSpeechBubble = false);
+      }
     }
   }
 
@@ -699,6 +916,35 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     // Handle mode transitions (greeting ↔ narrative ↔ waitingForNarrative).
     final bubbleMode = ref.watch(bubbleModeProvider);
     _handleBubbleModeTransition(bubbleMode);
+
+    // Detect scenario changes (screen navigation) even when bubble mode stays the same.
+    // Without this, quickly navigating between screens that both use BubbleMode.greeting
+    // (e.g. Topics → Lessons) would let old bubbles leak into the new screen.
+    final currentScenario = ref.watch(currentScenarioProvider);
+    final currentScenarioId = currentScenario?.id;
+    if (currentScenarioId != _lastScenarioId && _lastScenarioId != null) {
+      if (bubbleMode == BubbleMode.greeting && bubbleMode == _lastBubbleMode) {
+        // Same mode but different screen — force a greeting restart
+        _lastBubbleMode = null; // Reset so _handleBubbleModeTransition re-fires
+        _handleBubbleModeTransition(bubbleMode);
+      }
+    }
+    _lastScenarioId = currentScenarioId;
+
+    // Detect narrative resume (isPaused: true → false) and restart bubble timers
+    if (bubbleMode == BubbleMode.narrative) {
+      final narrativeState = ref.watch(lessonNarrativeBubbleProvider);
+      // If just resumed (was paused, now not paused), restart bubble display
+      if (_lastNarrativeIsPaused && !narrativeState.isPaused && narrativeState.isActive) {
+        // Schedule a call to _showNextBubble to restart timers
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_isChatOpen) {
+            _showNextBubble();
+          }
+        });
+      }
+      _lastNarrativeIsPaused = narrativeState.isPaused;
+    }
 
     // Phase 6: Detect character switch and trigger 800ms visual bridge with handoff bubbles
     final currentCharacter = ref.watch(activeCharacterProvider);
@@ -797,7 +1043,8 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
           ),
 
         // Speech Bubble Tooltip (when chat is closed)
-        if (_showSpeechBubble && !_isChatOpen && !_isDragging)
+        // Check isInstantHide flag to prevent flash during channel transitions
+        if (_showSpeechBubble && !_isChatOpen && !_isDragging && !ref.watch(lessonNarrativeBubbleProvider).isInstantHide)
           AnimatedBuilder(
             animation: _speechBubbleAnimation,
             builder: (context, child) {
@@ -828,12 +1075,36 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
               left: currentPosition.dx,
               top: currentPosition.dy,
               child: Draggable(
-                feedback: _buildButton(isDragging: true),
+                feedback: Transform.scale(
+                  scale: 1.15,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: currentCharacter.themeColor.withOpacity(0.4),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: _buildButton(isDragging: true),
+                  ),
+                ),
                 childWhenDragging: Opacity(
                   opacity: 0.3,
                   child: _buildButton(),
                 ),
                 onDragStarted: () {
+                  // Capture state before hiding bubble
+                  _bubbleIndexWhenDragStarted = _currentBubbleIndex;
+                  _bubbleModeWhenDragStarted = ref.read(bubbleModeProvider);
+                  _messagesWhenDragStarted = _getBubbleMessages();
+
+                  // Hide bubble immediately and animate out
+                  _speechBubbleController.reverse();
+
                   setState(() {
                     _isDragging = true;
                     _showSpeechBubble = false;
@@ -848,6 +1119,8 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
                   if (!_isChatOpen) {
                     _snapToEdge(details.offset, MediaQuery.of(context).size);
                   }
+
+                  _resumeBubbleSequenceAfterDrag();
                 },
                 child: GestureDetector(
                   onTap: () {
@@ -866,12 +1139,55 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     );
   }
 
+  /// Parse markdown-style **bold** text into TextSpan with styling
+  TextSpan _parseMarkdownText(String text, TextStyle baseStyle) {
+    final List<TextSpan> spans = [];
+    final RegExp boldPattern = RegExp(r'\*\*(.*?)\*\*');
+    int lastIndex = 0;
+
+    for (final match in boldPattern.allMatches(text)) {
+      // Add normal text before the bold
+      if (match.start > lastIndex) {
+        spans.add(TextSpan(
+          text: text.substring(lastIndex, match.start),
+          style: baseStyle,
+        ));
+      }
+
+      // Add bold text (without the ** markers)
+      spans.add(TextSpan(
+        text: match.group(1), // Text inside **...**
+        style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+      ));
+
+      lastIndex = match.end;
+    }
+
+    // Add remaining text after last bold
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastIndex),
+        style: baseStyle,
+      ));
+    }
+
+    return TextSpan(children: spans);
+  }
+
   /// Build speech bubble tooltip next to the FAB
   Widget _buildSpeechBubble(bool isOnRight) {
     final character = ref.watch(activeCharacterProvider);
-    // Use idle bubble if available, otherwise use greeting cycle messages
+    final narrativeBubbleState = ref.watch(lessonNarrativeBubbleProvider);
+
+    // Check if AI is thinking/generating a response
     final String currentMessage;
-    if (_currentIdleBubble != null) {
+    if (_isGeneratingGreeting) {
+      // Show thinking while generating greeting
+      currentMessage = 'Thinking...';
+    } else if (narrativeBubbleState.isThinking) {
+      // Show thinking during lesson Q&A
+      currentMessage = 'Thinking...';
+    } else if (_currentIdleBubble != null) {
       currentMessage = _currentIdleBubble!.content;
     } else {
       final messages = _getBubbleMessages();
@@ -888,37 +1204,66 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
         });
         _toggleChat();
       },
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.s12,
-          vertical: AppSizes.s8,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          border: Border.all(
-            color: character.themeColor.withOpacity(0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Left tail (when bubble is on left side, tail points right toward avatar)
+          if (!isOnRight)
+            CustomPaint(
+              size: const Size(8, 12),
+              painter: _BubbleTailPainter(
+                color: AppColors.white,
+                borderColor: character.themeColor.withOpacity(0.2),
+                pointsRight: true,
+              ),
             ),
-          ],
-        ),
-        child: Text(
-          currentMessage,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.grey900,
-            fontWeight: FontWeight.w500,
-            height: 1.3,
-            backgroundColor: Colors.transparent,
-            decoration: TextDecoration.none,
+          // Speech bubble container
+          Container(
+            constraints: const BoxConstraints(maxWidth: 220),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.s12,
+              vertical: AppSizes.s8,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              border: Border.all(
+                color: character.themeColor.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: RichText(
+              text: _parseMarkdownText(
+                currentMessage,
+                AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.grey900,
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                  backgroundColor: Colors.transparent,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ),
           ),
-        ),
+          // Right tail (when bubble is on right side, tail points left toward avatar)
+          if (isOnRight)
+            CustomPaint(
+              size: const Size(8, 12),
+              painter: _BubbleTailPainter(
+                color: AppColors.white,
+                borderColor: character.themeColor.withOpacity(0.2),
+                pointsRight: false,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1119,4 +1464,67 @@ class _TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TrianglePainter oldDelegate) => false;
+}
+
+/// Custom painter for speech bubble tail pointing toward the avatar
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+  final Color borderColor;
+  final bool pointsRight;
+
+  _BubbleTailPainter({
+    required this.color,
+    required this.borderColor,
+    required this.pointsRight,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw the tail fill
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final fillPath = Path();
+    if (pointsRight) {
+      // Tail pointing right (when bubble is on left)
+      fillPath.moveTo(0, size.height / 2);
+      fillPath.lineTo(size.width, 0);
+      fillPath.lineTo(size.width, size.height);
+      fillPath.close();
+    } else {
+      // Tail pointing left (when bubble is on right)
+      fillPath.moveTo(size.width, size.height / 2);
+      fillPath.lineTo(0, 0);
+      fillPath.lineTo(0, size.height);
+      fillPath.close();
+    }
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Draw the tail border
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final borderPath = Path();
+    if (pointsRight) {
+      borderPath.moveTo(0, size.height / 2);
+      borderPath.lineTo(size.width, 0);
+      borderPath.lineTo(size.width, size.height);
+    } else {
+      borderPath.moveTo(size.width, size.height / 2);
+      borderPath.lineTo(0, 0);
+      borderPath.lineTo(0, size.height);
+    }
+
+    canvas.drawPath(borderPath, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(_BubbleTailPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.borderColor != borderColor ||
+      oldDelegate.pointsRight != pointsRight;
 }

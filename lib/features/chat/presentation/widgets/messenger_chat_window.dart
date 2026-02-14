@@ -28,6 +28,34 @@ class MessengerChatWindow extends ConsumerStatefulWidget {
 }
 
 class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
+  /// Topic-specific conversation starters for each expert character
+  static const Map<String, List<String>> _expertConversationStarters = {
+    'herophilus': [
+      'How does blood flow through the heart?',
+      'Explain the difference between arteries and veins',
+      'What happens during gas exchange in the lungs?',
+      'Why is the circulatory system important?',
+    ],
+    'mendel': [
+      'How do traits pass from parents to offspring?',
+      'What is a Punnett square used for?',
+      'Explain dominant and recessive alleles',
+      'What causes genetic variation?',
+    ],
+    'odum': [
+      'How does energy flow in an ecosystem?',
+      'What is a food chain vs food web?',
+      'Why are decomposers important?',
+      'Explain the energy pyramid levels',
+    ],
+    'aristotle': [
+      'What topics can I study today?',
+      'How do I navigate the lessons?',
+      'Tell me about the AI tutors',
+      'How does progress tracking work?',
+    ],
+  };
+
   final _chatRepo = ChatRepository();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -35,6 +63,9 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
 
   bool _isLoading = true;
   bool _isStreaming = false;
+
+  // Track keyboard visibility for auto-scroll
+  double _previousBottomInset = 0;
 
   // ✅ PHASE 3.1: Stream subscription for character switching
   StreamSubscription<List<ChatMessage>>? _messageSubscription;
@@ -229,6 +260,16 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
 
   @override
   Widget build(BuildContext context) {
+    // Auto-scroll when keyboard opens so last message stays visible
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    if (bottomInset > 0 && _previousBottomInset == 0) {
+      // Keyboard just opened — scroll after AnimatedPadding settles
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _scrollToBottom();
+      });
+    }
+    _previousBottomInset = bottomInset;
+
     // CRITICAL FIX: Wrap in MediaQuery to handle keyboard properly
     return MediaQuery.removePadding(
       context: context,
@@ -432,6 +473,8 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
   /// Phase 4: Conversation starter chips below greeting
   Widget _buildConversationStarters() {
     final character = ref.read(activeCharacterProvider);
+    final starters = _expertConversationStarters[character.id] ??
+        _expertConversationStarters['aristotle']!;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -450,7 +493,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
           Wrap(
             spacing: AppSizes.s8,
             runSpacing: AppSizes.s8,
-            children: character.conversationStarters.map((starter) {
+            children: starters.map((starter) {
               return ActionChip(
                 label: Text(
                   starter,
@@ -600,6 +643,33 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
     }
   }
 
+  /// Get contextual placeholder text based on scenario
+  String _getContextualPlaceholder() {
+    final character = ref.read(activeCharacterProvider);
+    final scenario = ref.read(currentScenarioProvider);
+
+    if (scenario?.type == ScenarioType.lessonMenu) {
+      final topicName = _getTopicNameFromId(scenario?.context['topicId'] ?? '');
+      return 'Ask ${character.name} about $topicName...';
+    }
+
+    return 'Ask ${character.name} a question...';
+  }
+
+  /// Map topic IDs to display names
+  String _getTopicNameFromId(String topicId) {
+    switch (topicId) {
+      case 'topic_body_systems':
+        return 'Body Systems';
+      case 'topic_heredity':
+        return 'Heredity';
+      case 'topic_energy':
+        return 'Energy in Ecosystems';
+      default:
+        return 'Science';
+    }
+  }
+
   Widget _buildInputArea() {
     final character = ref.watch(activeCharacterProvider);
     final bool isDisabled = _isStreaming;
@@ -607,7 +677,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
     // Contextual hint text based on state
     final String hintText = isDisabled
         ? '${character.name} is thinking...'
-        : 'Type a message...';
+        : _getContextualPlaceholder();
 
     return Material(
       color: Colors.white,

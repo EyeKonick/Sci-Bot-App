@@ -5,7 +5,12 @@
       "Bash(flutter analyze:*)",
       "Bash(python3:*)",
       "Bash(flutter build:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(del \"d:\\\\Program Projects\\\\Flutter\\\\SciBot\\\\sci_bot\\\\assets\\\\data\\\\lessons\\\\topic_body_systems\\\\lesson_diseases_004.json\")",
+      "Bash(python -c:*)",
+      "Bash(pip install:*)",
+      "Bash(git checkout:*)",
+      "Bash(find:*)"
     ]
   }
 }

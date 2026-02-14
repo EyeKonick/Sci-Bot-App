@@ -14,6 +14,7 @@ import '../../../features/lessons/data/repositories/progress_repository.dart';
 import '../../../features/lessons/data/repositories/bookmark_repository.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/models/scenario_model.dart';
+import '../../../shared/models/ai_character_model.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
@@ -468,11 +469,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: AppColors.primary.withOpacity(0.15),
-              child: const Icon(
-                Icons.school,
-                color: AppColors.primary,
-                size: 24,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              child: Image.asset(
+                AiCharacter.aristotle.avatarAsset,
+                width: 24,
+                height: 24,
               ),
             ),
             const SizedBox(width: AppSizes.s12),
@@ -483,7 +484,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         content: Text(
-          "Are you sure you want to leave? I'll be here when you return!",
+          "Leaving so soon? Your learning journey awaits! "
+          "I'll be here when you return, my friend.",
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.grey600,
           ),
@@ -495,6 +497,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               'Stay',
               style: AppTextStyles.buttonLabel.copyWith(
                 color: AppColors.primary,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
