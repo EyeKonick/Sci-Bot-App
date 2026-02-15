@@ -19,6 +19,8 @@ import '../../chat/presentation/widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
 import '../data/providers/guided_lesson_provider.dart';
 import '../data/providers/lesson_chat_provider.dart';
+import '../presentation/widgets/chat_image_message.dart';
+import '../../../shared/widgets/image_modal.dart';
 
 /// Module Viewer Screen - AI-Guided Learning
 /// Replaces static text with chatbot-guided two-phase learning flow
@@ -1188,6 +1190,34 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   /// Build a chat bubble for lesson messages
   Widget _buildLessonChatBubble(LessonChatMessage msg, AiCharacter character) {
+    // Handle image messages
+    // Handle image messages WITH avatar (same pattern as text messages)
+    if (msg.imageAssetPath != null && msg.imageAssetPath!.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.s12,
+          vertical: AppSizes.s4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, // Align avatar at top
+          children: [
+            // Character avatar (same as text messages)
+            _buildCharacterAvatar(character),
+            const SizedBox(width: AppSizes.s8),
+
+            // Image
+            Flexible(
+              child: ChatImageMessage(
+                imageAssetPath: msg.imageAssetPath!,
+                onTap: () => ImageModal.show(context, msg.imageAssetPath!),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final isUser = msg.role == 'user';
 
     return Padding(

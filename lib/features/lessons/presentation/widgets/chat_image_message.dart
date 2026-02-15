@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import '../../../../core/constants/app_sizes.dart';
+
+/// Widget for displaying images inline with chat messages.
+///
+/// Images are constrained to max 75% of screen width to match chat bubble sizing.
+/// Clickable to trigger enlarged modal view.
+///
+/// Usage:
+/// ```dart
+/// ChatImageMessage(
+///   imageAssetPath: 'assets/images/topic_1/lesson_1/1.png',
+///   onTap: () => ImageModal.show(context, imagePath),
+/// )
+/// ```
+class ChatImageMessage extends StatelessWidget {
+  final String imageAssetPath;
+  final VoidCallback onTap;
+
+  const ChatImageMessage({
+    super.key,
+    required this.imageAssetPath,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.s16,
+        vertical: AppSizes.s8,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft, // Align left like assistant messages
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                imageAssetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    padding: const EdgeInsets.all(AppSizes.s16),
+                    color: Colors.grey[200],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: AppSizes.s8),
+                        Text(
+                          'Image not found',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

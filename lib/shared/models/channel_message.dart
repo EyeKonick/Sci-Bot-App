@@ -62,11 +62,13 @@ class NarrationMessage {
   final String content;
   final String? characterId;
   final PacingHint pacingHint;
+  final String? imageAssetPath; // Optional image to display with message
 
   const NarrationMessage({
     required this.content,
     this.characterId,
     this.pacingHint = PacingHint.normal,
+    this.imageAssetPath,
   });
 
   /// Calculate display duration based on word count.
@@ -122,6 +124,7 @@ class NarrationMessage {
             content: split.trim(),
             characterId: msg.characterId,
             pacingHint: msg.pacingHint,
+            imageAssetPath: msg.imageAssetPath,
           ));
         }
       }

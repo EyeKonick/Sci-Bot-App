@@ -6,6 +6,7 @@ import '../../../../shared/models/ai_character_model.dart';
 import '../../../../shared/models/channel_message.dart';
 import '../../../chat/data/repositories/chat_repository.dart';
 import 'guided_lesson_provider.dart';
+import '../../../../core/utils/reading_time.dart';
 
 // Re-export MessageChannel and NarrationMessage for consumers
 export '../../../../shared/models/channel_message.dart';
@@ -63,6 +64,11 @@ class ScriptStep {
   /// Example: "I like how you think. Here's another question."
   final String? transitionBubble;
 
+  /// Optional image asset path to display after bot messages.
+  /// Image appears in the same channel as the text (narration or interaction).
+  /// Example: 'assets/images/topic_1/lesson_1/1.png'
+  final String? imageAssetPath;
+
   const ScriptStep({
     required this.botMessages,
     required this.channel,
@@ -71,6 +77,7 @@ class ScriptStep {
     this.isModuleComplete = false,
     this.pacingHint = PacingHint.normal,
     this.transitionBubble,
+    this.imageAssetPath,
   });
 }
 
@@ -90,6 +97,7 @@ class LessonChatMessage {
   final MessageChannel? channel; // null for legacy; user messages are always interaction
   final bool isStreaming;
   final DateTime timestamp;
+  final String? imageAssetPath; // Optional image to display with message
 
   const LessonChatMessage({
     required this.id,
@@ -98,12 +106,14 @@ class LessonChatMessage {
     this.channel,
     this.isStreaming = false,
     required this.timestamp,
+    this.imageAssetPath,
   });
 
   LessonChatMessage copyWith({
     String? content,
     bool? isStreaming,
     MessageChannel? channel,
+    String? imageAssetPath,
   }) {
     return LessonChatMessage(
       id: id,
@@ -112,6 +122,7 @@ class LessonChatMessage {
       channel: channel ?? this.channel,
       isStreaming: isStreaming ?? this.isStreaming,
       timestamp: timestamp,
+      imageAssetPath: imageAssetPath ?? this.imageAssetPath,
     );
   }
 }
@@ -667,12 +678,24 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
     if (step.channel == MessageChannel.narration) {
       print('📝 DEBUG - Routing to NARRATION channel - showing speech bubbles');
       // Send to speech bubble (NOT central chat) - wrap as NarrationMessage
-      _ref.read(lessonNarrativeBubbleProvider.notifier).showNarrative(
-        step.botMessages.map((msg) => NarrationMessage(
-          content: msg,
+      final narrationMessages = step.botMessages.map((msg) => NarrationMessage(
+        content: msg,
+        characterId: _currentCharacter?.id,
+        pacingHint: step.pacingHint,
+      )).toList();
+
+      // Add image to narration if present
+      if (step.imageAssetPath != null) {
+        narrationMessages.add(NarrationMessage(
+          content: '', // Empty content, image-only message
           characterId: _currentCharacter?.id,
           pacingHint: step.pacingHint,
-        )).toList(),
+          imageAssetPath: step.imageAssetPath,
+        ));
+      }
+
+      _ref.read(lessonNarrativeBubbleProvider.notifier).showNarrative(
+        narrationMessages,
         _currentLesson?.id ?? 'unknown',
       );
 
@@ -752,11 +775,21 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
         if (requestId != _currentRequestId) return;
       }
 
-      // Add interaction messages to central chat
+      // Add interaction messages to central chat WITH DYNAMIC READING TIME
       for (int i = 0; i < step.botMessages.length; i++) {
+        // Calculate reading time for previous message (natural pacing)
         if (i > 0) {
-          await Future.delayed(const Duration(milliseconds: 600));
+          final previousMessage = step.botMessages[i - 1];
+          final readingTime = ReadingTime.calculateTotalMs(previousMessage);
+
+          // Show typing indicator during the delay
+          state = state.copyWith(isStreaming: true);
+
+          await Future.delayed(Duration(milliseconds: readingTime));
           if (requestId != _currentRequestId) return; // Module changed, stop
+
+          // Hide typing indicator before showing next message
+          state = state.copyWith(isStreaming: false);
         }
         final message = LessonChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -768,6 +801,38 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
         state = state.copyWith(
           messages: [...state.messages, message],
         );
+      }
+
+      // Add image message if present WITH VIEWING TIME
+      if (step.imageAssetPath != null) {
+        // Give time to read last text message before showing image
+        final lastMessage = step.botMessages.isNotEmpty ? step.botMessages.last : '';
+        final readingTime = ReadingTime.calculateTotalMs(lastMessage);
+
+        // Show typing indicator during the delay
+        state = state.copyWith(isStreaming: true);
+
+        await Future.delayed(Duration(milliseconds: readingTime));
+        if (requestId != _currentRequestId) return; // Module changed, stop
+
+        // Hide typing indicator before showing image
+        state = state.copyWith(isStreaming: false);
+
+        final imageMessage = LessonChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          role: 'assistant',
+          content: '', // Empty content, image-only message
+          channel: MessageChannel.interaction,
+          timestamp: DateTime.now(),
+          imageAssetPath: step.imageAssetPath,
+        );
+        state = state.copyWith(
+          messages: [...state.messages, imageMessage],
+        );
+
+        // Pause after image to allow viewing (images need more time than text)
+        await Future.delayed(const Duration(milliseconds: 2000)); // 2s to view image
+        if (requestId != _currentRequestId) return;
       }
 
       // Store in conversation history
@@ -1377,21 +1442,46 @@ RESPONSE RULES:
   /// -----------------------------------------------------------------------
   List<ScriptStep> _scriptFascinate() {
     return [
-      // Step 0: Initial Greeting (NARRATIVE - Speech Bubble)
-      // Each string is a separate bubble - no \n\n to avoid semanticSplit issues
+      // Step 0: Initial Greeting (NARRATION - Speech Bubble)
       const ScriptStep(
         botMessages: [
-          'Hello, SCI-learner! Kumusta! Welcome to today\'s science journey here in Roxas City.',
-          'Today, we\'ll explore how your body moves blood and exchanges gases.',
-          'Just like boats carry goods from Culasi fish port to different barangays, your body has a transport system too!',
-          'This lesson is all about **Circulation and Gas Exchange** — your body\'s very own delivery network.',
+          'Hello, SCI-learner! Kumusta!',
         ],
         channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Excitement - welcoming energy
-        waitForUser: false, // Auto-continue to next step
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
       ),
 
-      // Step 1: First Prompt (INTERACTION - Main Chat)
+      // Step 1: Welcome with Roxas City image (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
+          'Welcome to today\'s science journey here in Roxas City, where the sea breeze is fresh and our bodies are always on the move.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/1.png', // Roxas City aerial view
+      ),
+
+      // Step 2: Boat analogy with image (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
+          'Today, we will explore how your body moves blood and exchanges gases, just like how boats carry goods from the Culasi fish port to different barangays.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/2.png', // Fishing boat
+      ),
+
+      // Step 3: Introduction to topic (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
+          'This lesson is all about **Circulation and Gas Exchange** — your body\'s very own delivery network.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+      ),
+
+      // Step 4: First Prompt (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Ready to dive in? Let\'s get **Fa-SCI-nated**!',
@@ -1400,19 +1490,36 @@ RESPONSE RULES:
         waitForUser: true, // Wait for user acknowledgment
       ),
 
-      // Step 2: Scenario (NARRATIVE - Speech Bubble) - includes engagement statement
+      // Step 5: Scenario introduction (NARRATION - Speech Bubble)
       const ScriptStep(
         botMessages: [
           'Imagine this...',
+        ],
+        channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+      ),
+
+      // Step 6: Biking scenario with image (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
           'You\'re biking along Roxas Boulevard during sunset or dancing energetically during Sinadya Festival.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/3.png', // Biking scene
+      ),
+
+       const ScriptStep(
+        botMessages: [
           'Have you noticed your heart beating faster?',
         ],
         channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Reflection - let student imagine
-        waitForUser: false, // Auto-continue to first question
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
       ),
 
-      // Step 3: Question 1 (INTERACTION - Main Chat)
+      // Step 7: Question 1 (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Why do you think your heart beats faster when you move?**',
@@ -1432,7 +1539,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-      // Step 4: Transition to Question 2 (NARRATIVE - Speech Bubble)
+      // Step 8: Transition to Question 2 (NARRATIVE - Speech Bubble)
       const ScriptStep(
         botMessages: [
           'Here\'s another question:',
@@ -1441,7 +1548,7 @@ RESPONSE RULES:
         waitForUser: false, // Auto-continue to question
       ),
 
-      // Step 5: Question 2 (INTERACTION - Main Chat)
+      // Step 9: Question 2 (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**What do you think carries oxygen from your lungs to your muscles?**',
@@ -1460,7 +1567,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-      // Step 8: Explanation (INTERACTION - Main Chat)
+      // Step 10: Explanation with delivery truck image (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Just like how delivery trucks distribute seafood from the port to the '
@@ -1470,9 +1577,10 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false, // Auto-continue to conclusion
+        imageAssetPath: 'assets/images/topic_1/lesson_1/4.png', // Delivery truck
       ),
 
-      // Step 9: Transition to Q&A (NARRATION - Speech Bubble)
+      // Step 11: Transition to Q&A (NARRATION - Speech Bubble)
       const ScriptStep(
         botMessages: [
           'Great job, SCI-learner! You\'ve completed the Fa-SCI-nate module.',
@@ -1482,7 +1590,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 10: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
+      // Step 12: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about what we covered—your heart, blood, or the circulatory system?',
@@ -1508,7 +1616,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 11: Completion Marker (NARRATION - Speech Bubble)
+      // Step 13: Completion Marker (NARRATION - Speech Bubble)
       const ScriptStep(
         botMessages: [
           'You\'re ready to move forward!',
@@ -3275,19 +3383,39 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 1: Part 1 - Types of Circulatory Systems (INTERACTION - Main Chat)
+      // Step 1: Part 1 - Introduction to Circulatory Systems (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Part 1: Types of Circulatory Systems**',
+          'Your circulatory system is your body\'s transport network powered by the heart, blood, and blood vessels.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/5.png', // Human circulatory system diagram
+      ),
+
+      // Step 2: Open Circulatory System (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
           'There are two types of circulatory systems:',
           '**1. Open Circulatory System**\n• Found in insects like crabs and grasshoppers\n• Blood flows freely and slowly\n• Best for small, less active animals',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/6.png', // Open circulatory animals
+      ),
+
+      // Step 3: Closed Circulatory System (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
           '**2. Closed Circulatory System (Humans!)**\n• Blood stays inside vessels\n• Pumped by the heart\n• Faster and more efficient—perfect for active lifestyles like swimming in Baybay or playing basketball after school',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/7.png', // Closed circulatory animals
       ),
 
-      // Step 2: Part 2 - The Heart (INTERACTION - Main Chat)
+      // Step 4: Part 2 - The Heart (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Part 2: The Heart – Your Body\'s Pump**',
@@ -3297,9 +3425,10 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/8.png', // Heart anatomy diagram
       ),
 
-      // Step 3: Quick Check Question (INTERACTION - Main Chat)
+      // Step 5: Quick Check Question (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Quick Check:** Which chamber do you think has thicker walls—the atria or ventricles?',
@@ -3316,19 +3445,29 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-      // Step 4: Part 3 - Blood Vessels (INTERACTION - Main Chat)
+      // Step 6: Part 3 - Blood Vessels Introduction (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Part 3: Blood Vessels – The Body\'s Roads**',
           'Think of blood vessels like the roads connecting barangays in Roxas City:',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/9.png', // Barangay roads aerial
+      ),
+
+      // Step 7: Blood Vessel Types (INTERACTION - Main Chat)
+      const ScriptStep(
+        botMessages: [
           '**Arteries** – carry blood away from the heart\n**Veins** – bring blood back to the heart\n**Capillaries** – tiny paths where oxygen and nutrients are exchanged',
           'Without these "roads," cells would never receive what they need to survive.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/10.png', // Blood vessels diagram
       ),
 
-      // Step 5: Part 4 - Blood Components (INTERACTION - Main Chat)
+      // Step 8: Part 4 - Blood Components (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           '**Part 4: Blood – The Transport Medium**',
@@ -3339,9 +3478,10 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/11.png', // Blood components diagram
       ),
 
-      // Step 6: Transition to Q&A (NARRATION - Speech Bubbles)
+      // Step 9: Transition to Q&A (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
           'Amazing work, investigator!',
@@ -3352,7 +3492,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      // Step 7: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
+      // Step 10: Mandatory End-of-Module Q&A (INTERACTION - Main Chat)
       const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about circulatory systems, the heart, blood vessels, or blood?',
@@ -3376,7 +3516,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      // Step 8: Completion Marker (NARRATION - Speech Bubbles)
+      // Step 11: Completion Marker (NARRATION - Speech Bubbles)
       const ScriptStep(
         botMessages: [
           'You\'re ready to test your knowledge!',

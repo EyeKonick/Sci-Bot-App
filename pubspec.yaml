@@ -68,16 +68,26 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/images/topic_1/
+    - assets/images/topic_1/lesson_1/
+    - assets/images/topic_1/lesson_2/
+    - assets/images/topic_1/lesson_3/
+    - assets/images/topic_2/
+    - assets/images/topic_2/lesson_1/
+    - assets/images/topic_2/lesson_2/
+    - assets/images/topic_3/
+    - assets/images/topic_3/lesson_1/
+    - assets/images/topic_3/lesson_2/
     - assets/icons/
     - assets/icons/chathead-icons/
     - assets/icons/topic-icons/
     - assets/icons/modules-icons/
     - assets/icons/lessons-icons/
     - assets/data/
-    - assets/data/topics.json           
-    - assets/data/lessons/             
-    - assets/data/lessons/topic_body_systems/  
-    - assets/data/lessons/topic_heredity/  
+    - assets/data/topics.json
+    - assets/data/lessons/
+    - assets/data/lessons/topic_body_systems/
+    - assets/data/lessons/topic_heredity/
     - assets/data/lessons/topic_energy/  
     
   # Fonts
