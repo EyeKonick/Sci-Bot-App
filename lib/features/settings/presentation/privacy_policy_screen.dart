@@ -10,73 +10,50 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   static const List<Map<String, String>> _policySections = [
     {
-      'title': 'Introduction',
+      'title': 'Information Collection and Use',
       'content':
-          'SCI-Bot is committed to protecting your privacy. This Privacy Policy explains how we handle your data when you use our educational application. We believe in transparency and keeping things simple.',
+          'For the purpose of enhancing our Service, this application may require users to provide personally identifiable information. This information will only be retained on the user\'s device and will not be collected by the developer in any way. The app may use third-party services that collect additional information for user identification.',
     },
     {
-      'title': 'Data We Collect',
+      'title': 'Log Data',
       'content':
-          'SCI-Bot collects minimal data, all stored locally on your device:\n\n'
-          'Lesson progress and completion status\n'
-          'Bookmarked lessons\n'
-          'App preferences (such as text size)\n'
-          'Chat conversation history with AI characters\n\n'
-          'We do NOT collect:\n\n'
-          'Personal information or identity data\n'
-          'Email addresses or account credentials\n'
-          'Usage analytics or behavioral tracking\n'
-          'Location data\n'
-          'Device identifiers',
+          'In the event of an error in the app, the developer may collect data and information (through third-party products) on the device called Log Data. This Log Data may include information such as the device\'s Internet Protocol ("IP") address, device name, operating system version, app configuration, time and date of use, and other statistics.',
     },
     {
-      'title': 'Data Storage',
+      'title': 'Cookies',
       'content':
-          'All your data is stored locally on your device using Hive, a lightweight local database. No data is sent to external servers for storage. Your progress, bookmarks, and preferences remain on your device and are deleted when the app is uninstalled.',
+          'This app does not use "cookies" explicitly. However, it may use third-party code and libraries that use "cookies" to collect information and improve their services. Users have the option to accept or refuse these cookies and can be notified when a cookie is being sent to their device. Refusing cookies may limit the use of some portions of the Service.',
     },
     {
-      'title': 'AI Chat Feature',
+      'title': 'Service Providers',
       'content':
-          'When you use the AI chat feature, your messages are sent to OpenAI\'s API to generate responses. Important details:\n\n'
-          'No personal identification is sent with your messages\n'
-          'Conversations are used only for generating real-time responses\n'
-          'Chat history is stored locally on your device\n'
-          'An internet connection is required for AI chat functionality\n'
-          'When offline, the AI chat feature is unavailable but all other app features work normally',
+          'This app may employ third-party companies and individuals to facilitate, provide, or analyze the Service. These third parties may have access to Personal Information but are obligated not to disclose or use it for any other purposes.',
     },
     {
-      'title': 'Third-Party Services',
+      'title': 'Security',
       'content':
-          'SCI-Bot uses the following third-party services:\n\n'
-          'OpenAI API - Powers the AI chat feature (requires internet)\n'
-          'Google Fonts - Provides typography (Poppins, Inter)\n\n'
-          'We do not use any analytics, advertising, or tracking services. Your learning experience is private.',
+          'The developer aims to use commercially acceptable means to protect users\' Personal Information, although no electronic storage method is 100% secure. Therefore, absolute security cannot be guaranteed.',
     },
     {
-      'title': 'Your Rights',
+      'title': 'Links and Other Sites',
       'content':
-          'You have full control over your data:\n\n'
-          'View your progress and chat history anytime within the app\n'
-          'Delete all app data through the Development Tools option\n'
-          'Uninstall the app to remove all stored data completely\n'
-          'No data is shared with third parties for marketing or profiling\n\n'
-          'Since all data is stored locally, there is no account to delete or data export needed.',
+          'The Service may contain links to other sites that are not operated by the developer. When users click on a third-party link, they will be directed to that site and are advised to review the external site\'s Privacy Policy as the developer has no control over its content, privacy policies, or practices.',
     },
     {
       'title': 'Children\'s Privacy',
       'content':
-          'SCI-Bot is designed for Grade 9 students (ages 14-15). The app does not collect personal information from any users, including minors. No account creation is required, and no personal data is transmitted to external servers beyond the AI chat messages.',
+          'The Services do not address anyone under the age of 13 and do not knowingly collect personally identifiable information from children under 13 years of age. If it is discovered that a child under 13 has provided personal information, the developer will immediately delete it from their servers.',
     },
     {
-      'title': 'Changes to This Policy',
+      'title': 'Changes to This Privacy Policy',
       'content':
-          'We may update this Privacy Policy from time to time. Any changes will be reflected in the app. Continued use of SCI-Bot after changes constitutes acceptance of the updated policy.',
+          'The developer may update the Privacy Policy from time to time. Users are advised to review this page periodically for changes. Any updates will be notified by posting the new Privacy Policy on this page. This policy is effective as of August, 2025.',
     },
     {
       'title': 'Contact Us',
       'content':
-          'If you have questions about this Privacy Policy or how your data is handled, please contact us at:\n\n'
-          'scibot.support@example.com',
+          'For any queries or suggestions about this Privacy Policy, please feel free to contact us at:\n\n'
+          'scibot05@gmail.com',
     },
   ];
 
@@ -122,7 +99,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     top: AppSizes.s8,
                   ),
                   child: Text(
-                    'Last Updated: February 8, 2026',
+                    'Effective as of August, 2025',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.grey600,
                       fontStyle: FontStyle.italic,

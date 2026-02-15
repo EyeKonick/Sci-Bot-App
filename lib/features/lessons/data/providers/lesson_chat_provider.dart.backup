@@ -40,7 +40,7 @@ class ScriptStep {
 
   final String? imageAssetPath;
 
- ScriptStep({
+  const ScriptStep({
     required this.botMessages,
     required this.channel,
     this.waitForUser = false,
@@ -1186,7 +1186,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptFascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner! Kumusta!',
         ],
@@ -1195,7 +1195,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to today\'s science journey here in Roxas City, where the sea breeze is fresh and our bodies are always on the move.',
         ],
@@ -1204,7 +1204,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/1.png', // Roxas City aerial view
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today, we will explore how your body moves blood and exchanges gases, just like how boats carry goods from the Culasi fish port to different barangays.',
         ],
@@ -1213,7 +1213,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/2.png', // Fishing boat
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'This lesson is all about **Circulation and Gas Exchange** — your body\'s very own delivery network.',
         ],
@@ -1221,7 +1221,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to dive in? Let\'s get **Fa-SCI-nated**!',
         ],
@@ -1229,7 +1229,7 @@ RESPONSE RULES:
         waitForUser: true, // Wait for user acknowledgment
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
         ],
@@ -1238,7 +1238,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re biking along Roxas Boulevard during sunset or dancing energetically during Sinadya Festival.',
         ],
@@ -1247,7 +1247,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/3.png', // Biking scene
       ),
 
-      ScriptStep(
+       const ScriptStep(
         botMessages: [
           'Have you noticed your heart beating faster?',
         ],
@@ -1256,7 +1256,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do you think your heart beats faster when you move?**',
         ],
@@ -1275,7 +1275,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Here\'s another question:',
         ],
@@ -1283,7 +1283,7 @@ RESPONSE RULES:
         waitForUser: false, // Auto-continue to question
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What do you think carries oxygen from your lungs to your muscles?**',
         ],
@@ -1301,7 +1301,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Just like how delivery trucks distribute seafood from the port to the '
               'markets around Capiz, your body has a system that delivers oxygen, '
@@ -1325,7 +1325,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about what we covered—your heart, blood, or the circulatory system?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -1350,7 +1350,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to move forward!',
           'Tap **Next** to explore Goal SCI-tting!',
@@ -1371,17 +1371,17 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGoalScitting() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Now that you\'re Fa-SCI-nated, let\'s set our learning goals!',
-          NarrationVariations.getModuleWelcome('goal'),
+          'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Welcoming excitement
         waitForUser: false, // Auto-continue
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to see what you\'ll master today?',
         ],
@@ -1389,7 +1389,7 @@ RESPONSE RULES:
         waitForUser: true, // Acknowledgment
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:',
           '**1.** Compare the two types of circulatory systems and understand why humans have the system we do',
@@ -1400,7 +1400,7 @@ RESPONSE RULES:
         waitForUser: false, // Auto-continue after displaying
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Think of these goals as your science destination—let\'s get there step by step!',
         ],
@@ -1421,7 +1421,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about our learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -1445,7 +1445,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to move forward!',
           'Tap **Next** to explore Pre-SCI-ntation!',
@@ -1466,18 +1466,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPreScintation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job setting your learning goals!',
           'Now let\'s build the foundation.',
-          NarrationVariations.getModuleWelcome('presentation'),
+          'Welcome to **Pre-SCI-ntation** — let\'s start with the basics!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s start with the basics.',
           'Your body needs balance to survive—this balance is called **homeostasis**.',
@@ -1487,7 +1487,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Small organisms rely on **diffusion**, but humans, like active students in Roxas City, need something faster and stronger.',
           'That\'s why we have a **circulatory system** powered by the heart, blood, and blood vessels.',
@@ -1508,7 +1508,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we investigate deeper, do you have any questions about homeostasis or the circulatory system?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -1531,7 +1531,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to investigate!',
           'Tap **Next** to explore Inve-SCI-tigation!',
@@ -1552,18 +1552,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInveScitigation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You now have a solid foundation!',
           'Time to Inve-SCI-tigate deeper!',
-          NarrationVariations.getModuleWelcome('investigation'),
+          'Welcome to **Inve-SCI-tigation** — let\'s discover the details!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 1: Types of Circulatory Systems**',
           'Your circulatory system is your body\'s transport network powered by the heart, blood, and blood vessels.',
@@ -1573,7 +1573,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/5.png', // Human circulatory system diagram
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'There are two types of circulatory systems:',
           '**1. Open Circulatory System**\n• Found in insects like crabs and grasshoppers\n• Blood flows freely and slowly\n• Best for small, less active animals',
@@ -1583,7 +1583,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/6.png', // Open circulatory animals
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**2. Closed Circulatory System (Humans!)**\n• Blood stays inside vessels\n• Pumped by the heart\n• Faster and more efficient—perfect for active lifestyles like swimming in Baybay or playing basketball after school',
         ],
@@ -1592,7 +1592,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/7.png', // Closed circulatory animals
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 2: The Heart – Your Body\'s Pump**',
           'Your heart is about the size of your clenched fist ✊',
@@ -1604,7 +1604,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/8.png', // Heart anatomy diagram
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Quick Check:** Which chamber do you think has thicker walls—the atria or ventricles?',
         ],
@@ -1620,7 +1620,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 3: Blood Vessels – The Body\'s Roads**',
           'Think of blood vessels like the roads connecting barangays in Roxas City:',
@@ -1630,7 +1630,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/9.png', // Barangay roads aerial
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Arteries** – carry blood away from the heart\n**Veins** – bring blood back to the heart\n**Capillaries** – tiny paths where oxygen and nutrients are exchanged',
           'Without these "roads," cells would never receive what they need to survive.',
@@ -1640,7 +1640,7 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/10.png', // Blood vessels diagram
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 4: Blood – The Transport Medium**',
           'Blood makes up about 7–8% of your body weight.',
@@ -1665,7 +1665,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about circulatory systems, the heart, blood vessels, or blood?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -1688,7 +1688,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to test your knowledge!',
           'Tap **Next** to take the Self-A-SCI-ssment!',
@@ -1707,19 +1707,19 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptSelfAScissment() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Wow, you\'ve learned so much about the circulatory system!',
           'Now it\'s time to test your understanding.',
           'Don\'t worry — this is to help you learn, not to stress you out.',
-          NarrationVariations.getModuleWelcome('assessment'),
+          'Welcome to **Self-A-SCI-ssment**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to check your knowledge?',
         ],
@@ -1727,7 +1727,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1: What system transports oxygen and nutrients in the body?**',
         ],
@@ -1742,7 +1742,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2: Which blood component helps fight infection?**',
         ],
@@ -1757,7 +1757,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3: Why is a closed circulatory system efficient for humans?**',
         ],
@@ -1773,7 +1773,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'If you can answer these questions, you\'re doing SCI-mazing!',
           'Remember: It\'s okay if you need to review. Learning takes time, and every question helps you understand better!',
@@ -1783,7 +1783,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions about what we\'ve covered in this assessment?',
           'Type your question, or type "ready" to move to the bonus content!',
@@ -1827,18 +1827,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptScipplementary() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Congratulations! You\'ve completed the core lesson on the circulatory system.',
           'Ready for some bonus content and fun activities?',
-          NarrationVariations.getModuleWelcome('supplementary'),
+          'Welcome to **SCI-pplementary** — let\'s extend your learning!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Celebration
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready for bonus content?',
         ],
@@ -1846,7 +1846,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Tips to Keep Your Circulatory System Healthy:**',
           '✅ **Exercise regularly** — At least 30 minutes daily\n✅ **Eat nutritious food** — Fruits, vegetables, lean protein (like bangus from Roxas!)\n✅ **Stay hydrated** — Drink 8 glasses of water daily\n✅ **Get enough sleep** — 8-10 hours for teenagers\n✅ **Avoid smoking** — It damages blood vessels',
@@ -1858,7 +1858,7 @@ RESPONSE RULES:
         waitForUser: false, // Auto-continue after displaying
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'ve completed the lesson on **The Circulation System**!',
           'You now understand how your heart pumps blood, the role of blood vessels, and why this system is essential for life.',
@@ -1869,7 +1869,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions before we finish this lesson?',
           'Type your question, or type "done" to complete the lesson!',
@@ -1913,7 +1913,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2Fascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello again, SCI-learner!',
           'Welcome back to your science journey here in Roxas City, Capiz, where life flows—just like your blood!',
@@ -1925,7 +1925,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'This lesson is called **Circulation**.',
         ],
@@ -1934,7 +1934,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to follow the path of your blood?',
         ],
@@ -1942,7 +1942,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
           'You jog along Baybay Roxas early in the morning.',
@@ -1953,7 +1953,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Where do you think your blood goes first to get oxygen?**',
         ],
@@ -1981,7 +1981,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about blood pathways or where blood goes to get oxygen?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2001,7 +2001,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to move forward!',
           'Tap **Next** to explore Goal SCI-tting!',
@@ -2022,17 +2022,17 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2GoalScitting() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! Let\'s set your learning goals for this lesson.',
-          NarrationVariations.getModuleWelcome('goal'),
+          'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to see what you\'ll master today?',
         ],
@@ -2040,7 +2040,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:',
           '**1.** Differentiate between the pulmonary and systemic circuits',
@@ -2051,7 +2051,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Think of your circulatory system as Roxas City\'s transportation network.',
           'Just like jeepneys have specific routes, your blood follows specific pathways.',
@@ -2073,7 +2073,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about our learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2116,17 +2116,17 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2PreScintation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Now let\'s build the foundation!',
-          NarrationVariations.getModuleWelcome('presentation'),
+          'Welcome to **Pre-SCI-ntation**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Blood does not move randomly inside your body.',
           'Instead, it follows **specific pathways** called **blood circuits**.',
@@ -2138,7 +2138,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Why does your body need two circuits?',
           '**Your body needs:**\n• A way to refresh blood with oxygen (pulmonary)\n• A way to deliver oxygen to all cells (systemic)',
@@ -2148,7 +2148,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Understanding these circuits helps you understand how your body keeps every cell alive!',
           'You\'ve completed Pre-SCI-ntation!',
@@ -2158,7 +2158,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we investigate deeper, do you have any questions about blood circuits?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2178,12 +2178,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'You\'re ready to investigate!',
+          'Tap **Next** to explore Inve-SCI-tigation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2201,10 +2199,10 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2InveScitigation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Time to Inve-SCI-tigate deeper!',
-          NarrationVariations.getModuleWelcome('investigation'),
+          'Welcome to **Inve-SCI-tigation**!',
           'Let\'s explore how blood travels through your body using two distinct circuits.',
         ],
         channel: MessageChannel.narration,
@@ -2212,7 +2210,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 1: Pulmonary Circuit**',
           'The pulmonary circuit is the pathway between the heart and the lungs.',
@@ -2223,7 +2221,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which gas is removed in the lungs?**',
         ],
@@ -2239,7 +2237,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 2: Systemic Circuit**',
           'The systemic circuit carries blood from the heart to the rest of the body.',
@@ -2251,7 +2249,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which circuit do you think is larger?**',
         ],
@@ -2267,7 +2265,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Mini Investigation:**',
           'Think of blood vessels like straws of different sizes.',
@@ -2285,19 +2283,17 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'Amazing work, investigator!',
+          'You\'ve completed Inve-SCI-tigation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about the pulmonary circuit, systemic circuit, or blood flow?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2317,12 +2313,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready to test your knowledge!',
+          'Tap **Next** to take the Self-A-SCI-ssment!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2340,18 +2334,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2SelfAScissment() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'ve learned so much about blood circuits!',
           'Now it\'s time to test your understanding.',
-          NarrationVariations.getModuleWelcome('assessment'),
+          'Welcome to **Self-A-SCI-ssment**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to check your knowledge?',
         ],
@@ -2359,7 +2353,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1: Which circuit removes carbon dioxide from the blood?**',
         ],
@@ -2374,7 +2368,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2: Which circuit supplies oxygen to body tissues?**',
         ],
@@ -2389,7 +2383,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3: Where does blood entering the left atrium come from?**',
         ],
@@ -2404,7 +2398,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'If you can answer these questions, you\'re doing SCI-mazing!',
           'Remember: Learning takes time, and every question helps you understand better!',
@@ -2414,7 +2408,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions about what we\'ve covered in this assessment?',
           'Type your question, or type "ready" to move to the bonus content!',
@@ -2433,12 +2427,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'You\'ve completed your assessment! Well done!',
+          'Tap **Next** for bonus activities!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2456,18 +2448,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptCirc2Scipplementary() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Congratulations! You\'ve completed the core lesson on blood circulation pathways!',
           'Ready for some bonus content?',
-          NarrationVariations.getModuleWelcome('supplementary'),
+          'Welcome to **SCI-pplementary**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Celebration
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready for bonus content and health tips?',
         ],
@@ -2475,7 +2467,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Did you know?**',
           'The first stethoscope was made of wood over 170 years ago!',
@@ -2486,7 +2478,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**To keep your circulation healthy here in Roxas City:**',
           '✅ **Stay active** (walk, bike, dance!)\n✅ **Eat nutritious food** (fresh fish helps!)\n✅ **Avoid smoking** and too much fatty food',
@@ -2496,19 +2488,17 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Great job, SCI-learner!',
+          'You\'ve successfully followed the path of blood through the pulmonary and systemic circuits!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Celebration
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions before we finish this lesson?',
           'Type your question, or type "done" to complete the lesson!',
@@ -2527,12 +2517,11 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Next up: how circulation and gas exchange work together to keep your body alive and energized!',
+          'Padayon sa pagtukib sa SCI-ensiya!',
+          'Tap **Next** to complete this lesson!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2550,7 +2539,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespFascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner! Welcome back to your science adventure here in Roxas City, Capiz!',
           'The air is fresh and the sea breeze keeps us energized.',
@@ -2561,7 +2550,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today, we\'ll explore the **Respiratory System**—the system that allows your body to breathe, exchange gases, and release energy.',
         ],
@@ -2570,7 +2559,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to take a deep breath and begin?',
         ],
@@ -2578,7 +2567,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
           'You\'re jogging early in the morning along the roads of Pueblo de Panay.',
@@ -2589,7 +2578,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do you think breathing becomes faster during exercise?**',
         ],
@@ -2605,7 +2594,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Excellent! You\'ve completed Fa-SCI-nate!',
         ],
@@ -2614,7 +2603,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about breathing or the respiratory system?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2634,12 +2623,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'fascinate',
-            moduleName: 'Fa-SCI-nate',
-          ),
+          'You\'re ready to move forward!',
+          'Tap **Next** to explore Goal SCI-tting!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2657,17 +2644,17 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespGoalScitting() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! Let\'s set your learning goals for this lesson.',
-          NarrationVariations.getModuleWelcome('goal'),
+          'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to see what you\'ll master today?',
         ],
@@ -2675,7 +2662,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:',
           '**1.** Describe the three main events of respiration',
@@ -2687,7 +2674,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! You\'ve completed Goal SCI-tting!',
         ],
@@ -2696,7 +2683,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about our learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2716,12 +2703,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'goal',
-            moduleName: 'Goal SCI-tting',
-          ),
+          'You\'re ready to build the foundation!',
+          'Tap **Next** to explore Pre-SCI-ntation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2739,17 +2724,17 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespPreScintation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Now let\'s build the foundation!',
-          NarrationVariations.getModuleWelcome('presentation'),
+          'Welcome to **Pre-SCI-ntation**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Many people think respiration is just breathing.',
           'But respiration is actually a **complex process of gas exchange** that allows your body to produce energy.',
@@ -2759,7 +2744,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Respiration involves three main events:',
           '**1. Breathing** – air enters and leaves the lungs\n**2. Diffusion** – oxygen and carbon dioxide move across membranes\n**3. Transport of gases** – oxygen is delivered to cells, carbon dioxide is removed',
@@ -2769,7 +2754,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'ve completed Pre-SCI-ntation!',
         ],
@@ -2778,7 +2763,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we investigate deeper, do you have any questions about respiration or the three main events?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2798,12 +2783,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'You\'re ready to investigate!',
+          'Tap **Next** to explore Inve-SCI-tigation!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2821,10 +2804,10 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespInveScitigation() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Time to Inve-SCI-tigate deeper!',
-          NarrationVariations.getModuleWelcome('investigation'),
+          'Welcome to **Inve-SCI-tigation**!',
           'Let\'s explore how air travels through your body and how gas exchange keeps you alive!',
         ],
         channel: MessageChannel.narration,
@@ -2832,7 +2815,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 1: Three Main Events of Respiration**',
           'Here are the three main events:',
@@ -2842,7 +2825,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which event happens in the alveoli?**',
         ],
@@ -2858,7 +2841,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 2: Path of Air**',
           'Let\'s trace the path of air when you inhale:',
@@ -2868,7 +2851,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Where is air warmed and moistened?**',
         ],
@@ -2884,7 +2867,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 3: Parts of the Respiratory System**',
           'Each part has a special role:',
@@ -2895,7 +2878,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What prevents food from entering the lungs?**',
         ],
@@ -2911,7 +2894,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 4: Alveoli – Site of Gas Exchange**',
           'The alveoli are tiny, balloon-like air sacs.',
@@ -2921,7 +2904,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do you think having millions of alveoli is important?**',
         ],
@@ -2937,7 +2920,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Amazing work, investigator!',
           'You\'ve completed Inve-SCI-tigation!',
@@ -2947,7 +2930,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about the respiratory system parts, the path of air, or the alveoli?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -2967,12 +2950,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready to test your knowledge!',
+          'Tap **Next** to take the Self-A-SCI-ssment!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -2990,18 +2971,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespSelfAScissment() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'ve learned so much about the respiratory system!',
           'Now it\'s time to test your understanding.',
-          NarrationVariations.getModuleWelcome('assessment'),
+          'Welcome to **Self-A-SCI-ssment**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to check your knowledge?',
         ],
@@ -3009,7 +2990,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1: What gas do we need to release energy from food?**',
         ],
@@ -3024,7 +3005,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2: What gas is removed from the body during respiration?**',
         ],
@@ -3039,7 +3020,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3: Where does gas exchange take place?**',
         ],
@@ -3054,7 +3035,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'If you can answer these questions, you\'re doing SCI-mazing!',
           'Remember: Learning takes time, and every question helps you understand better!',
@@ -3064,7 +3045,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions about what we\'ve covered in this assessment?',
           'Type your question, or type "ready" to move to the bonus content!',
@@ -3083,12 +3064,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'You\'ve completed your assessment! Well done!',
+          'Tap **Next** for bonus activities!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -3106,18 +3085,18 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptRespScipplementary() {
     return [
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Congratulations! You\'ve completed the core lesson on the respiratory system!',
           'Ready for some bonus content?',
-          NarrationVariations.getModuleWelcome('supplementary'),
+          'Welcome to **SCI-pplementary**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Celebration
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready for bonus content and health tips?',
         ],
@@ -3125,7 +3104,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Did you know?**',
           'Difficulty in breathing is called **dyspnea**. It may happen after heavy exercise or due to health conditions.',
@@ -3135,7 +3114,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**To keep your respiratory system healthy in Roxas City:**',
           '✅ **Avoid smoking**\n✅ **Exercise regularly**\n✅ **Breathe clean air**\n✅ **Eat nutritious food**',
@@ -3145,19 +3124,17 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Great job, SCI-learner!',
+          'You\'ve learned how the respiratory system helps your body breathe and exchange gases!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Celebration
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions before we finish this lesson?',
           'Type your question, or type "done" to complete the lesson!',
@@ -3176,12 +3153,11 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Next, you\'ll discover how the respiratory and circulatory systems work together to keep you alive!',
+          'Padayon sa pagtuon sa SCI-ensiya!',
+          'Tap **Next** to complete this lesson!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -3199,7 +3175,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1Fascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner! Welcome to another science adventure here in Roxas City!',
         ],
@@ -3207,30 +3183,23 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Where family traits like smiles, dimples, or curly hair are often noticed during reunions and fiestas.',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/1.png',
-      ),
-      ScriptStep(
-        botMessages: [
           'Have you ever wondered why you look like your parents or why you share similar traits with your siblings?',
           '\nToday, we will explore **Genes and Chromosomes**—the tiny structures inside your cells that carry instructions making you YOU.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to discover your biological blueprint?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this... During a family gathering in Roxas City, someone says:',
           '"Ka-itsura mo guid imo iloy!" (You really look like your mother!)',
@@ -3238,7 +3207,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do you think family members look alike?**',
         ],
@@ -3254,14 +3223,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! You\'ve completed Fa-SCI-nate!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about genes or family traits?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3276,14 +3245,12 @@ RESPONSE RULES:
             'Say "Excellent! You\'ve completed Fa-SCI-nate. Tap Next to set your learning goals!"\n',
         pacingHint: PacingHint.normal,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'fascinate',
-            moduleName: 'Fa-SCI-nate',
-          ),
+          'You\'re ready to move forward!',
+          'Tap **Next** to explore Goal SCI-tting!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3296,29 +3263,29 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1GoalScitting() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleWelcome('goal'),
+          'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! Let\'s set your learning goals for this lesson.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to unlock the secrets of your genetic code?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:\n\n'
           '1. Describe where genes are located in chromosomes\n'
@@ -3329,7 +3296,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Do you have any questions about these learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3344,14 +3311,11 @@ RESPONSE RULES:
             'Say "Excellent! You understand the goals. Tap Next to explore Pre-SCI-ntation!"\n',
         pacingHint: PacingHint.normal,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'goal',
-            moduleName: 'Goal SCI-tting',
-          ),
+          'Perfect! Tap **Next** to explore Pre-SCI-ntation!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3364,22 +3328,22 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1PreScintation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleWelcome('presentation'),
+          'Welcome to **Pre-SCI-ntation**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to dive into the details?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s build your foundation!',
           'For a long time, people had different ideas about heredity.',
@@ -3388,7 +3352,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Some believed traits came from blood. Others believed traits were blended from parents.',
           'But science has shown us that traits are passed through **genes**, not blood.',
@@ -3397,7 +3361,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'These genes are found in **DNA**, which is packed inside **chromosomes**.',
         ],
@@ -3405,7 +3369,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Think of it like this:\n',
           '📖 DNA = The instruction manual',
@@ -3416,7 +3380,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-      ScriptStep(
+       const ScriptStep(
         botMessages: [
           'Do you have any questions about these learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3431,14 +3395,11 @@ RESPONSE RULES:
             'Say "Excellent! You understand the goals. Tap Next to explore Inve-SCI-tigation!"\n',
         pacingHint: PacingHint.normal,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'Perfect! Tap **Next** to explore Inve-SCI-tigation!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3451,7 +3412,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1InveScitigation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Time to Inve-SCI-tigate!',
         ],
@@ -3459,7 +3420,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s explore genes and chromosomes in detail.',
           '\n**Part 1: Genes and Chromosomes**',
@@ -3469,7 +3430,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Where are chromosomes found in most human cells?**',
         ],
@@ -3485,7 +3446,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 2: Human Chromosomes**',
           'Each human body cell has **46 chromosomes**, arranged in **23 pairs**.',
@@ -3494,7 +3455,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What do we call cells with two sets of chromosomes?**',
         ],
@@ -3510,7 +3471,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 3: DNA and the Genetic Code**',
           'DNA looks like a twisted ladder, called a **double helix**.',
@@ -3519,7 +3480,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which bases pair together?**',
         ],
@@ -3535,7 +3496,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 4: Genotype and Phenotype**',
           'Your **genotype** is the set of genes you inherit.',
@@ -3544,7 +3505,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which of these is a phenotype?**',
         ],
@@ -3561,7 +3522,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 5: Heredity and Environment**',
           'Genes are important—but the environment matters too!',
@@ -3570,7 +3531,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which affects traits like skin color?**',
         ],
@@ -3586,14 +3547,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Amazing work! You\'ve investigated the world of genes and chromosomes!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about genes, chromosomes, or DNA?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3605,14 +3566,12 @@ RESPONSE RULES:
             'If they ask a question: Answer thoroughly. DO NOT say "Tap Next".\n'
             'If they say "ready": Say "Excellent! Tap Next to test your knowledge!"\n',
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready for the assessment!',
+          'Tap **Next** to explore Self-A-SCI-ssment!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3625,7 +3584,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1SelfAScissment() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Time for Self-A-SCI-ssment!',
         ],
@@ -3633,14 +3592,14 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s check what you\'ve learned!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1: What carries genes—DNA or blood?**',
         ],
@@ -3656,7 +3615,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2: What is the difference between genotype and phenotype?**',
         ],
@@ -3672,7 +3631,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3: Why must sex cells be haploid?**',
         ],
@@ -3688,14 +3647,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Excellent work on the assessment!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions before we wrap up?',
           'Type your question, or type "done" if you\'re ready to finish.',
@@ -3707,14 +3666,12 @@ RESPONSE RULES:
             'If they ask: Answer thoroughly.\n'
             'If they say "done" or "ready": Say "Great job! Tap Next for interesting facts!"\n',
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'You\'re doing great!',
+          'Tap **Next** for SCI-pplementary facts!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3727,7 +3684,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenetics1Scipplementary() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'SCI-pplementary facts!',
         ],
@@ -3735,14 +3692,14 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Humans have around **20,000–25,000 genes**!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Traits like height, weight, and even talents are shaped by genes **and** environment.',
           'Celebrate your uniqueness—because no one else has your exact genetic combination!',
@@ -3750,7 +3707,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job, SCI-learner!',
           'You\'ve explored the world of genes and chromosomes—the foundation of heredity.',
@@ -3758,7 +3715,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'In the next lesson, we\'ll learn how traits are passed on from parents to offspring.',
           '**Padayon sa tu-on sa SCI-ensiya!** (Continue learning science!)',
@@ -3766,21 +3723,19 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to finish this module?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Congratulations! You\'ve completed Genes and Chromosomes!',
+          'Tap **Next** to continue your learning journey!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3796,7 +3751,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritFascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner! Welcome back to our science journey here in Roxas City, Capiz!',
         ],
@@ -3804,7 +3759,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Where family resemblances are often noticed during fiestas, reunions, and even at the streets.',
           '\nYou already know that traits are passed from parents to children.',
@@ -3813,7 +3768,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today, we\'ll explore **Non-Mendelian Inheritance**!',
           'Patterns that explain why traits like blood type, skin color, and some diseases don\'t follow the usual dominant–recessive pattern.',
@@ -3821,14 +3776,14 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to level up your genetics knowledge?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
           'In a family from Roxas City, one child has blood type AB, while the parents have type A and type B.',
@@ -3836,7 +3791,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**How is that possible?**',
         ],
@@ -3852,14 +3807,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! You\'ve completed Fa-SCI-nate!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about non-Mendelian inheritance?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3871,12 +3826,10 @@ RESPONSE RULES:
             'If they ask: Answer thoroughly. DO NOT say "Tap Next".\n'
             'If they say "ready": Say "Excellent! Tap Next to set your learning goals!"\n',
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'fascinate',
-            moduleName: 'Fa-SCI-nate',
-          ),
+          'You\'re ready to move forward!',
+          'Tap **Next** to explore Goal SCI-tting!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
@@ -3891,29 +3844,29 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritGoalScitting() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleWelcome('goal'),
+          'Welcome to **Goal SCI-tting**!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great! Let\'s set your learning goals for this lesson.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to explore these complex patterns?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'By the end of this lesson, you will be able to:\n\n'
           '1. Explain different patterns of non-Mendelian inheritance\n'
@@ -3924,7 +3877,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Do you have any questions about these learning goals?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -3939,14 +3892,11 @@ RESPONSE RULES:
             'Say "Excellent! You understand the goals. Tap Next to explore Pre-SCI-ntation!"\n',
         pacingHint: PacingHint.normal,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'goal',
-            moduleName: 'Goal SCI-tting',
-          ),
+          'Perfect! Tap **Next** to explore Pre-SCI-ntation!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -3959,7 +3909,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritPreScintation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Pre-SCI-ntation!',
         ],
@@ -3967,7 +3917,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s build your foundation!',
           'Gregor Mendel discovered basic rules of inheritance using pea plants.',
@@ -3975,7 +3925,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'However, scientists later found that many traits do **not** follow Mendel\'s rules.',
           'These traits follow **Non-Mendelian inheritance**.',
@@ -3983,7 +3933,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'In Non-Mendelian inheritance:',
           '• Traits may blend',
@@ -3995,21 +3945,18 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to dive into the details?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'Excellent! Tap **Next** to begin Inve-SCI-tigation!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -4022,7 +3969,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritInveScitigation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Inve-SCI-tigation!',
         ],
@@ -4030,7 +3977,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Time to Inve-SCI-tigate!',
           'Let\'s explore the different patterns of non-Mendelian inheritance.',
@@ -4038,7 +3985,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 1: Incomplete Dominance**',
           'In incomplete dominance, neither allele is fully dominant.',
@@ -4047,14 +3994,14 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Example: Red flower + White flower → **Pink flower**',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What phenotype appears in a heterozygous individual?**',
         ],
@@ -4070,7 +4017,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 2: Codominance**',
           'In codominance, both alleles are **equally expressed**.',
@@ -4079,7 +4026,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Is there a recessive allele in codominance?**',
         ],
@@ -4095,7 +4042,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 3: Multiple Alleles**',
           'Multiple alleles mean that **more than two alleles** exist for a trait.',
@@ -4104,14 +4051,14 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Even though there are three alleles, a person only gets **two**—one from each parent.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which blood type is recessive?**',
         ],
@@ -4127,7 +4074,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 4: Polygenic Traits**',
           'Some traits are controlled by **many genes** working together.',
@@ -4137,7 +4084,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do people in Roxas City have different skin shades?**',
         ],
@@ -4153,7 +4100,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Part 5: Sex-linked Traits**',
           'Some genes are found on the **X chromosome**.',
@@ -4163,7 +4110,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which condition is a sex-linked trait?**',
         ],
@@ -4180,14 +4127,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Amazing work! You\'ve investigated all the non-Mendelian patterns!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, any questions about these inheritance patterns?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -4199,14 +4146,12 @@ RESPONSE RULES:
             'If they ask: Answer thoroughly. DO NOT say "Tap Next".\n'
             'If they say "ready": Say "Excellent! Tap Next to test your knowledge!"\n',
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready for the assessment!',
+          'Tap **Next** to explore Self-A-SCI-ssment!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -4219,7 +4164,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritSelfAScissment() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Self-A-SCI-ssment!',
         ],
@@ -4227,7 +4172,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s check your understanding!',
           'Time for Self-A-SCI-ssment!',
@@ -4235,7 +4180,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1: What is the difference between incomplete dominance and codominance?**',
         ],
@@ -4251,7 +4196,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2: Why are polygenic traits more varied?**',
         ],
@@ -4267,7 +4212,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3: Why are sex-linked traits more common in males?**',
         ],
@@ -4283,14 +4228,14 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Excellent work on the assessment!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Any final questions before we wrap up?',
           'Type your question, or type "done" if you\'re ready to finish.',
@@ -4302,14 +4247,12 @@ RESPONSE RULES:
             'If they ask: Answer thoroughly.\n'
             'If they say "done": Say "Great job! Tap Next for interesting facts!"\n',
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'You\'re doing great!',
+          'Tap **Next** for SCI-pplementary facts!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -4322,7 +4265,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptInheritScipplementary() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to SCI-pplementary!',
         ],
@@ -4330,7 +4273,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Did you know?**',
           'About 5% of Asian males have some form of **color blindness**.',
@@ -4338,7 +4281,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today, special eyeglasses can help people with color blindness see better.',
           'Understanding genetics helps families make informed health decisions.',
@@ -4346,7 +4289,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job, SCI-learner!',
           'You\'ve learned how traits can be inherited in more complex ways than Mendel first discovered.',
@@ -4354,7 +4297,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'In the next lesson, we\'ll explore probability and inheritance patterns.',
           '**Padayon sa pagtu-on sa SCI-ensiya!** (Continue learning science!)',
@@ -4362,21 +4305,19 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
       ),
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to finish this module?',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Congratulations! You\'ve completed Non-Mendelian Inheritance!',
+          'Tap **Next** to continue your learning journey!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -4392,7 +4333,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoFascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner!',
           'Welcome to another science adventure here in Roxas City, where rice fields, mangroves, and backyard plants turn sunlight into life-sustaining energy.',
@@ -4403,7 +4344,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today\'s lesson is about **photosynthesis**, the process that powers plants and supports all life in the ecosystem, including us.',
         ],
@@ -4412,7 +4353,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to follow the path of energy from the Sun to living things?',
         ],
@@ -4420,7 +4361,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
           'You walk past a rice field in Capiz at noon. The Sun is bright, and the leaves are wide open.',
@@ -4430,7 +4371,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What do you think plants are doing under the sunlight?**',
         ],
@@ -4450,7 +4391,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Plants use sunlight to **make their own food** through photosynthesis.',
           'Plants don\'t just absorb heat—they use **light energy to produce food**.',
@@ -4459,19 +4400,16 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'fascinate',
-            moduleName: 'Fa-SCI-nate',
-          ),
+          'Great job, SCI-learner! You\'ve completed the Fa-SCI-nate module.',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about photosynthesis or how plants make food?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -4495,12 +4433,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'goal',
-            moduleName: 'Goal SCI-tting',
-          ),
+          'You\'re ready to move forward!',
+          'Tap **Next** to explore Goal SCI-tting!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -4519,7 +4455,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoGoalScitting() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Goal SCI-tting!',
         ],
@@ -4528,7 +4464,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## 🎯 By the end of this lesson, you will be able to:',
           '✅ **Describe the cell structures involved in photosynthesis**',
@@ -4540,7 +4476,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'These goals will help you understand **where energy in the ecosystem begins**.',
         ],
@@ -4548,7 +4484,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to learn about photosynthesis?',
         ],
@@ -4556,7 +4492,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about these learning goals or photosynthesis basics?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -4580,7 +4516,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Fantastic! Let\'s explore how plants capture sunlight and turn it into energy!',
           'Tap **Next** to continue!',
@@ -4601,7 +4537,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoPreScintation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Pre-SCI-ntation!',
         ],
@@ -4610,7 +4546,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Not all organisms get energy the same way.**',
         ],
@@ -4618,7 +4554,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Autotrophs** (like plants) make their own food.',
           '**Heterotrophs** (like humans and animals) depend on other organisms.',
@@ -4627,7 +4563,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Photosynthesis happens only in **photoautotrophs**, such as green plants.',
         ],
@@ -4635,7 +4571,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Without photosynthesis, there would be no food and no oxygen for life on Earth.**',
         ],
@@ -4643,7 +4579,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to explore how this amazing process works?',
         ],
@@ -4651,7 +4587,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about autotrophs, heterotrophs, or why photosynthesis is important?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -4676,14 +4612,12 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'Great! You now understand the foundation.',
+          'Tap **Next** to investigate photosynthesis in detail!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -4699,7 +4633,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoInveScitigation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Inve-SCI-tigation!',
           'Let\'s discover where and how photosynthesis happens!',
@@ -4709,7 +4643,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 1: Where Photosynthesis Happens',
           'Photosynthesis mainly occurs in the **leaves** of plants.',
@@ -4719,7 +4653,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which structure is the site of photosynthesis?**',
         ],
@@ -4735,7 +4669,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 2: Chloroplast Structure',
           'Inside the chloroplast are important parts:',
@@ -4748,7 +4682,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Where do light-dependent reactions occur?**',
         ],
@@ -4763,7 +4697,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 3: Two Stages of Photosynthesis',
           'Photosynthesis has **two stages**:',
@@ -4774,7 +4708,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which stage produces glucose?**',
         ],
@@ -4789,7 +4723,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 4: Light and Pigments',
           'Chlorophyll **absorbs** red and blue/violet light and **reflects** green light.',
@@ -4799,7 +4733,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Why do leaves appear green?**',
         ],
@@ -4814,7 +4748,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 5: Plant Adaptations (C₄ and CAM)',
           'In hot and dry places, plants may lose too much water.',
@@ -4826,7 +4760,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'CAM plants open their stomata during the **night** to conserve water.',
         ],
@@ -4834,7 +4768,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which plants open stomata at night?**',
         ],
@@ -4849,7 +4783,7 @@ RESPONSE RULES:
             'Keep response to 2 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Excellent work! You\'ve explored how photosynthesis works inside plant cells.',
         ],
@@ -4858,7 +4792,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Do you have any questions about chloroplasts, the stages of photosynthesis, or plant adaptations?',
           'Type your question, or type "ready" to continue.',
@@ -4880,12 +4814,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready to test your knowledge!',
+          'Tap **Next** for the Self-A-SCI-ssment!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -4904,7 +4836,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoSelfAScissment() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Self-A-SCI-ssment!',
         ],
@@ -4913,7 +4845,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s check your understanding of photosynthesis!',
         ],
@@ -4921,7 +4853,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1:** What are the two stages of photosynthesis?',
         ],
@@ -4934,7 +4866,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2:** What is the role of chlorophyll?',
         ],
@@ -4947,7 +4879,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3:** Why are C₄ and CAM plants adapted to hot environments?',
         ],
@@ -4960,7 +4892,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job completing the assessment!',
           'You now understand the key concepts of photosynthesis.',
@@ -4969,7 +4901,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to explore supplementary content?',
         ],
@@ -4977,14 +4909,12 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'Excellent work, SCI-learner!',
+          'Tap **Next** for SCI-pplementary content!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5000,7 +4930,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptPhotoScipplementary() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to SCI-pplementary!',
         ],
@@ -5009,7 +4939,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Did you know?**',
           'Photosynthesis is the foundation of all food chains.',
@@ -5018,7 +4948,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'The rice you eat, the fish you enjoy, and even the oxygen you breathe—all depend on photosynthesis.',
         ],
@@ -5026,7 +4956,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Protecting plants means protecting life in Roxas City and beyond!',
         ],
@@ -5034,7 +4964,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job, SCI-learner! You\'ve learned how plants capture sunlight and turn it into energy.',
           'Next, we\'ll explore how organisms release that energy through cellular respiration.',
@@ -5043,7 +4973,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Padayon sa pagtu-on sa SCI-ensiya!** (Continue learning science!)',
         ],
@@ -5051,7 +4981,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to finish this module?',
         ],
@@ -5059,14 +4989,12 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Congratulations! You\'ve completed Plant Photosynthesis!',
+          'Tap **Next** to continue your learning journey!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5082,7 +5010,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabFascinate() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Hello, SCI-learner! Welcome back to our science journey here in Roxas City.',
           'Walking to school, playing basketball, and helping at home all require energy.',
@@ -5093,7 +5021,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Today, we\'ll discover how your body and other organisms release that stored energy through a process called **cellular respiration**.',
         ],
@@ -5102,7 +5030,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to find out where your energy really comes from? ⚡',
         ],
@@ -5110,7 +5038,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Imagine this...',
           'You\'re playing basketball at the Villareal Stadium. After a few minutes, your arms feel tired and your breathing gets faster.',
@@ -5120,7 +5048,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**What do you think is happening inside your cells?**',
         ],
@@ -5138,7 +5066,7 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'During activity, cells **release energy**, not store or rest.',
           'Your cells break down food molecules to power your movements!',
@@ -5147,19 +5075,16 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'fascinate',
-            moduleName: 'Fa-SCI-nate',
-          ),
+          'Great job, SCI-learner! You\'ve completed the Fa-SCI-nate module.',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about cellular energy or metabolism?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -5179,7 +5104,7 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'You\'re ready to move forward!',
           'Tap **Next** to explore Goal SCI-tting!',
@@ -5201,7 +5126,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabGoalScitting() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Goal SCI-tting!',
         ],
@@ -5210,7 +5135,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## 🎯 By the end of this lesson, you will be able to:',
           '✅ **Explain what cellular respiration is**',
@@ -5222,7 +5147,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'These goals will help you understand **how energy flows in living things**.',
         ],
@@ -5230,7 +5155,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to learn about cellular respiration?',
         ],
@@ -5238,7 +5163,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about these learning goals or cellular respiration basics?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -5262,14 +5187,12 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'goal',
-            moduleName: 'Goal SCI-tting',
-          ),
+          'Fantastic! Let\'s explore how cells release energy!',
+          'Tap **Next** to continue!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5285,7 +5208,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabPreScintation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Pre-SCI-ntation!',
         ],
@@ -5294,7 +5217,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**All living organisms need energy to survive.**',
         ],
@@ -5302,7 +5225,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Plants store energy in food during **photosynthesis**.',
           'Animals—including humans—release that energy through **cellular respiration**.',
@@ -5311,7 +5234,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Cellular respiration is part of **metabolism**, the sum of all chemical processes in cells.',
         ],
@@ -5319,7 +5242,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Metabolism has two parts:',
           '• **Anabolism** – building molecules',
@@ -5329,7 +5252,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to explore how cells release energy?',
         ],
@@ -5337,7 +5260,7 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Before we move on, do you have any questions about metabolism, anabolism, catabolism, or cellular respiration?',
           'Type your question, or type "ready" if you\'re ready to continue.',
@@ -5363,14 +5286,12 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'presentation',
-            moduleName: 'Pre-SCI-ntation',
-          ),
+          'Great! You now understand the foundation.',
+          'Tap **Next** to investigate cellular respiration in detail!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5386,7 +5307,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabInveScitigation() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Inve-SCI-tigation!',
           'Let\'s discover how cells release energy!',
@@ -5396,7 +5317,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 1: What Is Cellular Respiration?',
           'Cellular respiration is a catabolic process that produces **ATP**, the energy currency of the cell.',
@@ -5405,7 +5326,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which molecule is the main energy carrier in cells?**',
         ],
@@ -5421,7 +5342,7 @@ RESPONSE RULES:
             'Keep to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 2: Stages of Cellular Respiration',
           'Cellular respiration has three main stages:',
@@ -5433,7 +5354,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Where does glycolysis occur?**',
         ],
@@ -5448,7 +5369,7 @@ RESPONSE RULES:
             'Keep to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 3: Aerobic Respiration',
           'Aerobic respiration happens in the **presence of oxygen**.',
@@ -5459,7 +5380,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which gas is the final electron acceptor?**',
         ],
@@ -5474,7 +5395,7 @@ RESPONSE RULES:
             'Keep to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 4: Anaerobic Respiration (Fermentation)',
           'When oxygen is limited, cells use anaerobic respiration or fermentation.',
@@ -5486,7 +5407,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which type occurs in human muscles during strenuous exercise?**',
         ],
@@ -5501,7 +5422,7 @@ RESPONSE RULES:
             'Keep to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '## Part 5: Energy Comparison',
           'Let\'s compare energy yield:',
@@ -5512,7 +5433,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Which process produces more energy?**',
         ],
@@ -5527,7 +5448,7 @@ RESPONSE RULES:
             'Keep to 2 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Excellent work! You\'ve explored how cells release energy through cellular respiration.',
         ],
@@ -5536,7 +5457,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Do you have any questions about cellular respiration, ATP, or the difference between aerobic and anaerobic respiration?',
           'Type your question, or type "ready" to continue.',
@@ -5556,12 +5477,10 @@ RESPONSE RULES:
         pacingHint: PacingHint.normal,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'investigation',
-            moduleName: 'Inve-SCI-tigation',
-          ),
+          'You\'re ready to test your knowledge!',
+          'Tap **Next** for the Self-A-SCI-ssment!',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow,
@@ -5580,7 +5499,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabSelfAScissment() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to Self-A-SCI-ssment!',
         ],
@@ -5589,7 +5508,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s check your understanding!',
         ],
@@ -5597,7 +5516,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 1:** What is the role of ATP?',
         ],
@@ -5610,7 +5529,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 2:** Why is glycolysis important?',
         ],
@@ -5623,7 +5542,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Question 3:** Why do muscles feel tired during intense exercise?',
         ],
@@ -5636,7 +5555,7 @@ RESPONSE RULES:
             'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job completing the assessment!',
           'You now understand how cells release energy.',
@@ -5645,7 +5564,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to explore supplementary content?',
         ],
@@ -5653,14 +5572,12 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'assessment',
-            moduleName: 'Self A-SCI-ssment',
-          ),
+          'Excellent work, SCI-learner!',
+          'Tap **Next** for SCI-pplementary content!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5676,7 +5593,7 @@ RESPONSE RULES:
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptMetabScipplementary() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Welcome to SCI-pplementary!',
         ],
@@ -5685,7 +5602,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           '**Did you know?**',
           'The energy from the rice you eat in Capiz fuels your cells through cellular respiration.',
@@ -5694,7 +5611,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Photosynthesis and respiration are opposite but connected processes—together, they keep energy flowing in ecosystems.',
         ],
@@ -5702,7 +5619,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Healthy food and regular exercise help your cells produce energy efficiently!',
         ],
@@ -5710,7 +5627,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Great job, SCI-learner! You\'ve learned how cells release energy through cellular respiration.',
           '**Padayon sa pagtu-on sa SCI-ensiya!** Thank you!',
@@ -5719,7 +5636,7 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Ready to finish this module?',
         ],
@@ -5727,14 +5644,12 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-      ScriptStep(
+      const ScriptStep(
         botMessages: [
-          NarrationVariations.getModuleCompletion(
-            moduleType: 'supplementary',
-            moduleName: 'SCI-pplementary',
-          ),
+          'Congratulations! You\'ve completed Metabolism: An Overview!',
+          'Tap **Next** to continue your learning journey!',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         waitForUser: false,
         isModuleComplete: true,
       ),
@@ -5758,7 +5673,7 @@ final lessonNarrativeBubbleProvider =
   /// -------------------------------------------------------------------------
   List<ScriptStep> _scriptGenericFallback() {
     return [
-     ScriptStep(
+      const ScriptStep(
         botMessages: [
           'Let\'s explore this module together! Read through the content below, '
               'and tap **Next** when you\'re ready to continue.',
