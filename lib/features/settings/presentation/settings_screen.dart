@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -89,21 +90,21 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.bookmark,
                   title: 'Bookmarks',
                   subtitle: 'Your saved lessons',
-                  onTap: () => _showComingSoon(context, 'Bookmarks'),
+                  onTap: () => context.push('/bookmarks'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.history,
                   title: 'Learning History',
                   subtitle: 'View your past lessons',
-                  onTap: () => _showComingSoon(context, 'Learning History'),
+                  onTap: () => context.push('/learning-history'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.leaderboard,
                   title: 'Progress Stats',
                   subtitle: 'Detailed progress analytics',
-                  onTap: () => _showComingSoon(context, 'Progress Stats'),
+                  onTap: () => context.push('/progress-stats'),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
@@ -111,24 +112,10 @@ class SettingsScreen extends StatelessWidget {
                 _buildSectionHeader('Preferences'),
                 _buildSettingsTile(
                   context,
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: 'Manage alerts and reminders',
-                  onTap: () => _showComingSoon(context, 'Notifications'),
-                ),
-                _buildSettingsTile(
-                  context,
                   icon: Icons.text_fields,
                   title: 'Text Size',
                   subtitle: 'Adjust reading comfort',
-                  onTap: () => _showComingSoon(context, 'Text Size'),
-                ),
-                _buildSettingsTile(
-                  context,
-                  icon: Icons.storage,
-                  title: 'Storage',
-                  subtitle: 'Manage offline content',
-                  onTap: () => _showComingSoon(context, 'Storage'),
+                  onTap: () => context.push('/text-size'),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
@@ -146,14 +133,14 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.help,
                   title: 'Help & Support',
                   subtitle: 'Get help with the app',
-                  onTap: () => _showComingSoon(context, 'Help & Support'),
+                  onTap: () => context.push('/help'),
                 ),
                 _buildSettingsTile(
                   context,
                   icon: Icons.privacy_tip,
                   title: 'Privacy Policy',
                   subtitle: 'How we protect your data',
-                  onTap: () => _showComingSoon(context, 'Privacy Policy'),
+                  onTap: () => context.push('/privacy-policy'),
                 ),
               ]),
             ),
@@ -220,46 +207,73 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon!'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('About SCI-Bot'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'SCI-Bot',
-              style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.primary,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SCI-Bot',
+                style: AppTextStyles.headingMedium.copyWith(
+                  color: AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSizes.s8),
-            Text(
-              'Version 1.0.0',
-              style: AppTextStyles.bodyMedium,
-            ),
-            const SizedBox(height: AppSizes.s16),
-            Text(
-              'Your AI-powered companion for mastering Grade 9 Science.',
-              style: AppTextStyles.bodyMedium,
-            ),
-            const SizedBox(height: AppSizes.s16),
-            Text(
-              '© 2025 SCI-Bot. All rights reserved.',
-              style: AppTextStyles.caption,
-            ),
-          ],
+              const SizedBox(height: AppSizes.s8),
+              Text(
+                'Version 1.0.0',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s16),
+              Text(
+                'The Science Contextualized Instruction through AI-based Chatbot (SCI-Bot) mobile learning application is an AI-powered supplementary learning tool designed to support Grade 9 Science students, with a special focus on mastering the least-learned skills identified in the Grade 9 Science curriculum.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s12),
+              Text(
+                'Powered by OpenAI, SCI-Bot uses artificial intelligence to provide interactive, learner-centered, and contextualized instruction that helps make complex scientific concepts clearer, more engaging, and easier to understand.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s12),
+              Text(
+                'SCI-Bot presents science lessons through real-life situations, familiar examples, and simplified explanations that are aligned with students\' local context. This contextualized approach bridges the gap between abstract scientific ideas and everyday experiences, enhancing comprehension, engagement, and long-term retention of knowledge.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s16),
+              const Divider(),
+              const SizedBox(height: AppSizes.s16),
+              Text(
+                'Developer',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSizes.s8),
+              Text(
+                'This mobile app was developed by Joecil Orola Villanueva, a graduate student of West Visayas State University – La Paz Campus, taking up Master of Arts in Education (MAEd), Major in Biological Science. He is currently a Teacher II at Roxas City School for Philippine Craftsmen, where he actively teaches science and works closely with high school learners.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s12),
+              Text(
+                'As a classroom practitioner, the developer brings firsthand experience in identifying students\' learning gaps, particularly in science concepts that are often challenging for Grade 9 learners. His exposure to diverse learning needs, coupled with his academic training in biological science and education, inspired the development of SCI-Bot as an innovative, technology-driven support tool for students.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s12),
+              Text(
+                'Driven by a commitment to learner-centered and inclusive education, Villanueva integrates pedagogy, content knowledge, and educational technology in the design of SCI-Bot. The application reflects his advocacy for contextualized instruction, inquiry-based learning, and the meaningful use of artificial intelligence to enhance science education and improve student learning outcomes beyond the traditional classroom setting.',
+                style: AppTextStyles.bodyMedium,
+              ),
+              const SizedBox(height: AppSizes.s16),
+              Text(
+                '© 2026 SCI-Bot. All rights reserved.',
+                style: AppTextStyles.caption,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

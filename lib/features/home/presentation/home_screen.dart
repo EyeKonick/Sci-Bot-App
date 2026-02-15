@@ -1,14 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_feedback.dart';
+import '../../../shared/widgets/feedback_toast.dart';
 import '../../../features/topics/data/repositories/topic_repository.dart';
 import '../../../features/lessons/data/repositories/lesson_repository.dart';
 import '../../../features/lessons/data/repositories/progress_repository.dart';
 import '../../../features/lessons/data/repositories/bookmark_repository.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/models/scenario_model.dart';
+import '../../../shared/models/ai_character_model.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
@@ -20,6 +26,7 @@ import '../../../services/storage/hive_service.dart';
 import '../../../services/data/data_seeder_service.dart';
 import '../../chat/presentation/widgets/floating_chat_button.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../chat/data/repositories/chat_repository.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -39,6 +46,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchFocusNode = FocusNode();
   bool _isSearchActive = false;
   List<LessonModel> _searchSuggestions = [];
+  Timer? _searchDebounce; // Phase 0: Debounce search to prevent UI blocking
 
   @override
   void initState() {
@@ -46,37 +54,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onSearchFocusChanged);
     
-    // Update navigation context to home
+    // Update navigation context to home and activate aristotle_general scenario
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterContextManagerProvider).navigateToHome();
+      final scenario = ChatScenario.aristotleGeneral();
+      ref.read(characterContextManagerProvider).setScenario(scenario);
+      ChatRepository().setScenario(scenario);
     });
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
+  /// Phase 0: Debounced search - waits 300ms after last keystroke before searching
   void _onSearchChanged() {
+    _searchDebounce?.cancel();
+
     final query = _searchController.text;
-    
-    if (query.length >= 3) {
-      // Perform search
-      setState(() {
-        _isSearchActive = true;
-        _searchSuggestions = _searchLessons(query);
-      });
-    } else {
-      // Clear suggestions
+
+    if (query.length < 3) {
+      // Clear suggestions immediately (no debounce needed for clearing)
       setState(() {
         _searchSuggestions = [];
         if (query.isEmpty) {
           _isSearchActive = false;
         }
       });
+      return;
     }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() {
+        _isSearchActive = true;
+        _searchSuggestions = _searchLessons(query);
+      });
+    });
   }
 
   void _onSearchFocusChanged() {
@@ -146,7 +164,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topics = _topicRepo.getAllTopics();
     final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
     
-    return GestureDetector(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showExitConfirmation();
+        if (shouldExit && mounted) {
+          SystemNavigator.pop();
+        }
+      },
+      child: GestureDetector(
       onTap: () {
         // Dismiss search when tapping outside
         if (_isSearchActive) {
@@ -166,39 +193,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           
 
-          // Search Bar - overlapping the gradient header
+          // Search Bar
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -24),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, 0),
-                child: Column(
-                  children: [
-                    // Search Bar
-                    SearchBarWidget(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      readOnly: false,
-                      onChanged: (_) {}, // Handled by controller listener
-                      onClear: _clearSearch,
-                    ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s12, AppSizes.s20, 0),
+              child: Column(
+                children: [
+                  // Search Bar
+                  SearchBarWidget(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    readOnly: false,
+                    onChanged: (_) {}, // Handled by controller listener
+                    onClear: _clearSearch,
+                  ),
 
-                    // Inline Search Suggestions
-                    if (_isSearchActive && _searchController.text.length >= 3)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSizes.s8),
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          child: InlineSearchSuggestions(
-                            suggestions: _searchSuggestions,
-                            query: _searchController.text,
-                            onTap: _onSuggestionTap,
-                          ),
+                  // Inline Search Suggestions
+                  if (_isSearchActive && _searchController.text.length >= 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.s8),
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: InlineSearchSuggestions(
+                          suggestions: _searchSuggestions,
+                          query: _searchController.text,
+                          onTap: _onSuggestionTap,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -429,8 +453,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ), // Close Scaffold
         ], // Close Stack children
       ), // Close Stack
-      ); // Close GestureDetector
-    
+      ), // Close GestureDetector
+    ); // Close PopScope
+  }
+
+  /// Show exit confirmation dialog with Aristotle's personality
+  Future<bool> _showExitConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              child: Image.asset(
+                AiCharacter.aristotle.avatarAsset,
+                width: 24,
+                height: 24,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s12),
+            Text(
+              'Exit SCI-Bot?',
+              style: AppTextStyles.headingSmall,
+            ),
+          ],
+        ),
+        content: Text(
+          "Leaving so soon? Your learning journey awaits! "
+          "I'll be here when you return, my friend.",
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.grey600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Stay',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Exit App',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   /// Parse hex color string to Color
@@ -467,13 +550,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 await HiveService.clearAll();
                 await DataSeederService.resetSeededFlag();
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Data cleared! Restart app to reseed.',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                  ),
+                FeedbackToast.showSnackBar(
+                  context,
+                  type: FeedbackType.warning,
+                  message: 'Data cleared! Restart app to reseed.',
                 );
               },
             ),

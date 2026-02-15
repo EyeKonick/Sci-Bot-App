@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_feedback.dart';
 import '../../../shared/models/models.dart';
 import '../data/repositories/bookmark_repository.dart';
 import '../data/repositories/lesson_repository.dart';
@@ -135,7 +136,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                                     color: AppColors.white,
                                   ),
                                 ),
-                                duration: const Duration(seconds: 2),
+                                duration: AppFeedback.toastDuration,
                                 backgroundColor: AppColors.grey900,
                                 action: SnackBarAction(
                                   label: 'Undo',

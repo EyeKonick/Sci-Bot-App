@@ -56,6 +56,24 @@ enum ModuleType {
     }
   }
 
+  /// Get the module icon asset path (header variant with "- Copy" suffix)
+  String get iconAsset {
+    switch (this) {
+      case ModuleType.pre_scintation:
+        return 'assets/icons/Pre-SCI-ntation - Copy.png';
+      case ModuleType.fa_scinate:
+        return 'assets/icons/Fa-SCI-nate - Copy.png';
+      case ModuleType.inve_scitigation:
+        return 'assets/icons/Inve-SCI-tigation - Copy.png';
+      case ModuleType.goal_scitting:
+        return 'assets/icons/Goal-SCI-tting - Copy.png';
+      case ModuleType.self_a_scissment:
+        return 'assets/icons/Self-A-SCI-ssment - Copy.png';
+      case ModuleType.scipplementary:
+        return 'assets/icons/SCI-pplumentary - Copy.png';
+    }
+  }
+
   /// Parse from JSON string
   static ModuleType fromString(String type) {
     switch (type.toLowerCase()) {

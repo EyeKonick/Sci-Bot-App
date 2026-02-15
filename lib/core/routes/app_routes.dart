@@ -23,6 +23,11 @@ class AppRoutes {
   // SETTINGS & OTHER ROUTES
   static const String settings = '/settings';
   static const String bookmarks = '/bookmarks';
+  static const String learningHistory = '/learning-history';
+  static const String progressStats = '/progress-stats';
+  static const String textSize = '/text-size';
+  static const String help = '/help';
+  static const String privacyPolicy = '/privacy-policy';
   static const String searchResults = '/search';
   static const String about = '/about';
   
@@ -42,6 +47,11 @@ class AppRoutes {
   static const String moduleViewerName = 'module-viewer';
   static const String settingsName = 'settings';
   static const String bookmarksName = 'bookmarks';
+  static const String learningHistoryName = 'learning_history';
+  static const String progressStatsName = 'progress_stats';
+  static const String textSizeName = 'text_size';
+  static const String helpName = 'help';
+  static const String privacyPolicyName = 'privacy_policy';
   static const String searchResultsName = 'search';
   static const String aboutName = 'about';
 }

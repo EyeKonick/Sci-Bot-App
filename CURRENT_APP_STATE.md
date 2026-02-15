@@ -2,7 +2,7 @@
 
 **SCI-Bot Flutter Application - Technical State Documentation**
 
-**Date Generated:** February 8, 2026
+**Date Generated:** February 11, 2026
 **Purpose:** Development handoff, thesis technical appendix, and baseline snapshot
 **Status:** Read-only observational analysis
 
@@ -14,6 +14,11 @@
 lib/
 ├── core/
 │   ├── constants/              # Design tokens and app-wide constants (LOCKED)
+│   │   ├── app_colors.dart           # Color palette (LOCKED)
+│   │   ├── app_text_styles.dart      # Typography system (LOCKED)
+│   │   ├── app_sizes.dart            # Spacing/sizing scale (LOCKED)
+│   │   ├── app_strings.dart          # Static strings
+│   │   └── app_feedback.dart         # Feedback timing, loading thresholds, pacing constants
 │   ├── routes/                 # Navigation configuration using GoRouter
 │   └── theme/                  # Flutter theme definitions
 ├── features/                   # Feature-based modular architecture
@@ -21,7 +26,7 @@ lib/
 │   │   ├── data/
 │   │   │   ├── providers/      # Character providers, Riverpod state management
 │   │   │   ├── repositories/   # ChatRepository (singleton), OpenAI integration
-│   │   │   └── services/       # Context service for chat
+│   │   │   └── services/       # AristotleGreetingService (dynamic AI greetings), context service
 │   │   └── presentation/
 │   │       ├── widgets/        # FloatingChatButton, MessengerChatWindow, ChatBubble
 │   │       └── chat_screen.dart # Full-screen chat interface
@@ -45,7 +50,14 @@ lib/
 │   │       └── module_viewer_screen.dart # AI-guided learning interface
 │   ├── onboarding/             # First-time user experience
 │   ├── splash/                 # App initialization screen
-│   ├── settings/               # App settings and preferences
+│   ├── settings/               # App settings, preferences, and More tab screens
+│   │   └── presentation/
+│   │       ├── settings_screen.dart              # More tab main screen
+│   │       ├── learning_history_screen.dart      # Lessons accessed sorted by recency
+│   │       ├── progress_stats_screen.dart        # Detailed analytics per topic
+│   │       ├── text_size_screen.dart             # Text scale presets + preview
+│   │       ├── help_screen.dart                  # Expandable FAQ cards
+│   │       └── privacy_policy_screen.dart        # Static privacy policy sections
 │   └── error/                  # Error handling screens
 ├── services/                   # Shared services across features
 │   ├── ai/                     # OpenAI API integration
@@ -55,14 +67,18 @@ lib/
 │   └── preferences/            # SharedPreferences wrapper
 └── shared/
     ├── models/                 # Shared data models
-    │   ├── ai_character_model.dart        # 4 AI character definitions
-    │   ├── chat_message_extended.dart     # Chat message with character tracking
+    │   ├── ai_character_model.dart        # 4 AI character definitions + conversation starters
+    │   ├── channel_message.dart           # Two-channel message types (NarrationMessage, InteractionMessage) + PacingHint
+    │   ├── chat_message_extended.dart     # Chat message with character tracking + transient isError flag
     │   ├── navigation_context_model.dart  # Navigation state for character switching
     │   ├── topic_model.dart
     │   ├── lesson_model.dart
     │   ├── module_model.dart
     │   └── progress_model.dart
     └── widgets/                # Shared UI components
+        ├── feedback_toast.dart            # Reusable overlay-based toast with slide+fade animation
+        ├── loading_spinner.dart           # Spinner with context message + timeout awareness
+        └── skeleton_loader.dart           # Shimmer skeleton placeholders for lists
 ```
 
 ---
@@ -80,6 +96,7 @@ lib/
    - Sets system UI overlay (transparent status bar)
    - Locks orientation to portrait
    - Launches app with ProviderScope (Riverpod)
+   - Applies user text scale preference via MediaQuery builder (reads from SharedPreferences)
 
 2. **Initial navigation:**
    - App starts at SplashScreen (/splash route)
@@ -93,7 +110,13 @@ lib/
 Splash → Onboarding (first time) → Home
                                      ├── Topics (full screen) → Lessons → Module Viewer
                                      ├── Chat (bottom nav tab)
-                                     └── More/Settings (bottom nav tab)
+                                     └── More (bottom nav tab)
+                                          ├── Bookmarks (/bookmarks)
+                                          ├── Learning History (/learning-history)
+                                          ├── Progress Stats (/progress-stats)
+                                          ├── Text Size (/text-size)
+                                          ├── Help & Support (/help)
+                                          └── Privacy Policy (/privacy-policy)
 ```
 
 - **Home screen** displays greeting, search bar, quick stats, streak tracker, bookmarks, and topic cards
@@ -142,7 +165,7 @@ Splash → Onboarding (first time) → Home
   - **Eugene Odum:** Energy in Ecosystems expert
 - Character automatically switches based on navigation context
 - No manual character selection interface (by design, permanently excluded)
-- Each character has isolated conversation history (Phase 3.1 implementation)
+- Each character has isolated conversation history (Phase 3.1 implementation, session-only - clears on app restart)
 - Character avatar, name, and theme color update when switching
 
 **Two Communication Channels (Non-Negotiable Split):**
@@ -208,16 +231,16 @@ The app uses two distinct communication channels. They must never overlap respon
 2. **Full Chat Screen (Bottom Nav):**
    - Dedicated tab for extended conversations
    - Same ChatRepository as popup (singleton pattern)
-   - Shows conversation history for active character
+   - Always uses Aristotle regardless of current navigation context (hardcoded)
+   - Chat nav tab forces NavigationContext.home() to ensure Aristotle is active
    - Real-time message streaming with typing indicators
 
 **Current Limitations:**
 
 - Expert characters (Herophilus, Mendel, Odum) cannot use popup chat
 - Floating button for experts only shows narrative bubbles
-- Chat histories are character-scoped but no visual indication of separation
-- Contextual greetings sometimes repetitive
-- Chathead vs Main Chat responsibility split not yet enforced consistently across all modules
+- Chat histories are character-scoped with "Starting fresh conversation" indicator on switch (Polish Phase 6)
+- Chathead vs Main Chat responsibility split is now architecturally enforced via typed message system (Polish Phase 1)
 
 ---
 
@@ -282,20 +305,23 @@ User sends message
       ↓
 ChatRepository.sendMessageStream()
       ↓
-Message added to character-specific history (_characterHistories[characterId])
+Scenario ID captured (for stale response detection)
       ↓
-Saved to Hive with characterId stored in lessonContext field
+Message added to character-specific in-memory history (_characterHistories[characterId])
       ↓
 OpenAI API called with character's system prompt
       ↓
-Streaming response chunks received
+Streaming response chunks received (each checked against scenario ID)
       ↓
 UI updates in real-time with partial message
       ↓
-Final message saved to Hive and history
+Final message stored in memory only (no Hive persistence - session-only)
       ↓
 _notifyListeners() broadcasts to all chat interfaces
 ```
+
+Note: Chat history is session-only (clears on app restart). Hive persistence was removed.
+Scenario-based architecture ensures character switches instantly invalidate in-flight API responses.
 
 **Lesson Progress Data:**
 
@@ -333,22 +359,37 @@ _notifyListeners() broadcasts to all chat interfaces
 ### Chat / AI
 
 **Fully Implemented:**
-- 4 distinct AI characters with unique personalities
+- 4 distinct AI characters with unique personalities and conversation starters
 - Automatic character switching based on navigation context
 - Character-scoped conversation histories (Phase 3.1)
+- Two-channel message system: `NarrationMessage` (chathead) and `InteractionMessage` (main chat) with compile-time and runtime enforcement (Polish Phase 1)
 - Floating chat button with draggable positioning
-- Speech bubble greetings with contextual messages
+- Speech bubble greetings with content-aware pacing and semantic splitting (Polish Phase 5)
+- Character switch handoff with 800ms avatar transition, introduction bubbles, and conversation history indicator (Polish Phase 6)
 - Messenger-style popup chat window (Aristotle only)
 - Full-screen chat interface
-- Streaming message responses with typing indicators
+- Streaming message responses with character-themed typing indicators (avatar, name, theme-colored dots) (Polish Phase 2)
 - Bold text support in messages (**text** markdown)
-- Singleton ChatRepository for cross-interface sync
-- Hive persistence of chat history
+- Singleton ChatRepository with async mutex for concurrency safety (Polish Phase 0)
+- Session-only chat history (in-memory, clears on app restart; Hive persistence removed)
+- Contextual disabled input hints across all chat interfaces (Polish Phase 2)
+- Welcome message with conversation starters for empty chat (Polish Phase 4)
+- Actionable error cards with Retry button on API failure (Polish Phase 4)
+- Offline mode banner explaining capabilities (Polish Phase 4)
+- Consistent feedback vocabulary: FeedbackType enum with standardized colors, icons, timing (Polish Phase 3)
+- Reusable FeedbackToast overlay widget for all toast notifications (Polish Phase 3)
+- "Checking your answer" state (300ms buffer) before AI evaluation (Polish Phase 3)
+- Loading spinners with context messages and timeout awareness (Polish Phase 8)
+- 30-second API call timeout with graceful degradation (Polish Phase 0)
+- Scenario-based chat architecture: each navigation creates/destroys a chat scenario via generation ID, preventing stale API responses from leaking across character switches
+- AristotleGreetingService: dynamic AI-generated greetings via OpenAI (time-aware, unique each session, anti-repetition tracking of last 9 greetings)
+- Aristotle idle bubbles: AI-generated encouragement bubbles after 30-60s idle (batch-fetched 5 at a time, max 15 per session)
+- Chat nav tab always opens Aristotle (forces NavigationContext.home() on Chat tab tap)
+- Full chat screen exclusively uses Aristotle (hardcoded, ignores activeCharacterProvider)
+- MessengerChatWindow wrapped in Material widget for proper Material ancestor (fixes ActionChip, Divider, InkWell rendering)
 
 **Partially Implemented:**
-- Contextual greeting system (functional but sometimes repetitive)
 - Expert character chat (only works inline during modules, not in popup)
-- Narrative bubble system for module guidance (works but timing issues observed)
 
 **Non-Functional but Present:**
 - Notification badge on floating button (code present, never triggered)
@@ -363,11 +404,17 @@ _notifyListeners() broadcasts to all chat interfaces
 - Quick stats card on home screen
 - Progress indicator on topic cards
 - Module progress dots in viewer
+- Animated progress bar in module viewer header with smooth 300ms fill transition (Polish Phase 7)
+- Next button success pulse animation (green checkmark, 500ms) on module completion (Polish Phase 3)
+- Module completion toast via FeedbackToast overlay (Polish Phase 3)
+- Personalized lesson completion dialog with sharing prompt (Polish Phase 7)
+- Topic completion confetti celebration (40 particles, 1-second animation) with trophy icon (Polish Phase 7)
 
 **Stub/Placeholder:**
 - Streak calculation (returns 0)
 - Last 7 days activity visualization (hardcoded false values)
 - Time invested tracking (uses estimated minutes, not actual)
+- Share progress button (visual only, shows "coming soon" toast)
 
 ### Navigation
 
@@ -379,9 +426,10 @@ _notifyListeners() broadcasts to all chat interfaces
 - Route parameter passing (topicId, lessonId, moduleIndex)
 - Navigation context tracking for AI character switching
 - Safe back navigation with context restoration
+- 5 new standalone routes for More screen sub-pages: /learning-history, /progress-stats, /text-size, /help, /privacy-policy (Feb 11 update)
 
 **Fully Functional:**
-- All routes properly configured
+- All routes properly configured (12 standalone routes + 3 shell routes)
 - Error handling with NotFoundScreen
 - No transition animations (by design for performance)
 
@@ -391,23 +439,31 @@ _notifyListeners() broadcasts to all chat interfaces
 - Hive local storage for all app data
 - Topics, lessons, and modules stored locally
 - Progress and bookmarks persisted offline
-- Chat history stored locally
+- Chat history stored in-memory only (session-only, clears on restart)
 - Data seeding on first launch
 
 **Partially Implemented:**
 - Offline chat (falls back to static content, no AI)
 - No sync mechanism (no cloud backend exists)
 
-### Settings / Utilities
+### Settings / More Screen
 
 **Fully Implemented:**
 - Development tools dialog (clear data, view stats)
-- Bookmark management
+- Bookmark management (accessible from More > Bookmarks)
 - Theme system (light mode only)
+- More screen with 3 sections: Learning, Preferences, About (Feb 11 update)
+- Bookmarks navigation: links to existing BookmarksScreen (Feb 11 update)
+- Learning History screen: shows all accessed lessons sorted by recency with progress bars, completion badges, relative timestamps, empty state (Feb 11 update)
+- Progress Stats screen: overall circular progress indicator, per-topic breakdown with colored progress bars, summary stats row (modules done, weekly activity, completion rate) (Feb 11 update)
+- Text Size settings: Small (0.85x), Medium (1.0x), Large (1.15x) presets with live preview, persisted via SharedPreferences, applied globally via MediaQuery builder (Feb 11 update)
+- Help & Support screen: 7 expandable FAQ cards covering app usage, contact section, version info (Feb 11 update)
+- Privacy Policy screen: 9 structured sections explaining local-only data handling, AI chat privacy, children's privacy (Feb 11 update)
+- About SCI-Bot dialog: app name, version, mission statement, copyright 2026
 
-**Stub/Placeholder:**
-- Settings screen (exists but minimal functionality)
-- User preferences (not extensively used)
+**Removed Features (Feb 11):**
+- Notifications tile (removed - no notification infrastructure)
+- Storage management tile (removed - not needed for local-only app)
 
 ---
 
@@ -457,11 +513,13 @@ The app defines two non-overlapping communication channels:
 - User responds in Main Chat.
 - After a valid response, the chathead may add a short comment, then the module officially begins.
 
-**Implementation Status:**
+**Implementation Status (Post-Polish):**
 
-- Fa-SCI-nate (Topic 1, Lesson 1, Module 1) contains a partial reference implementation of this model.
-- The chathead-to-main-chat handoff behavior is not yet fully polished.
-- The separation of narration vs interaction responsibilities is not clearly enforced in the current codebase across all modules.
+- Two-channel separation is now architecturally enforced via `NarrationMessage` and `InteractionMessage` types (Polish Phase 1)
+- Chathead only accepts `NarrationMessage` type at compile time; main chat asserts no narration messages at runtime
+- `MessageChannel` enum (`narration`, `interaction`) replaces the previous `MessageType` enum
+- All lesson script steps use correct `MessageChannel` values
+- Fa-SCI-nate (Topic 1, Lesson 1, Module 1) contains the reference implementation of this model
 
 ### 5.1 Chat Head (FloatingChatButton)
 
@@ -491,14 +549,19 @@ The app defines two non-overlapping communication channels:
 **Speech Bubble Behavior:**
 
 - Appears next to chat head with contextual messages
-- 3-5 rotating messages per character
-- Auto-cycles through messages every 5 seconds
-- Hides after completing one cycle
-- Re-appears after 30-second idle period (max 3 cycles)
+- Aristotle: dynamic AI-generated greetings via AristotleGreetingService (time-aware, unique, no pre-scripted text). Bubbles only appear after AI response arrives (no static fallback shown while loading)
+- Other characters: 3-5 rotating static messages per character, delivered as `NarrationMessage` type (compile-time enforced)
+- Content-aware display timing: ~300ms per word, clamped 2-8 seconds (replaces fixed 5s cycle)
+- Variable inter-bubble gaps based on PacingHint: fast (800ms), normal (800-1800ms length-based), slow (1800ms), questions (1500ms)
+- Long messages split at semantic boundaries (paragraph breaks, then sentence boundaries) via `NarrationMessage.semanticSplit()`
+- Bubbles fade in with 200ms easeIn opacity animation (replaces instant pop)
+- Aristotle: greeting plays once, then switches to AI-generated idle bubbles (30-60s random interval, max 5 idle cycles)
+- Other characters: hides after completing up to 3 greeting cycles, re-appears after 30-second idle
 - Immediately hides when dragging starts
 - Positioned left or right of button depending on screen position
 - Tapping bubble opens chat
 - Speech bubbles are part of the Guided Narration Channel and must never contain questions requiring user input
+- Character switch triggers handoff introduction sequence: "Meet [Name]..." / "Welcome back!" + greeting + "Starting fresh conversation..."
 
 **Navigation Behavior:**
 
@@ -508,13 +571,13 @@ The app defines two non-overlapping communication channels:
 - Character changes when navigating between topics
 - Speech bubble content updates based on previous navigation context
 
-**Observed Inconsistencies:**
+**Observed Inconsistencies (Post-Polish):**
 
 - Expert characters (Herophilus, Mendel, Odum) cannot open popup chat (by design, but may confuse users)
-- Speech bubble sometimes appears during module narrative (timing conflict)
 - Button remains visible during module lessons (could be distracting)
-- No visual indicator of which character is active (only avatar visible)
 - Breathing animation always white (not character-themed)
+- (Resolved in Polish Phase 6) Character switch now announced via handoff introduction bubbles with 800ms avatar fade transition
+- (Resolved in Polish Phase 5) Speech bubble timing is now content-aware with variable pacing instead of fixed intervals
 
 ### 5.2 Chat Bubble (Message Display)
 
@@ -548,9 +611,10 @@ The app defines two non-overlapping communication channels:
 - User can manually scroll up to read history
 
 **Animation/Transition:**
-- No entrance/exit animations for bubbles
+- No entrance/exit animations for chat message bubbles
 - Streaming cursor blinks at 500ms intervals (opacity fade)
-- Speech bubbles have scale + opacity animation (elastic curve)
+- Speech bubbles fade in with 200ms easeIn opacity animation (Polish Phase 5, replaced elastic scale+opacity)
+- Character avatar transitions with 800ms fade-out/pause/fade-in sequence on character switch (Polish Phase 6)
 - No message deletion or editing (static once sent)
 
 **Timestamp/Metadata:**
@@ -560,11 +624,9 @@ The app defines two non-overlapping communication channels:
 - Streaming indicator (blinking cursor) shown during AI response
 
 **Behavior During Long Conversations:**
-- Messages stored in character-scoped history maps
-- Last 20 messages per character loaded from Hive on init
+- Messages stored in character-scoped in-memory history maps (session-only, no Hive persistence)
 - Only last 10 messages sent to OpenAI API for context
-- Hive box limited to 400 total messages (100 per character)
-- Oldest messages deleted when limit exceeded
+- No message count limits (session clears on restart)
 - No pagination or lazy loading
 
 ### 5.3 Chat UX Consistency
@@ -587,26 +649,28 @@ The app defines two non-overlapping communication channels:
 - Rounded rectangle (24px radius) with grey background
 - Expands vertically up to 120px height for multi-line input
 - Send button changes from grey to character-colored gradient when text entered
-- Send button disabled when text empty or AI is streaming
-- Text field disabled during streaming responses
+- Send button disabled when text empty, AI is streaming, or input is disabled
+- Text field disabled during streaming responses with contextual hint: "[Name] is thinking..." (Polish Phase 2)
+- Module viewer input always visible (not conditionally hidden) with state-specific hints: "Listen to [Name] first", "[Name] is thinking...", "Lesson in progress...", "Module complete! Tap Next to continue" (Polish Phase 2)
+- Animated border color transition: enabled state shows character-themed border, disabled shows grey (Polish Phase 2)
+- Pulse glow animation on module viewer input when transitioning from disabled to enabled (Polish Phase 2)
 - Placeholder: "Type a message..." (popup) or "ASK QUESTION or TYPE" (module viewer)
 
 **Accessibility Considerations:**
 - No screen reader optimizations observed
 - Text contrast meets standards (white on color, dark on white)
 - Tap targets: Buttons are 48x48 minimum (meets WCAG)
-- No font scaling support beyond system default
+- User-configurable text scaling: Small (0.85x), Medium (1.0x), Large (1.15x) via More > Text Size, applied globally via MediaQuery (Feb 11 update)
 - No high contrast mode
 - No voice input integration
 
-**Observed Issues:**
-- Popup chat only works for Aristotle, not expert characters (confusing UX)
-- No visual separation between different character conversations in UI
-- Speech bubble can overlap with module narrative bubbles
-- No loading state shown when initializing chat
-- No error message if OpenAI API fails during chat
-- Character switch not announced to user (just happens silently)
+**Observed Issues (Post-Polish):**
+- Popup chat only works for Aristotle, not expert characters (by design)
 - No way to view conversation list (manual character selection is permanently excluded by design)
+- (Resolved in Polish Phase 6) Character switch now announced via handoff introduction bubbles
+- (Resolved in Polish Phase 8) Loading state shown when initializing chat via `LoadingSpinner` with context message
+- (Resolved in Polish Phase 4) API errors now show actionable error card with Retry button
+- (Resolved in Polish Phase 6) Character conversations visually separated with "Starting fresh conversation" indicator
 
 ---
 
@@ -637,7 +701,7 @@ The app defines two non-overlapping communication channels:
 
 - Dark mode support
 - Customizable theme colors
-- Font size adjustment settings
+- ~~Font size adjustment settings~~ (Implemented Feb 11 - More > Text Size)
 - Onboarding tutorial for floating chat button
 - Loading states for all async operations
 - Empty states for no bookmarks, no lessons
@@ -698,10 +762,10 @@ The app defines two non-overlapping communication channels:
 **Observed Behavior:** When chat opens, brief delay before messages appear with no loading indicator
 **Impact:** User unsure if chat is working
 
-### Issue: Chat History Bleeding Between Sessions
-**Location:** `chat_repository.dart:66-126`
-**Observed Behavior:** When switching characters rapidly, previous character's last message sometimes visible briefly
-**Impact:** Confusing, appears as data corruption
+### Issue: Chat History Bleeding Between Sessions (RESOLVED)
+
+**Location:** `chat_repository.dart`
+**Resolution:** Scenario-based architecture with `_scenarioId` generation counter. Character switch increments scenario ID, instantly invalidating all in-flight API responses. Stale messages from previous character are never displayed.
 
 ### Issue: Module Progress Dots Not Reactive to Completion
 **Location:** `module_viewer_screen.dart:1138-1169`
@@ -742,10 +806,10 @@ Uses flutter_riverpod 2.4.9 for reactive state management. Providers are used to
 Hive 2.2.3 chosen as NoSQL local database. Type adapters registered for all models. Boxes opened on app init in HiveService. No encryption currently applied.
 
 ### Singleton ChatRepository Pattern
-ChatRepository implemented as singleton to ensure all chat interfaces (popup, full screen, module viewer) share the same conversation history and state. Broadcast StreamController used for real-time updates.
+ChatRepository implemented as singleton to ensure all chat interfaces (popup, full screen, module viewer) share the same conversation history and state. Broadcast StreamController used for real-time updates. Scenario-based architecture: `_scenarioId` increments on character switch, invalidating all in-flight API responses to prevent stale message leaking.
 
 ### Character-Scoped Data Isolation
-Each AI character maintains separate conversation history stored in map structure `_characterHistories<String, List<ChatMessage>>`. Character ID stored in Hive messages via lessonContext field for backward compatibility.
+Each AI character maintains separate conversation history stored in map structure `_characterHistories<String, List<ChatMessage>>`. History is session-only (in-memory, no Hive persistence). Character switches trigger `startNewScenario()` which clears history and increments scenario ID.
 
 ### Offline-First Design
 All content (topics, lessons, modules) seeded locally on first launch. App functions fully offline except for AI chat features. No network calls for static content.
@@ -780,6 +844,10 @@ Content uses English with occasional Filipino context references. No internation
 
 ### No User-Generated Content
 All content created by developers and seeded on install. No user-created lessons, notes, or contributions.
+
+### Text Scale Applied on App Restart Only
+
+Text size preference (Small/Medium/Large) is read from SharedPreferences once when SCIBotApp builds. Changing the preference in the Text Size screen saves immediately but requires an app restart to apply globally. Live hot-reload of text scale is not implemented.
 
 ### Streak Based on Daily Access (Intended)
 Streak calculation assumes daily app usage pattern, though not currently implemented.
@@ -825,8 +893,8 @@ Streak calculation assumes daily app usage pattern, though not currently impleme
 ### Performance-Sensitive Areas
 
 **Message History Loading:**
-- All messages loaded from Hive on chat init
-- Could be slow with 400+ messages (100 per character)
+- Messages stored in-memory only (session-only, no Hive loading)
+- No performance concern from persistent storage
 - No lazy loading or pagination
 
 **Character Switch Animation:**
@@ -846,10 +914,11 @@ Streak calculation assumes daily app usage pattern, though not currently impleme
 
 ### Chat Scalability Limitations
 
-**Message Count Limit (400 Total):**
-- Hard limit prevents unbounded growth
-- But deleting oldest messages loses conversation context
-- No archival or compression strategy
+**Session-Only Chat History:**
+
+- Chat history clears on app restart (no persistence)
+- No long-term conversation context across sessions
+- Trade-off: simpler architecture but no conversation continuity
 
 **API Context Window (10 Messages):**
 - Only last 10 messages sent to OpenAI
@@ -914,9 +983,9 @@ Streak calculation assumes daily app usage pattern, though not currently impleme
 **Impact:** User must restart app to retry
 **Severity:** Medium - annoying but not data-losing
 
-**Risk:** Hive corruption not detected or handled
+**Risk:** Hive corruption not detected or handled (for progress/bookmark data; chat no longer uses Hive)
 **Impact:** App could crash on launch
-**Severity:** High - requires reinstall
+**Severity:** Medium - chat data is session-only so less affected
 
 **Risk:** No validation on seeded data
 **Impact:** Malformed JSON could cause runtime errors
@@ -1013,6 +1082,6 @@ A design pattern ensuring only one instance of ChatRepository exists, shared acr
 
 ## END OF DOCUMENT
 
-**This document represents a snapshot of the SCI-Bot application as of February 8, 2026.**
-**No code was modified during this analysis.**
+**This document represents a snapshot of the SCI-Bot application as of February 11, 2026.**
+**Last update: Aristotle dynamic AI greetings, session-only chat, scenario-based architecture, chat nav always Aristotle, Material widget fix in MessengerChatWindow.**
 **For implementation recommendations, refer to CLAUDE.md and context documentation.**

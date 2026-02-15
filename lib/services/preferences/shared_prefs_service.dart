@@ -10,6 +10,8 @@ class SharedPrefsService {
   static const String _keyFirstLaunch = 'is_first_launch';
   static const String _keyOnboardingCompleted = 'onboarding_completed';
   static const String _keyDataSeeded = 'data_seeded'; // NEW: for data seeding
+  static const String _keySeedVersion = 'seed_version';
+  static const int _currentSeedVersion = 2; // Bump when seed data changes
 
   /// Initialize SharedPreferences
   static Future<void> init() async {
@@ -54,9 +56,39 @@ class SharedPrefsService {
     await _prefs?.setBool(_keyDataSeeded, true);
   }
 
+  /// Check if seed data needs updating (version mismatch)
+  static bool get needsReseed {
+    final storedVersion = _prefs?.getInt(_keySeedVersion) ?? 0;
+    return storedVersion < _currentSeedVersion;
+  }
+
+  /// Save current seed version
+  static Future<void> setSeedVersion() async {
+    await _prefs?.setInt(_keySeedVersion, _currentSeedVersion);
+  }
+
   /// Reset data seeded flag (useful for testing)
   static Future<void> resetDataSeeded() async {
     await _prefs?.setBool(_keyDataSeeded, false);
+  }
+
+  // TEXT SIZE PREFERENCE
+  static const String _keyTextScale = 'text_scale_factor';
+  static const double _defaultTextScale = 1.0;
+
+  /// Get text scale factor (0.85 - 1.15)
+  static double get textScaleFactor {
+    return _prefs?.getDouble(_keyTextScale) ?? _defaultTextScale;
+  }
+
+  /// Set text scale factor
+  static Future<void> setTextScaleFactor(double scale) async {
+    await _prefs?.setDouble(_keyTextScale, scale.clamp(0.85, 1.15));
+  }
+
+  /// Reset to default text scale
+  static Future<void> resetTextScale() async {
+    await _prefs?.setDouble(_keyTextScale, _defaultTextScale);
   }
 
   /// Clear all preferences (useful for testing)

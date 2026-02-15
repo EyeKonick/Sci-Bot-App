@@ -28,6 +28,7 @@ class HiveService {
   static Box<BookmarkModel>? _bookmarksBox; // Stores BookmarkModel objects
 
   /// Initialize Hive and open all boxes
+  /// Phase 0: Added integrity check with recovery flow per box
   static Future<void> init() async {
     // Initialize Hive Flutter
     await Hive.initFlutter();
@@ -52,12 +53,30 @@ class HiveService {
       Hive.registerAdapter(BookmarkAdapter());
     }
 
-    // Open all boxes
-    _topicsBox = await Hive.openBox<TopicModel>(topicsBoxName);
-    _lessonsBox = await Hive.openBox<LessonModel>(lessonsBoxName);
-    _progressBox = await Hive.openBox<ProgressModel>(progressBoxName);
-    _chatHistoryBox = await Hive.openBox<ChatMessageModel>(chatHistoryBoxName);
-    _bookmarksBox = await Hive.openBox<BookmarkModel>(bookmarksBoxName);
+    // Open all boxes with integrity recovery
+    _topicsBox = await _openBoxSafely<TopicModel>(topicsBoxName);
+    _lessonsBox = await _openBoxSafely<LessonModel>(lessonsBoxName);
+    _progressBox = await _openBoxSafely<ProgressModel>(progressBoxName);
+    _chatHistoryBox = await _openBoxSafely<ChatMessageModel>(chatHistoryBoxName);
+    _bookmarksBox = await _openBoxSafely<BookmarkModel>(bookmarksBoxName);
+  }
+
+  /// Open a Hive box safely with corruption recovery.
+  /// If opening fails (corrupted data), deletes the box from disk and
+  /// re-opens it empty. Data loss is preferable to app crash.
+  static Future<Box<T>> _openBoxSafely<T>(String boxName) async {
+    try {
+      return await Hive.openBox<T>(boxName);
+    } catch (e) {
+      print('⚠️ Hive box "$boxName" corrupted: $e');
+      print('🔄 Recovering by deleting and re-creating box...');
+      try {
+        await Hive.deleteBoxFromDisk(boxName);
+      } catch (_) {
+        // Deletion may also fail if file is locked; ignore and try opening
+      }
+      return await Hive.openBox<T>(boxName);
+    }
   }
 
   /// Get Topics Box

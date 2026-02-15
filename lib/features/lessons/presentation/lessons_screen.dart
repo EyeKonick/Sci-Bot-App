@@ -10,6 +10,11 @@ import '../../topics/data/repositories/topic_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../chat/data/repositories/chat_repository.dart';
+import '../../chat/data/services/expert_greeting_service.dart';
+import '../../../shared/models/scenario_model.dart';
+import '../../../shared/models/ai_character_model.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 /// Lesson List Screen - Shows all lessons for a selected topic
 /// Week 2 Day 3 Implementation + Week 3 Day 3 Character Integration
@@ -38,11 +43,31 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
   void initState() {
     super.initState();
     _loadData();
-    
-    // Update navigation context when screen loads
+
+    // Update navigation context and activate expert scenario when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterContextManagerProvider).navigateToTopic(widget.topicId);
+      _activateExpertScenario();
     });
+  }
+
+  /// Activate the expert's lessonMenu scenario for this topic.
+  /// The expert character greets the student via chathead bubbles.
+  Future<void> _activateExpertScenario() async {
+    final expert = AiCharacter.getCharacterForTopic(widget.topicId);
+    final scenario = ChatScenario.expertLessonMenu(
+      expertId: expert.id,
+      topicId: widget.topicId,
+    );
+
+    // Invalidate cached greeting so a fresh one is generated every visit
+    ExpertGreetingService().invalidateScenario(scenario.id);
+
+    // Set scenario in provider for FloatingChatButton awareness
+    ref.read(currentScenarioProvider.notifier).state = scenario;
+
+    // Activate scenario in repository (creates history + greeting if new)
+    await ChatRepository().setScenario(scenario);
   }
 
   Future<void> _loadData() async {
@@ -66,43 +91,123 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.grey50,
-      body: CustomScrollView(
-        slivers: [
-          // App Bar with Topic Info
-          _buildAppBar(),
-
-          // Loading State
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+  /// Show educational exit confirmation dialog with character avatar
+  Future<bool> _showLessonExitConfirmation(AiCharacter character) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: character.themeColor.withValues(alpha: 0.15),
+              child: Image.asset(
+                character.avatarAsset,
+                width: 24,
+                height: 24,
               ),
             ),
-
-          // Error State (Topic not found)
-          if (!_isLoading && _topic == null)
-            SliverFillRemaining(
-              child: _buildErrorState(),
+            const SizedBox(width: AppSizes.s12),
+            Text(
+              'End the Lesson?',
+              style: AppTextStyles.headingSmall,
             ),
-
-          // Empty State (No lessons)
-          if (!_isLoading && _topic != null && _lessons.isEmpty)
-            SliverFillRemaining(
-              child: _buildEmptyState(),
+          ],
+        ),
+        content: Text(
+          "You're making great progress, ${character.name} is proud! "
+          "Are you sure you want to end this lesson now?",
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.grey600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Keep Learning',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: character.themeColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-
-          // Lessons List
-          if (!_isLoading && _topic != null && _lessons.isNotEmpty)
-            _buildLessonsList(),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'End Lesson',
+              style: AppTextStyles.buttonLabel.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+          ),
         ],
       ),
     );
+    return result ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeCharacter = ref.watch(activeCharacterProvider);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showLessonExitConfirmation(activeCharacter);
+        if (shouldExit && mounted) {
+          // Clear expert scenario when leaving lesson menu
+          final scenarioId = '${activeCharacter.id}_lesson_menu_${widget.topicId}';
+          ChatRepository().clearScenario(scenarioId);
+          ref.read(currentScenarioProvider.notifier).state = null;
+          context.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.grey50,
+        body: CustomScrollView(
+          slivers: [
+            // App Bar with Topic Info
+            _buildAppBar(),
+
+            // Loading State - Phase 8: Skeleton cards instead of bare spinner
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.all(AppSizes.s20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const Padding(
+                      padding: EdgeInsets.only(bottom: AppSizes.s16),
+                      child: SkeletonLessonCard(),
+                    ),
+                    childCount: 3,
+                  ),
+                ),
+              ),
+
+            // Error State (Topic not found)
+            if (!_isLoading && _topic == null)
+              SliverFillRemaining(
+                child: _buildErrorState(),
+              ),
+
+            // Empty State (No lessons)
+            if (!_isLoading && _topic != null && _lessons.isEmpty)
+              SliverFillRemaining(
+                child: _buildEmptyState(),
+              ),
+
+            // Lessons List
+            if (!_isLoading && _topic != null && _lessons.isNotEmpty)
+              _buildLessonsList(),
+          ],
+        ),
+      ), // Scaffold
+    ); // PopScope
   }
 
   /// App Bar with gradient and topic info - FIXED LAYOUT
@@ -118,7 +223,18 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
       backgroundColor: topicColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: AppColors.white),
-        onPressed: () => context.pop(),
+        onPressed: () async {
+          // Show exit confirmation dialog
+          final character = ref.read(activeCharacterProvider);
+          final shouldExit = await _showLessonExitConfirmation(character);
+          if (shouldExit && mounted) {
+            // Clear expert scenario when leaving lesson menu
+            final scenarioId = '${character.id}_lesson_menu_${widget.topicId}';
+            ChatRepository().clearScenario(scenarioId);
+            ref.read(currentScenarioProvider.notifier).state = null;
+            if (mounted) context.pop();
+          }
+        },
       ),
       flexibleSpace: FlexibleSpaceBar(
         // Centered title for collapsed state
@@ -146,30 +262,33 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Topic Name
-                  Text(
-                    _topic?.name ?? 'Lessons',
-                    style: AppTextStyles.headingMedium.copyWith(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w700,
+                  Flexible(
+                    child: Text(
+                      _topic?.name ?? 'Lessons',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.s8),
-                  
+                  const SizedBox(height: AppSizes.s4),
+
                   // Topic Description
                   Text(
                     _topic?.description ?? '',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.white.withOpacity(0.95),
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.s8),
-                  
+                  const SizedBox(height: AppSizes.s4),
+
                   // Lesson Count
                   Row(
                     children: [
@@ -221,6 +340,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                 progress: progress,
                 topicColor: _parseColor(_topic!.colorHex),
                 progressRepo: _progressRepo,
+                lessonIconAsset: _getLessonIconAsset(widget.topicId, index + 1),
                 onTap: () async {
                   // Resume from last incomplete module or start from beginning
                   final startIndex = _getStartingModuleIndex(lesson);
@@ -290,7 +410,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     );
   }
 
-  /// Empty State
+  /// Empty State - Phase 4: Forward action added
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -298,7 +418,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.school_outlined,
               size: 80,
               color: AppColors.grey300,
@@ -312,16 +432,38 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
-              'Lessons for this topic are coming soon!',
+              'Lessons for this topic are coming soon! Explore other topics in the meantime.',
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.grey600,
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: AppSizes.s24),
+            ElevatedButton.icon(
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.explore),
+              label: const Text('Explore Other Topics'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// Get lesson icon asset path based on topic and lesson number
+  String? _getLessonIconAsset(String topicId, int lessonNumber) {
+    final topicNumber = switch (topicId) {
+      'topic_body_systems' => 1,
+      'topic_heredity' => 2,
+      'topic_energy' => 3,
+      _ => null,
+    };
+    if (topicNumber == null) return null;
+    return 'assets/icons/lessons-icons/topic$topicNumber-lesson$lessonNumber-icon.png';
   }
 
   /// Parse hex color
@@ -368,6 +510,7 @@ class _LessonCard extends StatelessWidget {
   final Color topicColor;
   final ProgressRepository progressRepo;
   final VoidCallback onTap;
+  final String? lessonIconAsset;
 
   const _LessonCard({
     required this.lesson,
@@ -377,6 +520,7 @@ class _LessonCard extends StatelessWidget {
     required this.topicColor,
     required this.progressRepo,
     required this.onTap,
+    this.lessonIconAsset,
   });
 
   @override
@@ -401,7 +545,7 @@ class _LessonCard extends StatelessWidget {
               // Header Row
               Row(
                 children: [
-                  // Lesson Number Badge
+                  // Lesson Icon / Number Badge
                   Container(
                     width: 48,
                     height: 48,
@@ -411,21 +555,33 @@ class _LessonCard extends StatelessWidget {
                           : topicColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
-                    child: Center(
-                      child: isCompleted
-                          ? const Icon(
+                    child: isCompleted
+                        ? const Center(
+                            child: Icon(
                               Icons.check_circle,
                               color: AppColors.white,
                               size: 28,
-                            )
-                          : Text(
-                              '$lessonNumber',
-                              style: AppTextStyles.headingSmall.copyWith(
-                                color: topicColor,
-                                fontWeight: FontWeight.w700,
-                              ),
                             ),
-                    ),
+                          )
+                        : lessonIconAsset != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                                child: Image.asset(
+                                  lessonIconAsset!,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  '$lessonNumber',
+                                  style: AppTextStyles.headingSmall.copyWith(
+                                    color: topicColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                   ),
                   const SizedBox(width: AppSizes.s12),
 
@@ -598,17 +754,17 @@ class _LessonCard extends StatelessWidget {
     String getModuleAssetPath() {
       switch (moduleType) {
         case ModuleType.pre_scintation:
-          return 'assets/icons/Pre-SCI-ntation.png';
+          return 'assets/icons/modules-icons/Pre-SCI-ntation.png';
         case ModuleType.fa_scinate:
-          return 'assets/icons/Fa-SCI-nate.png';
+          return 'assets/icons/modules-icons/Fa-SCI-nate.png';
         case ModuleType.inve_scitigation:
-          return 'assets/icons/Inve-SCI-tigation.png';
+          return 'assets/icons/modules-icons/Inve-SCI-tigation.png';
         case ModuleType.goal_scitting:
-          return 'assets/icons/Goal-SCI-tting.png';
+          return 'assets/icons/modules-icons/Goal-SCI-tting.png';
         case ModuleType.self_a_scissment:
-          return 'assets/icons/Self-A-SCI-ssment.png';
+          return 'assets/icons/modules-icons/Self-A-SCI-ssment.png';
         case ModuleType.scipplementary:
-          return 'assets/icons/SCI-pplumentary.png';
+          return 'assets/icons/modules-icons/SCI-pplumentary.png';
       }
     }
 

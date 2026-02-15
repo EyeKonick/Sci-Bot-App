@@ -4,13 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/app_feedback.dart';
 import '../../../../shared/models/chat_message_extended.dart';
+import '../../../../shared/models/scenario_model.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/providers/character_provider.dart';
 import 'chat_bubble.dart';
 import 'typing_indicator.dart';
+import '../../../../shared/widgets/loading_spinner.dart';
 
-/// Messenger-Style Chat Window
+/// Messenger-Style Chat Window (INTERACTION CHANNEL ONLY)
+///
+/// This is an interaction-channel interface. All messages displayed here
+/// are InteractionMessages or UserMessages. Narration content belongs
+/// in the chathead speech bubbles (NarrationMessage), not here.
+///
 /// Full chat interface that appears when floating button is tapped
 class MessengerChatWindow extends ConsumerStatefulWidget {
   const MessengerChatWindow({super.key});
@@ -20,6 +28,34 @@ class MessengerChatWindow extends ConsumerStatefulWidget {
 }
 
 class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
+  /// Topic-specific conversation starters for each expert character
+  static const Map<String, List<String>> _expertConversationStarters = {
+    'herophilus': [
+      'How does blood flow through the heart?',
+      'Explain the difference between arteries and veins',
+      'What happens during gas exchange in the lungs?',
+      'Why is the circulatory system important?',
+    ],
+    'mendel': [
+      'How do traits pass from parents to offspring?',
+      'What is a Punnett square used for?',
+      'Explain dominant and recessive alleles',
+      'What causes genetic variation?',
+    ],
+    'odum': [
+      'How does energy flow in an ecosystem?',
+      'What is a food chain vs food web?',
+      'Why are decomposers important?',
+      'Explain the energy pyramid levels',
+    ],
+    'aristotle': [
+      'What topics can I study today?',
+      'How do I navigate the lessons?',
+      'Tell me about the AI tutors',
+      'How does progress tracking work?',
+    ],
+  };
+
   final _chatRepo = ChatRepository();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
@@ -27,6 +63,9 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
 
   bool _isLoading = true;
   bool _isStreaming = false;
+
+  // Track keyboard visibility for auto-scroll
+  double _previousBottomInset = 0;
 
   // ✅ PHASE 3.1: Stream subscription for character switching
   StreamSubscription<List<ChatMessage>>? _messageSubscription;
@@ -41,14 +80,15 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // ✅ PHASE 3.1: Update repository when character changes
-    // ✅ PHASE 3.4: Pass contextual greeting for returning characters
-    final character = ref.read(activeCharacterProvider);
-    final contextManager = ref.read(characterContextManagerProvider);
-    final greeting = contextManager.getPersonalizedGreeting();
-    // Only pass greeting if it differs from default (meaning there's context)
-    final contextGreeting = greeting != character.greeting ? greeting : null;
-    _chatRepo.setCharacter(character, contextGreeting: contextGreeting);
+    // Ensure scenario is active. On home/topics screens this will be
+    // aristotle_general (already set by HomeScreen). On topic-specific
+    // screens the scenario will be set by the host screen in later phases.
+    final currentScenario = _chatRepo.currentScenario;
+    if (currentScenario == null) {
+      // Fallback: if no scenario active yet, activate aristotle_general
+      final scenario = ChatScenario.aristotleGeneral();
+      _chatRepo.setScenario(scenario);
+    }
   }
 
   /// ✅ PHASE 3.1: Listen to message stream for character switching
@@ -190,6 +230,15 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
     super.dispose();
   }
 
+  /// Whether the chat is offline (OpenAI not configured)
+  bool get _isOffline => !_chatRepo.isConfigured;
+
+  /// Whether messages list only contains the initial greeting
+  bool get _isWelcomeState =>
+      _messages.length == 1 &&
+      _messages.first.role == 'assistant' &&
+      !_messages.first.isError;
+
   /// Expand messages - split long assistant messages into multiple bubbles
   List<ChatMessage> get _expandedMessages {
     final expanded = <ChatMessage>[];
@@ -211,6 +260,16 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
 
   @override
   Widget build(BuildContext context) {
+    // Auto-scroll when keyboard opens so last message stays visible
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    if (bottomInset > 0 && _previousBottomInset == 0) {
+      // Keyboard just opened — scroll after AnimatedPadding settles
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _scrollToBottom();
+      });
+    }
+    _previousBottomInset = bottomInset;
+
     // CRITICAL FIX: Wrap in MediaQuery to handle keyboard properly
     return MediaQuery.removePadding(
       context: context,
@@ -227,8 +286,10 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
             ),
           ],
         ),
-        child: ClipRRect(
+        child: Material(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          clipBehavior: Clip.antiAlias,
+          color: Colors.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -237,13 +298,37 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
 
               const Divider(height: 1),
 
+              // Phase 4: Offline banner
+              if (_isOffline)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.s12,
+                    vertical: AppSizes.s8,
+                  ),
+                  color: AppFeedback.warningColor.withValues(alpha: 0.1),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wifi_off, size: 14, color: AppColors.warning),
+                      const SizedBox(width: AppSizes.s8),
+                      Expanded(
+                        child: Text(
+                          'Chat requires internet connection.',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.warning,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // Messages - FLEXIBLE
               Flexible(
                 child: _isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: ref.watch(activeCharacterProvider).themeColor,
-                        ),
+                    ? LoadingSpinner(
+                        message: 'Loading chat...',
+                        color: ref.watch(activeCharacterProvider).themeColor,
                       )
                     : Builder(
                         builder: (context) {
@@ -254,14 +339,45 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                               horizontal: AppSizes.s4,
                               vertical: AppSizes.s8,
                             ),
-                            itemCount: displayMessages.length + (_isStreaming ? 1 : 0),
+                            itemCount: displayMessages.length +
+                                (_isStreaming ? 1 : 0) +
+                                (_isWelcomeState ? 1 : 0),
                             itemBuilder: (context, index) {
-                              if (index == displayMessages.length && _isStreaming) {
-                                return const TypingIndicator();
+                              final msgCount = displayMessages.length +
+                                  (_isWelcomeState ? 1 : 0);
+
+                              // Typing indicator at the end
+                              if (index == msgCount && _isStreaming) {
+                                final character = ref.read(activeCharacterProvider);
+                                return TypingIndicator(
+                                  color: character.themeColor,
+                                  characterName: character.name,
+                                  avatarAsset: character.avatarAsset,
+                                );
                               }
+
+                              // Phase 4: Conversation starters after greeting
+                              if (_isWelcomeState && index == 1) {
+                                return _buildConversationStarters();
+                              }
+
+                              // Adjust index past starters
+                              final msgIndex =
+                                  (_isWelcomeState && index > 1) ? index - 1 : index;
+                              if (msgIndex >= displayMessages.length) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final message = displayMessages[msgIndex];
+
+                              // Phase 4: Error card with Retry
+                              if (message.isError) {
+                                return _buildErrorCard(message);
+                              }
+
                               return ChatBubble(
-                                message: displayMessages[index],
-                                showAvatar: displayMessages[index].characterName != null,
+                                message: message,
+                                showAvatar: message.characterName != null,
                               );
                             },
                           );
@@ -354,16 +470,224 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
     );
   }
 
+  /// Phase 4: Conversation starter chips below greeting
+  Widget _buildConversationStarters() {
+    final character = ref.read(activeCharacterProvider);
+    final starters = _expertConversationStarters[character.id] ??
+        _expertConversationStarters['aristotle']!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.s12, AppSizes.s4, AppSizes.s12, AppSizes.s8,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Try asking:',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.grey600,
+            ),
+          ),
+          const SizedBox(height: AppSizes.s8),
+          Wrap(
+            spacing: AppSizes.s8,
+            runSpacing: AppSizes.s8,
+            children: starters.map((starter) {
+              return ActionChip(
+                label: Text(
+                  starter,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: character.themeColor,
+                    fontSize: 12,
+                  ),
+                ),
+                backgroundColor: character.themeColor.withValues(alpha: 0.08),
+                side: BorderSide(
+                  color: character.themeColor.withValues(alpha: 0.3),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                onPressed: _isOffline
+                    ? null
+                    : () {
+                        _controller.text = starter;
+                        _sendMessage();
+                      },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Phase 4: Error card with Retry button
+  Widget _buildErrorCard(ChatMessage errorMessage) {
+    final character = ref.read(activeCharacterProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.s8,
+        vertical: AppSizes.s4,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.s12),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          border: Border.all(
+            color: AppColors.error.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  AppFeedback.errorIcon,
+                  color: AppColors.error,
+                  size: 18,
+                ),
+                const SizedBox(width: AppSizes.s8),
+                Expanded(
+                  child: Text(
+                    'Connection Error',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.s8),
+            Text(
+              errorMessage.content,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+            const SizedBox(height: AppSizes.s8),
+            Row(
+              children: [
+                SizedBox(
+                  height: 32,
+                  child: OutlinedButton.icon(
+                    onPressed: _isStreaming ? null : () => _retryLastMessage(),
+                    icon: const Icon(Icons.refresh, size: 14),
+                    label: const Text('Retry', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: character.themeColor,
+                      side: BorderSide(color: character.themeColor),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.s12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.s8),
+                Text(
+                  'Check your connection',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.grey600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Phase 4: Retry the last failed message
+  Future<void> _retryLastMessage() async {
+    final character = ref.read(activeCharacterProvider);
+    final retryStream = _chatRepo.retryLastMessage(character: character);
+
+    if (retryStream == null) return;
+
+    setState(() {
+      _isStreaming = true;
+    });
+
+    ChatMessage? aiMessage;
+
+    await for (final message in retryStream) {
+      setState(() {
+        if (message.role == 'user') return;
+
+        if (aiMessage == null) {
+          aiMessage = message;
+          _messages.add(message);
+        } else {
+          final idx = _messages.indexOf(aiMessage!);
+          if (idx != -1) {
+            _messages[idx] = message;
+            aiMessage = message;
+          }
+        }
+      });
+
+      _scrollToBottom();
+
+      if (!message.isStreaming && message.role == 'assistant') {
+        setState(() {
+          _isStreaming = false;
+        });
+      }
+    }
+  }
+
+  /// Get contextual placeholder text based on scenario
+  String _getContextualPlaceholder() {
+    final character = ref.read(activeCharacterProvider);
+    final scenario = ref.read(currentScenarioProvider);
+
+    if (scenario?.type == ScenarioType.lessonMenu) {
+      final topicName = _getTopicNameFromId(scenario?.context['topicId'] ?? '');
+      return 'Ask ${character.name} about $topicName...';
+    }
+
+    return 'Ask ${character.name} a question...';
+  }
+
+  /// Map topic IDs to display names
+  String _getTopicNameFromId(String topicId) {
+    switch (topicId) {
+      case 'topic_body_systems':
+        return 'Body Systems';
+      case 'topic_heredity':
+        return 'Heredity';
+      case 'topic_energy':
+        return 'Energy in Ecosystems';
+      default:
+        return 'Science';
+    }
+  }
+
   Widget _buildInputArea() {
+    final character = ref.watch(activeCharacterProvider);
+    final bool isDisabled = _isStreaming;
+
+    // Contextual hint text based on state
+    final String hintText = isDisabled
+        ? '${character.name} is thinking...'
+        : _getContextualPlaceholder();
+
     return Material(
       color: Colors.white,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
+          border: const Border(
             top: BorderSide(
-              color: Colors.grey.shade200,
+              color: AppColors.grey300,
               width: 1,
             ),
           ),
@@ -373,28 +697,36 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Text input
+              // Text input with animated border
               Expanded(
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   constraints: const BoxConstraints(
                     minHeight: 48,
                     maxHeight: 120,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: isDisabled
+                        ? AppColors.grey100
+                        : AppColors.grey100,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: Colors.grey.shade300,
+                      color: isDisabled
+                          ? AppColors.grey300
+                          : AppColors.grey300,
                       width: 1,
                     ),
                   ),
                   child: TextField(
                     controller: _controller,
+                    enabled: !isDisabled,
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 16,
+                      hintText: hintText,
+                      hintStyle: AppTextStyles.bodyMedium.copyWith(
+                        color: isDisabled
+                            ? character.themeColor.withValues(alpha: 0.5)
+                            : AppColors.grey600,
+                        fontStyle: isDisabled ? FontStyle.italic : FontStyle.normal,
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -403,9 +735,8 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                       ),
                       isDense: true,
                     ),
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.grey900,
                       height: 1.4,
                     ),
                     textCapitalization: TextCapitalization.sentences,
@@ -423,35 +754,30 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
             const SizedBox(width: 8),
 
             // Send button
-            Builder(
-              builder: (context) {
-                final character = ref.watch(activeCharacterProvider);
-                return Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: _controller.text.isEmpty
-                        ? null
-                        : character.themeGradient,
-                    color: _controller.text.isEmpty
-                        ? Colors.grey.shade300
-                        : null,
-                    shape: BoxShape.circle,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: (_controller.text.isEmpty || isDisabled)
+                    ? null
+                    : character.themeGradient,
+                color: (_controller.text.isEmpty || isDisabled)
+                    ? AppColors.grey300
+                    : null,
+                shape: BoxShape.circle,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: (_controller.text.isEmpty || isDisabled) ? null : _sendMessage,
+                  customBorder: const CircleBorder(),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _controller.text.isEmpty ? null : _sendMessage,
-                      customBorder: const CircleBorder(),
-                      child: const Icon(
-                        Icons.send_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                );
-              },
+                ),
+              ),
             ),
           ],
         ),
