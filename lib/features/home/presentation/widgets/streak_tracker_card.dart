@@ -4,10 +4,11 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 
 /// Streak Tracker Card
-/// Shows user's learning streak with calendar dots
+/// Shows user's learning streak with calendar dots for the current week.
+/// Days are fixed Monday(0) through Sunday(6).
 class StreakTrackerCard extends StatelessWidget {
   final int currentStreak;
-  final List<bool> last7Days; // true = completed, false = not completed
+  final List<bool> last7Days; // index 0 = Monday, index 6 = Sunday
 
   const StreakTrackerCard({
     super.key,
@@ -17,6 +18,9 @@ class StreakTrackerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final todayWeekday = DateTime.now().weekday; // 1=Mon, 7=Sun
+    const weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
     return Card(
       elevation: AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
@@ -64,41 +68,30 @@ class StreakTrackerCard extends StatelessWidget {
 
             const SizedBox(height: AppSizes.s16),
 
-            // Calendar dots (last 7 days)
+            // Calendar dots (Monday through Sunday)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(7, (index) {
-                final dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                final isCompleted = index < last7Days.length && last7Days[index];
+                final dayLabel = weekdayLabels[index];
+                final isCompleted =
+                    index < last7Days.length && last7Days[index];
+                final isToday = (index + 1) == todayWeekday;
 
                 return Column(
                   children: [
-                    // Day label
+                    // Day label - uniform color for all days
                     Text(
-                      dayLabels[index],
+                      dayLabel,
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.grey600,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: AppSizes.s8),
-                    // Dot indicator
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isCompleted
-                            ? AppColors.success
-                            : AppColors.grey300.withOpacity(0.6),
-                      ),
-                      child: isCompleted
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
-                            )
-                          : null,
+                    // Day indicator
+                    _buildDayIndicator(
+                      isCompleted: isCompleted,
+                      isToday: isToday,
                     ),
                   ],
                 );
@@ -106,6 +99,98 @@ class StreakTrackerCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Builds a single day indicator circle.
+  /// Completed: 3D raised green button with white check.
+  /// Today (not completed): green outline ring.
+  /// Inactive: flat grey circle.
+  Widget _buildDayIndicator({
+    required bool isCompleted,
+    required bool isToday,
+  }) {
+    if (isCompleted) {
+      // 3D raised green button with white check
+      return Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF81C784), // Light green highlight
+              Color(0xFF4CAF50), // Mid green
+              Color(0xFF388E3C), // Dark green shadow
+            ],
+            stops: [0.0, 0.4, 1.0],
+          ),
+          boxShadow: [
+            // Top-left highlight for 3D raised effect
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.5),
+              offset: const Offset(-1, -1),
+              blurRadius: 2,
+              spreadRadius: -1,
+            ),
+            // Bottom-right shadow for depth
+            BoxShadow(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.4),
+              offset: const Offset(1.5, 2),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+            // Ambient glow
+            BoxShadow(
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
+              offset: const Offset(0, 1),
+              blurRadius: 6,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.check_rounded,
+          color: Colors.white,
+          size: 20,
+        ),
+      );
+    }
+
+    if (isToday) {
+      // Today (not yet completed): green outline ring hinting "complete me"
+      return Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF4CAF50).withValues(alpha: 0.08),
+          border: Border.all(
+            color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
+            width: 2.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+              offset: const Offset(0, 1),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Inactive: flat grey circle
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.grey300.withValues(alpha: 0.5),
       ),
     );
   }

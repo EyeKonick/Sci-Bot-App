@@ -1490,6 +1490,14 @@ RESPONSE RULES:
      ScriptStep(
         botMessages: [
           'Small organisms rely on **diffusion**, but humans, like active students in Roxas City, need something faster and stronger.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_1/5.png', 
+      ),
+
+      ScriptStep(
+        botMessages: [
           'That\'s why we have a **circulatory system** powered by the heart, blood, and blood vessels.',
         ],
         channel: MessageChannel.interaction,
@@ -1566,12 +1574,10 @@ RESPONSE RULES:
      ScriptStep(
         botMessages: [
           '**Part 1: Types of Circulatory Systems**',
-          'Your circulatory system is your body\'s transport network powered by the heart, blood, and blood vessels.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/5.png', // Human circulatory system diagram
-      ),
+     ),
 
      ScriptStep(
         botMessages: [
@@ -1633,12 +1639,21 @@ RESPONSE RULES:
      ScriptStep(
         botMessages: [
           '**Arteries** – carry blood away from the heart\n**Veins** – bring blood back to the heart\n**Capillaries** – tiny paths where oxygen and nutrients are exchanged',
-          'Without these "roads," cells would never receive what they need to survive.',
+         
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
         imageAssetPath: 'assets/images/topic_1/lesson_1/10.png', // Blood vessels diagram
       ),
+
+      ScriptStep(
+        botMessages:  [
+          'Without these "roads," cells would never receive what they need to survive.',
+          ],
+          channel: MessageChannel.interaction,
+          waitForUser: false,
+        ),
+
 
      ScriptStep(
         botMessages: [
@@ -1646,11 +1661,18 @@ RESPONSE RULES:
           'Blood makes up about 7–8% of your body weight.',
           '**Plasma (55%)**\n• Mostly water\n• Carries nutrients, hormones, and wastes',
           '**Red Blood Cells** – carry oxygen using hemoglobin\n**White Blood Cells** – defend against infection\n**Platelets** – help blood clot when you get a wound',
-          'Every drop of blood plays a role in keeping you healthy and active!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
         imageAssetPath: 'assets/images/topic_1/lesson_1/11.png', // Blood components diagram
+      ),
+
+       ScriptStep(
+        botMessages: [
+          'Every drop of blood plays a role in keeping you healthy and active!',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
       ),
 
       ScriptStep(
@@ -1916,9 +1938,6 @@ RESPONSE RULES:
      ScriptStep(
         botMessages: [
           'Hello again, SCI-learner!',
-          'Welcome back to your science journey here in Roxas City, Capiz, where life flows—just like your blood!',
-          'In the last lesson, you learned about the heart, blood, and blood vessels.',
-          'Today, we\'ll focus on how blood moves in specific pathways, just like jeepneys and tricycles following routes around the city.',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Welcoming excitement
@@ -1927,11 +1946,34 @@ RESPONSE RULES:
 
      ScriptStep(
         botMessages: [
+          'In the last lesson, you learned about the heart, blood, and blood vessels.',
+          'Today, we\'ll focus on how blood moves in specific pathways, just like jeepneys and tricycles following routes around the city.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow, // Welcoming excitement
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/1.png',
+      ),
+
+       ScriptStep(
+        botMessages: [
+          'In the last lesson, you learned about the heart, blood, and blood vessels.',
+          'Today, we\'ll focus on how blood moves in specific pathways, just like jeepneys and tricycles following routes around the city.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow, // Welcoming excitement
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/2.png',
+      ),
+
+     ScriptStep(
+        botMessages: [
           'This lesson is called **Circulation**.',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.normal,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/3.png',
       ),
 
      ScriptStep(
@@ -1942,15 +1984,33 @@ RESPONSE RULES:
         waitForUser: true,
       ),
 
-     ScriptStep(
+      ScriptStep(
         botMessages: [
           'Imagine this...',
-          'You jog along Baybay Roxas early in the morning.',
-          'You breathe faster, and your heart beats harder.',
         ],
         channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow, 
+        waitForUser: false,
+      ),
+
+     ScriptStep(
+        botMessages: [
+          'You jog along Baybay Roxas early in the morning.',
+        ],
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow, // Reflection - let student imagine
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/4.png', 
+      ),
+
+       ScriptStep(
+        botMessages: [
+          'You breathe faster, and your heart beats harder.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow, 
+        waitForUser: false,
+
       ),
 
      ScriptStep(
@@ -2136,15 +2196,14 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/5.png', 
       ),
 
-     ScriptStep(
+       ScriptStep(
         botMessages: [
-          'Why does your body need two circuits?',
-          '**Your body needs:**\n• A way to refresh blood with oxygen (pulmonary)\n• A way to deliver oxygen to all cells (systemic)',
-          '**Think of it like this:**\n• Pulmonary circuit = Gas station (refuel with oxygen)\n• Systemic circuit = Delivery service (bring oxygen everywhere)',
+          'Let\'s Explore this one',
         ],
-        channel: MessageChannel.interaction,
+        channel: MessageChannel.narration,
         waitForUser: false,
       ),
 
@@ -2217,6 +2276,15 @@ RESPONSE RULES:
           '**Part 1: Pulmonary Circuit**',
           'The pulmonary circuit is the pathway between the heart and the lungs.',
           '**Its main job is to:**\n• Remove carbon dioxide\n• Refill blood with oxygen',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/6.png',
+      ),
+
+      
+     ScriptStep(
+        botMessages: [
           'Blood flows from the **right ventricle → lungs → left atrium**.',
         ],
         channel: MessageChannel.interaction,
@@ -2243,6 +2311,14 @@ RESPONSE RULES:
         botMessages: [
           '**Part 2: Systemic Circuit**',
           'The systemic circuit carries blood from the heart to the rest of the body.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/7.png',      
+        ),
+
+        ScriptStep(
+        botMessages: [
           '**It delivers:**\n• Oxygen\n• Nutrients\n• Hormones',
           'It also collects waste materials.',
           'Blood flows from the **left ventricle → body tissues → right atrium**.',
@@ -2267,10 +2343,18 @@ RESPONSE RULES:
             'Keep response to 2-3 sentences maximum.',
       ),
 
-     ScriptStep(
+      ScriptStep(
         botMessages: [
           '**Mini Investigation:**',
           'Think of blood vessels like straws of different sizes.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/8.png',      
+      ),
+
+     ScriptStep(
+        botMessages: [
           '**If water flows faster in a wider straw, what does that represent in your body?**',
         ],
         channel: MessageChannel.interaction,
@@ -2479,6 +2563,14 @@ RESPONSE RULES:
         botMessages: [
           '**Did you know?**',
           'The first stethoscope was made of wood over 170 years ago!',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_2/9.png',
+      ),
+
+     ScriptStep(
+        botMessages: [
           '• Invented by René Laennec in 1816\n• It was a simple wooden tube\n• Today\'s stethoscopes are much more advanced',
           '**Fun Fact:** Your blood travels about 19,000 kilometers of blood vessels in your body—that\'s almost halfway around the Earth!',
         ],
@@ -2554,6 +2646,15 @@ RESPONSE RULES:
         botMessages: [
           'Hello, SCI-learner! Welcome back to your science adventure here in Roxas City, Capiz!',
           'The air is fresh and the sea breeze keeps us energized.',
+        ],
+        channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow, // Welcoming excitement
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_3/1.png',
+      ),
+
+       ScriptStep(
+        botMessages: [
           'Have you ever noticed how your breathing changes when you walk along Baybay Roxas, climb stairs at school, or play basketball with friends?',
         ],
         channel: MessageChannel.narration,
@@ -2581,12 +2682,21 @@ RESPONSE RULES:
      ScriptStep(
         botMessages: [
           'Imagine this...',
-          'You\'re jogging early in the morning along the roads of Pueblo de Panay.',
-          'You inhale deeply and feel the cool air fill your lungs.',
         ],
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Reflection - let student imagine
         waitForUser: false,
+      ),
+
+       ScriptStep(
+        botMessages: [
+          'You\'re jogging early in the morning along the roads of Pueblo de Panay.',
+          'You inhale deeply and feel the cool air fill your lungs.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow, 
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_3/2.png',
       ),
 
      ScriptStep(
@@ -2757,13 +2867,13 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_3/3.png',
       ),
 
      ScriptStep(
         botMessages: [
-          'Respiration involves three main events:',
-          '**1. Breathing** – air enters and leaves the lungs\n**2. Diffusion** – oxygen and carbon dioxide move across membranes\n**3. Transport of gases** – oxygen is delivered to cells, carbon dioxide is removed',
-          'All three must work together for respiration to succeed!',
+          'Respiration involves three main events.',
+          'Let’s explore them one by one.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
@@ -2866,6 +2976,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_3/4.png',
       ),
 
      ScriptStep(
@@ -2919,6 +3030,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_1/lesson_3/5.png',
       ),
 
      ScriptStep(
@@ -3218,7 +3330,15 @@ RESPONSE RULES:
       ScriptStep(
         botMessages: [
           'Have you ever wondered why you look like your parents or why you share similar traits with your siblings?',
-          '\nToday, we will explore **Genes and Chromosomes**—the tiny structures inside your cells that carry instructions making you YOU.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/2.png',
+      ),
+
+       ScriptStep(
+        botMessages: [
+          'Today, we will explore **Genes and Chromosomes**—the tiny structures inside your cells that carry instructions making you YOU.',
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
@@ -3237,6 +3357,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/3.png',
       ),
      ScriptStep(
         botMessages: [
@@ -3258,7 +3379,7 @@ RESPONSE RULES:
         botMessages: [
           'Great! You\'ve completed Fa-SCI-nate!',
         ],
-        channel: MessageChannel.interaction,
+        channel: MessageChannel.narration,
         waitForUser: false,
       ),
      ScriptStep(
@@ -3468,6 +3589,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/4.png',
       ),
      ScriptStep(
         botMessages: [
@@ -3489,6 +3611,13 @@ RESPONSE RULES:
         botMessages: [
           '**Part 2: Human Chromosomes**',
           'Each human body cell has **46 chromosomes**, arranged in **23 pairs**.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/5.png',
+      ),
+     ScriptStep(
+        botMessages: [
           'One set comes from your mother, and one from your father.',
         ],
         channel: MessageChannel.interaction,
@@ -3518,6 +3647,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/6.png',
       ),
      ScriptStep(
         botMessages: [
@@ -3543,6 +3673,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/7.png',
       ),
      ScriptStep(
         botMessages: [
@@ -3569,6 +3700,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_1/8.png',
       ),
      ScriptStep(
         botMessages: [
@@ -3812,6 +3944,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_2/1.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4053,6 +4186,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_2/2.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4078,6 +4212,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath:  'assets/images/topic_2/lesson_2/3.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4110,6 +4245,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_2/4.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4136,6 +4272,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_2/5.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4162,6 +4299,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_2/lesson_2/6.png',
       ),
      ScriptStep(
         botMessages: [
@@ -4396,9 +4534,25 @@ RESPONSE RULES:
         botMessages: [
           'Hello, SCI-learner!',
           'Welcome to another science adventure here in Roxas City, where rice fields, mangroves, and backyard plants turn sunlight into life-sustaining energy.',
-          'Have you ever wondered how plants grow tall even though they don\'t eat like humans do?',
         ],
         channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+      ),
+     ScriptStep(
+        botMessages: [
+          'Welcome to another science adventure here in Roxas City, where rice fields, mangroves, and backyard plants turn sunlight into life-sustaining energy.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/1.png',
+      ),
+     ScriptStep(
+        botMessages: [
+          'Have you ever wondered how plants grow tall even though they don\'t eat like humans do?',
+        ],
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
@@ -4425,9 +4579,10 @@ RESPONSE RULES:
           'Imagine this...',
           'You walk past a rice field in Capiz at noon. The Sun is bright, and the leaves are wide open.',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/2.png',
       ),
 
      ScriptStep(
@@ -4633,6 +4788,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/3.png',
       ),
 
      ScriptStep(
@@ -4717,6 +4873,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/4.png',
       ),
 
      ScriptStep(
@@ -4746,6 +4903,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/5.png',
       ),
 
      ScriptStep(
@@ -4772,6 +4930,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/6.png',
       ),
 
      ScriptStep(
@@ -4797,6 +4956,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/7.png',
       ),
 
      ScriptStep(
@@ -4832,6 +4992,15 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/8.png',
+      ),
+     ScriptStep(
+        botMessages: [
+          'Here is another one.',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/9.png',
       ),
 
      ScriptStep(
@@ -5032,6 +5201,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_1/10.png',
       ),
 
      ScriptStep(
@@ -5084,11 +5254,27 @@ RESPONSE RULES:
     return [
      ScriptStep(
         botMessages: [
-          'Hello, SCI-learner! Welcome back to our science journey here in Roxas City.',
-          'Walking to school, playing basketball, and helping at home all require energy.',
-          'You learned in the previous lesson how plants store energy through photosynthesis.',
+          'Hello, SCI-learner!',
         ],
         channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+      ),
+
+     ScriptStep(
+        botMessages: [
+          ' Welcome back to our science journey here in Roxas City. Where Walking to school, playing basketball, and helping at home all require energy.',
+        ],
+        channel: MessageChannel.interaction,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_2/1.png',
+      ),
+     ScriptStep(
+        botMessages: [
+          'You learned in the previous lesson how plants store energy through photosynthesis.',
+        ],
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
@@ -5115,9 +5301,10 @@ RESPONSE RULES:
           'Imagine this...',
           'You\'re playing basketball at the Villareal Stadium. After a few minutes, your arms feel tired and your breathing gets faster.',
         ],
-        channel: MessageChannel.narration,
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_2/2.png',
       ),
 
      ScriptStep(
@@ -5309,6 +5496,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_2/3.png',
       ),
 
      ScriptStep(
@@ -5431,6 +5619,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_2/4.png',
       ),
 
      ScriptStep(
@@ -5484,6 +5673,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
+        imageAssetPath: 'assets/images/topic_3/lesson_2/5.png',
       ),
 
      ScriptStep(

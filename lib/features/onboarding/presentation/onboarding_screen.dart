@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../services/preferences/shared_prefs_service.dart';
+import '../../../shared/utils/image_utils.dart';
+import '../../profile/data/repositories/user_profile_repository.dart';
+import '../../profile/presentation/widgets/profile_setup_page.dart';
 import '../data/onboarding_page.dart';
-import 'package:flutter/services.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,6 +20,8 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
+  final GlobalKey<ProfileSetupPageState> _profilePageKey = GlobalKey();
+  final UserProfileRepository _profileRepository = UserProfileRepository();
   int _currentPage = 0;
 
   // Onboarding content
@@ -69,16 +74,68 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     context.go(AppRoutes.home);
   }
 
-  void _nextPage() {
+  Future<void> _nextPage() async {
     HapticFeedback.lightImpact(); // Haptic feedback on button press
-    if (_currentPage < _pages.length - 1) {
+
+    // Check if we're on the last page (profile setup - index 4)
+    if (_currentPage == 4) {
+      await _validateAndSaveProfile();
+    } else if (_currentPage < 4) {
+      // Navigate to next page
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      _completeOnboarding();
     }
+  }
+
+  Future<void> _validateAndSaveProfile() async {
+    final profileState = _profilePageKey.currentState;
+    if (profileState == null) {
+      _showError('Profile setup error. Please try again.');
+      return;
+    }
+
+    if (!profileState.isValid) {
+      _showError('Please enter a valid name to continue');
+      return;
+    }
+
+    try {
+      // Get profile data
+      final profile = profileState.getProfile();
+      final selectedImage = profileState.selectedImage;
+
+      // Save image if selected
+      String? imagePath;
+      if (selectedImage != null) {
+        imagePath = await ImageUtils.processAndSaveProfileImage(selectedImage);
+      }
+
+      // Update profile with image path
+      final updatedProfile = profile.copyWith(
+        profileImagePath: imagePath,
+      );
+
+      // Save to repository
+      await _profileRepository.saveProfile(updatedProfile);
+      await SharedPrefsService.setProfileCompleted();
+
+      // Complete onboarding
+      await _completeOnboarding();
+    } catch (e) {
+      _showError('Error saving profile. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void _skipOnboarding() {
@@ -98,30 +155,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip Button
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.s16),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: _skipOnboarding,
-                  child: Text(
-                    'Skip',
-                    style: AppTextStyles.buttonLabel.copyWith(
-                      color: AppColors.grey600,
+            // Skip Button (hidden on profile setup page)
+            if (_currentPage != 4)
+              Padding(
+                padding: const EdgeInsets.all(AppSizes.s16),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: TextButton(
+                    onPressed: _skipOnboarding,
+                    child: Text(
+                      'Skip',
+                      style: AppTextStyles.buttonLabel.copyWith(
+                        color: AppColors.grey600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              )
+            else
+              // Empty space to maintain layout when skip button is hidden
+              const SizedBox(height: 56),
 
             // PageView
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: _onPageChanged,
-                itemCount: _pages.length,
+                itemCount: 5, // 4 standard pages + 1 profile setup page
                 itemBuilder: (context, index) {
+                  // Show profile setup page for index 4
+                  if (index == 4) {
+                    return ProfileSetupPage(key: _profilePageKey);
+                  }
+                  // Show standard onboarding pages for indices 0-3
                   return _buildPage(_pages[index]);
                 },
               ),
@@ -133,7 +199,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  _pages.length,
+                  5, // 5 total pages
                   (index) => _buildPageIndicator(index),
                 ),
               ),
@@ -147,7 +213,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _nextPage,
                   child: Text(
-                    _currentPage == _pages.length - 1
+                    _currentPage == 4
                         ? 'Get Started'
                         : 'Next',
                   ),

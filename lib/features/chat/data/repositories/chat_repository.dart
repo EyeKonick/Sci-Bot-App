@@ -102,6 +102,9 @@ class ChatRepository {
   /// Current character (derived from active scenario).
   AiCharacter _currentCharacter = AiCharacter.aristotle;
 
+  /// Student's name for personalized responses (null if not set).
+  String? _userName;
+
   /// Generation counter to invalidate in-flight API responses when
   /// the scenario changes mid-stream.
   int _scenarioGeneration = 0;
@@ -415,6 +418,13 @@ class ChatRepository {
   String _buildEnhancedSystemPrompt() {
     String prompt = _currentCharacter.systemPrompt;
 
+    // Add student's name for personalized responses
+    if (_userName != null && _userName!.isNotEmpty) {
+      prompt += "\n\nThe student's name is $_userName. "
+          "Use their name naturally when encouraging or complimenting them, "
+          "but not in every message - keep it natural and varied.";
+    }
+
     // Add expert recommendations for lesson menu contexts
     if (_currentScenario?.type == ScenarioType.lessonMenu &&
         _currentCharacter.id != 'aristotle') {
@@ -519,6 +529,11 @@ class ChatRepository {
     } finally {
       _releaseLock();
     }
+  }
+
+  /// Set the student's name for personalized AI responses.
+  void setUserName(String? name) {
+    _userName = name;
   }
 
   /// Legacy: set current character. Now creates/switches to the

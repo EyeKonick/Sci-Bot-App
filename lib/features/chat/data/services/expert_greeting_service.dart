@@ -25,6 +25,10 @@ class ExpertGreetingService {
   /// Each lesson menu scenario gets its own cached greeting.
   final Map<String, List<NarrationMessage>> _cachedGreetings = {};
 
+  /// Track the userName used when generating each cached greeting.
+  /// If userName changes, the cached greeting is invalidated.
+  final Map<String, String?> _cachedUserNames = {};
+
   /// Track previous greetings per character to avoid repetition.
   final Map<String, List<String>> _previousGreetings = {};
 
@@ -43,15 +47,17 @@ class ExpertGreetingService {
     required String scenarioId,
     required AiCharacter character,
     required String topicName,
+    String? userName,
   }) async {
-    // Return cached if already generated for this scenario
-    if (hasGreeting(scenarioId)) {
+    // Return cached if already generated for this scenario with same userName
+    if (hasGreeting(scenarioId) && _cachedUserNames[scenarioId] == userName) {
       return _cachedGreetings[scenarioId]!;
     }
 
     if (!_openAI.isConfigured) {
-      final fallback = _offlineFallback(character, topicName);
+      final fallback = _offlineFallback(character, topicName, userName);
       _cachedGreetings[scenarioId] = fallback;
+      _cachedUserNames[scenarioId] = userName;
       return fallback;
     }
 
@@ -59,6 +65,7 @@ class ExpertGreetingService {
       final systemPrompt = _buildGreetingPrompt(
         character: character,
         topicName: topicName,
+        userName: userName,
       );
 
       final response = await _openAI.chatCompletion(
@@ -82,7 +89,7 @@ class ExpertGreetingService {
           .toList();
 
       if (lines.isEmpty) {
-        final fallback = _offlineFallback(character, topicName);
+        final fallback = _offlineFallback(character, topicName, userName);
         _cachedGreetings[scenarioId] = fallback;
         return fallback;
       }
@@ -103,11 +110,13 @@ class ExpertGreetingService {
       }
 
       _cachedGreetings[scenarioId] = messages;
+      _cachedUserNames[scenarioId] = userName;
       return messages;
     } catch (e) {
       print('⚠️ Expert greeting failed for ${character.name}, using fallback: $e');
-      final fallback = _offlineFallback(character, topicName);
+      final fallback = _offlineFallback(character, topicName, userName);
       _cachedGreetings[scenarioId] = fallback;
+      _cachedUserNames[scenarioId] = userName;
       return fallback;
     }
   }
@@ -115,11 +124,13 @@ class ExpertGreetingService {
   /// Invalidate greeting for a specific scenario.
   void invalidateScenario(String scenarioId) {
     _cachedGreetings.remove(scenarioId);
+    _cachedUserNames.remove(scenarioId);
   }
 
   /// Invalidate all cached greetings (e.g., on app restart).
   void invalidateAll() {
     _cachedGreetings.clear();
+    _cachedUserNames.clear();
     _previousGreetings.clear();
   }
 
@@ -127,13 +138,18 @@ class ExpertGreetingService {
   String _buildGreetingPrompt({
     required AiCharacter character,
     required String topicName,
+    String? userName,
   }) {
     final prevList = _previousGreetings[character.id];
     final avoidLine = (prevList != null && prevList.isNotEmpty)
         ? '\n\nDO NOT use any of these phrases (already used):\n${prevList.map((g) => '- "$g"').join('\n')}'
         : '';
 
-    return '''You are ${character.name}, an expert in ${character.specialization}. You are an AI chatbot in SCI-Bot, a Grade 9 Science app for Filipino students. You are introducing yourself to a student.
+    final userNameLine = userName != null
+        ? '\nThe student\'s name is $userName. You MUST include their name in the FIRST message greeting (e.g., "Kamusta, $userName!"). You may also use it naturally in other messages.'
+        : '';
+
+    return '''You are ${character.name}, an expert in ${character.specialization}. You are an AI chatbot in SCI-Bot, a Grade 9 Science app for Filipino students. You are introducing yourself to a student.$userNameLine
 
 TASK: Generate exactly 3 short speech bubble messages to greet a student who just entered the "$topicName" lesson menu. One message per line. Speak in first person as if YOU are the expert talking directly to the student.
 
@@ -141,7 +157,7 @@ RULES:
 - Each message MUST be under 80 characters
 - No numbering, no quotes, no bullets, no formatting
 - Just plain text, one message per line
-- The FIRST message: Greet the student and introduce yourself by name and title, and briefly mention what you are famous for or known for
+- The FIRST message: Greet the student by name (if provided) and introduce yourself by name and title, and briefly mention what you are famous for or known for
 - The SECOND message: Tell the student you are their AI chatbot companion for $topicName and express what fascinates you about the subject
 - The THIRD message: Encourage them to pick a lesson so you can guide them through it
 - Use "Kamusta" or "Hello" or "Welcome" to start - vary each time
@@ -168,10 +184,10 @@ Be warm, enthusiastic, and speak naturally as yourself. Every greeting must feel
 
   /// Offline fallback with randomized greeting sets per character.
   List<NarrationMessage> _offlineFallback(
-      AiCharacter character, String topicName) {
+      AiCharacter character, String topicName, String? userName) {
     final rng = Random();
 
-    final sets = _getOfflineSets(character, topicName);
+    final sets = _getOfflineSets(character, topicName, userName);
     final chosen = sets[rng.nextInt(sets.length)];
 
     return chosen
@@ -184,12 +200,14 @@ Be warm, enthusiastic, and speak naturally as yourself. Every greeting must feel
   }
 
   /// Get offline greeting sets for each expert character.
-  List<List<String>> _getOfflineSets(AiCharacter character, String topicName) {
+  List<List<String>> _getOfflineSets(AiCharacter character, String topicName, String? userName) {
+    final nameGreeting = userName != null ? ", $userName" : "";
+
     switch (character.id) {
       case 'herophilus':
         return [
           [
-            "Kamusta! I'm Herophilus, the Father of Anatomy.",
+            "Kamusta$nameGreeting! I'm Herophilus, the Father of Anatomy.",
             "I'm your AI chatbot companion for $topicName. I'm fascinated by how our body works!",
             'Pick a lesson and let me guide you through it!',
           ],

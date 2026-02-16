@@ -55,6 +55,7 @@ class AristotleGreetingService {
     required bool isFirstLaunch,
     required String timeOfDay,
     String? lastTopicExplored,
+    String? userName,
   }) async {
     debugPrint('🤖 [GREETING SERVICE] Starting Aristotle greeting generation for scenario: $scenarioId (token: $generationToken)');
 
@@ -83,7 +84,7 @@ class AristotleGreetingService {
 
     if (!_openAI.isConfigured) {
       debugPrint('🤖 [GREETING SERVICE] ⚠️ OpenAI not configured, using offline fallback');
-      final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
+      final fallback = _offlineFallback(isFirstLaunch, timeOfDay, userName);
       _cachedGreetings[scenarioId] = fallback;
       _inFlightScenarios.remove(scenarioId);
       _inFlightCompleters.remove(scenarioId);
@@ -96,6 +97,7 @@ class AristotleGreetingService {
         isFirstLaunch: isFirstLaunch,
         timeOfDay: timeOfDay,
         lastTopicExplored: lastTopicExplored,
+        userName: userName,
       );
 
       debugPrint('🤖 [GREETING SERVICE] Calling OpenAI API...');
@@ -128,7 +130,7 @@ class AristotleGreetingService {
 
       if (lines.isEmpty) {
         debugPrint('🤖 [GREETING SERVICE] ⚠️ No valid lines parsed, using fallback');
-        final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
+        final fallback = _offlineFallback(isFirstLaunch, timeOfDay, userName);
         _cachedGreetings[scenarioId] = fallback;
         _inFlightScenarios.remove(scenarioId);
         _inFlightCompleters.remove(scenarioId);
@@ -172,7 +174,7 @@ class AristotleGreetingService {
       return messages;
     } catch (e) {
       debugPrint('🤖 [GREETING SERVICE] ❌ AI greeting failed: $e');
-      final fallback = _offlineFallback(isFirstLaunch, timeOfDay);
+      final fallback = _offlineFallback(isFirstLaunch, timeOfDay, userName);
       _cachedGreetings[scenarioId] = fallback;
       _inFlightScenarios.remove(scenarioId);
       _inFlightCompleters.remove(scenarioId);
@@ -246,16 +248,21 @@ class AristotleGreetingService {
     required bool isFirstLaunch,
     required String timeOfDay,
     String? lastTopicExplored,
+    String? userName,
   }) {
     final topicLine = lastTopicExplored != null
         ? 'The student last explored: $lastTopicExplored'
         : 'The student has not explored any topics yet';
 
+    final userNameLine = userName != null
+        ? '\nThe student\'s name is $userName. You MUST include their name in the FIRST message greeting (e.g., "Good $timeOfDay, $userName!"). You may also use it naturally in other messages.'
+        : '';
+
     final avoidLine = _previousGreetings.isNotEmpty
         ? '\n\nDO NOT use any of these phrases (already used):\n${_previousGreetings.map((g) => '- "$g"').join('\n')}'
         : '';
 
-    return '''You are Aristotle (384-322 BC), the ancient Greek philosopher and Father of Biology. You are the main AI companion in SCI-Bot, a Grade 9 Science app for Filipino students.
+    return '''You are Aristotle (384-322 BC), the ancient Greek philosopher and Father of Biology. You are the main AI companion in SCI-Bot, a Grade 9 Science app for Filipino students.$userNameLine
 
 TASK: Generate exactly 3 short speech bubble messages. One message per line.
 
@@ -263,7 +270,7 @@ RULES:
 - Each message MUST be under 80 characters
 - No numbering, no quotes, no bullets, no formatting
 - Just plain text, one message per line
-- The FIRST message MUST be a time-appropriate greeting that includes your name AND "Father of Biology" (e.g. "Good $timeOfDay! I'm Aristotle, the Father of Biology!")
+- The FIRST message MUST be a time-appropriate greeting that includes your name, "Father of Biology", AND the student's name if provided (e.g. "Good $timeOfDay${userName != null ? ', $userName' : ''}! I'm Aristotle, the Father of Biology!")
 - The SECOND message should mention you are their AI companion in SCI-Bot and briefly state your role
 - The THIRD message should encourage them to start learning or continue
 - IMPORTANT: Always identify yourself as both the "Father of Biology" AND an "AI companion" of SCI-Bot
@@ -308,13 +315,13 @@ Be warm, encouraging, varied, and inspiring. Every message should feel fresh and
 
   /// Offline-only fallback - only used when OpenAI is not configured.
   /// Uses randomized greeting sets so messages vary across app restarts.
-  List<NarrationMessage> _offlineFallback(bool isFirstLaunch, String timeOfDay) {
+  List<NarrationMessage> _offlineFallback(bool isFirstLaunch, String timeOfDay, String? userName) {
     final rng = Random();
     final greeting = timeOfDay == 'morning'
-        ? 'Good morning!'
+        ? (userName != null ? 'Good morning, $userName!' : 'Good morning!')
         : timeOfDay == 'afternoon'
-            ? 'Good afternoon!'
-            : 'Good evening!';
+            ? (userName != null ? 'Good afternoon, $userName!' : 'Good afternoon!')
+            : (userName != null ? 'Good evening, $userName!' : 'Good evening!');
 
     if (isFirstLaunch) {
       final sets = [

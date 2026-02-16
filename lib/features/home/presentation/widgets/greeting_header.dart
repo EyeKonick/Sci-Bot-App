@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../profile/data/providers/user_profile_provider.dart';
+import '../../../profile/presentation/widgets/profile_avatar.dart';
 
 /// Greeting header with personalized welcome message
-class GreetingHeader extends StatelessWidget {
+class GreetingHeader extends ConsumerWidget {
   const GreetingHeader({super.key});
 
   String _getGreeting() {
@@ -19,7 +22,8 @@ class GreetingHeader extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(userProfileProvider);
     return Container(
       padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s20, AppSizes.s20, AppSizes.s20),
       decoration: BoxDecoration(
@@ -41,11 +45,29 @@ class GreetingHeader extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '${_getGreeting()} 👋',
-                        style: AppTextStyles.headingMedium.copyWith(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.w700,
+                      profileAsync.when(
+                        data: (profile) => Text(
+                          profile != null
+                              ? '${_getGreeting()}, ${profile.name}! 👋'
+                              : '${_getGreeting()}! 👋',
+                          style: AppTextStyles.headingMedium.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        loading: () => Text(
+                          '${_getGreeting()}! 👋',
+                          style: AppTextStyles.headingMedium.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        error: (_, __) => Text(
+                          '${_getGreeting()}! 👋',
+                          style: AppTextStyles.headingMedium.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       const SizedBox(height: AppSizes.s4),
@@ -58,22 +80,19 @@ class GreetingHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Profile Avatar Placeholder
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.white.withOpacity(0.6),
-                      width: 2,
-                    ),
+                // Profile Avatar
+                profileAsync.when(
+                  data: (profile) => ProfileAvatar(
+                    imagePath: profile?.profileImagePath,
+                    size: 44,
+                    borderColor: AppColors.white.withOpacity(0.6),
+                    borderWidth: 2,
                   ),
-                  child: const Icon(
-                    Icons.person,
-                    color: AppColors.white,
-                    size: 22,
+                  loading: () => const ProfileAvatar(
+                    size: 44,
+                  ),
+                  error: (_, __) => const ProfileAvatar(
+                    size: 44,
                   ),
                 ),
               ],

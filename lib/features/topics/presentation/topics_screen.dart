@@ -235,11 +235,19 @@ class _TopicListCard extends StatelessWidget {
     }
   }
 
+  /// Learning competencies mapped by topic ID
+  static const Map<String, String> _learningCompetencies = {
+    'topic_body_systems': 'Explain how the respiratory and circulatory systems work together to transport nutrients, gases and other molecules to and from the different parts of the body (S9LT-la-b-26)',
+    'topic_heredity': 'Explain the different patterns of non-Mendelian inheritance (S9LT-Id-29)',
+    'topic_energy': 'Differentiate basic features and importance of photosynthesis and respiration (S9LT-lg-j-31)',
+  };
+
   @override
   Widget build(BuildContext context) {
     final iconColor = _parseColor(topic.colorHex);
     final icon = _parseIcon(topic.iconName);
     final progressPercent = (progress * 100).toInt();
+    final competency = _learningCompetencies[topic.id];
 
     return Card(
       elevation: AppSizes.cardElevation,
@@ -350,6 +358,46 @@ class _TopicListCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+
+              // Learning Competency
+              if (competency != null) ...[
+                const SizedBox(height: AppSizes.s12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSizes.s12),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                    border: Border(
+                      left: BorderSide(
+                        color: iconColor,
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Learning Competency',
+                        style: AppTextStyles.caption.copyWith(
+                          color: iconColor,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.s4),
+                      Text(
+                        competency,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.grey900,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: AppSizes.s12),
 

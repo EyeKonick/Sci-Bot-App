@@ -12,6 +12,7 @@ import '../../data/providers/character_provider.dart';
 import '../../data/services/aristotle_greeting_service.dart';
 import '../../data/services/expert_greeting_service.dart';
 import '../../../lessons/data/providers/lesson_chat_provider.dart';
+import '../../../profile/data/providers/user_profile_provider.dart';
 import 'messenger_chat_window.dart';
 
 /// Floating Chat Button - Messenger Style
@@ -176,7 +177,11 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     final prevContext = ref.read(previousContextProvider);
     final lastTopic = prevContext?.currentTopicId;
 
-    debugPrint('🤖 [ARISTOTLE] Context - Scenario: $scenarioId, First Launch: $isFirstLaunch, Time: $timeOfDay, Last Topic: $lastTopic');
+    // Read user's name for personalized greeting
+    final profile = await ref.read(userProfileProvider.future);
+    final userName = profile?.name;
+
+    debugPrint('🤖 [ARISTOTLE] Context - Scenario: $scenarioId, First Launch: $isFirstLaunch, Time: $timeOfDay, Last Topic: $lastTopic, User: $userName');
 
     final startTime = DateTime.now();
     await service.generateGreeting(
@@ -185,6 +190,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       isFirstLaunch: isFirstLaunch,
       timeOfDay: timeOfDay,
       lastTopicExplored: lastTopic,
+      userName: userName,
     );
     final duration = DateTime.now().difference(startTime);
     debugPrint('🤖 [ARISTOTLE] Greeting generated in ${duration.inMilliseconds}ms');
@@ -262,10 +268,14 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       _ => topicId,
     };
 
+    // Read user's name for personalized greeting
+    final profile = await ref.read(userProfileProvider.future);
+
     await service.generateGreeting(
       scenarioId: scenario.id,
       character: character,
       topicName: topicName,
+      userName: profile?.name,
     );
 
     // Only show bubbles if we haven't been cancelled/disposed

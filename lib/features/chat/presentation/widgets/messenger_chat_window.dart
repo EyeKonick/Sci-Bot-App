@@ -9,6 +9,7 @@ import '../../../../shared/models/chat_message_extended.dart';
 import '../../../../shared/models/scenario_model.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/providers/character_provider.dart';
+import '../../../profile/data/providers/user_profile_provider.dart';
 import 'chat_bubble.dart';
 import 'typing_indicator.dart';
 import '../../../../shared/widgets/loading_spinner.dart';
@@ -120,7 +121,11 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
   Future<void> _initialize() async {
     try {
       await _chatRepo.initialize();
-      
+
+      // Set user's name for personalized AI responses
+      final profile = await ref.read(userProfileProvider.future);
+      _chatRepo.setUserName(profile?.name);
+
       if (!mounted) return;
       
       // Get active character and context manager

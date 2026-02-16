@@ -12,7 +12,14 @@
       "Bash(git checkout:*)",
       "Bash(find:*)",
       "Bash(dart analyze:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/services/validation/profanity_filter_service.dart\":*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/shared/utils/image_utils.dart\":*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_avatar.dart\":*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/name_input_field.dart\":*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_picture_selector.dart\":*)",
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_setup_page.dart\":*)"
     ]
   }
 }

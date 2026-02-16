@@ -1,12 +1,14 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../shared/models/models.dart';
+import '../../features/profile/data/models/user_profile_model.dart';
 import 'adapters/module_adapter.dart';
 import 'adapters/lesson_adapter.dart';
 import 'adapters/topic_adapter.dart';
 import 'adapters/progress_adapter.dart';
 import 'adapters/chat_message_adapter.dart';
 import 'adapters/bookmark_adapter.dart';
+import 'adapters/user_profile_adapter.dart';
 
 /// Central Hive database service
 /// Handles initialization and box management
@@ -19,6 +21,7 @@ class HiveService {
   static const String progressBoxName = 'progress_box';
   static const String chatHistoryBoxName = 'chat_history_box';
   static const String bookmarksBoxName = 'bookmarks_box';
+  static const String userProfileBoxName = 'user_profile_box';
 
   // Box instances
   static Box<TopicModel>? _topicsBox;
@@ -26,6 +29,7 @@ class HiveService {
   static Box<ProgressModel>? _progressBox;
   static Box<ChatMessageModel>? _chatHistoryBox;
   static Box<BookmarkModel>? _bookmarksBox; // Stores BookmarkModel objects
+  static Box<UserProfileModel>? _userProfileBox;
 
   /// Initialize Hive and open all boxes
   /// Phase 0: Added integrity check with recovery flow per box
@@ -52,6 +56,9 @@ class HiveService {
     if (!Hive.isAdapterRegistered(5)) {
       Hive.registerAdapter(BookmarkAdapter());
     }
+    if (!Hive.isAdapterRegistered(6)) {
+      Hive.registerAdapter(UserProfileAdapter());
+    }
 
     // Open all boxes with integrity recovery
     _topicsBox = await _openBoxSafely<TopicModel>(topicsBoxName);
@@ -59,6 +66,7 @@ class HiveService {
     _progressBox = await _openBoxSafely<ProgressModel>(progressBoxName);
     _chatHistoryBox = await _openBoxSafely<ChatMessageModel>(chatHistoryBoxName);
     _bookmarksBox = await _openBoxSafely<BookmarkModel>(bookmarksBoxName);
+    _userProfileBox = await _openBoxSafely<UserProfileModel>(userProfileBoxName);
   }
 
   /// Open a Hive box safely with corruption recovery.
@@ -122,6 +130,14 @@ class HiveService {
     return _bookmarksBox!;
   }
 
+  /// Get User Profile Box
+  static Box<UserProfileModel> get userProfileBox {
+    if (_userProfileBox == null || !_userProfileBox!.isOpen) {
+      throw Exception('User profile box not initialized. Call HiveService.init() first.');
+    }
+    return _userProfileBox!;
+  }
+
   /// Close all boxes (call on app termination)
   static Future<void> closeAll() async {
     await _topicsBox?.close();
@@ -129,6 +145,7 @@ class HiveService {
     await _progressBox?.close();
     await _chatHistoryBox?.close();
     await _bookmarksBox?.close();
+    await _userProfileBox?.close();
   }
 
   /// Clear all data (useful for testing/debugging)
@@ -138,6 +155,7 @@ class HiveService {
     await _progressBox?.clear();
     await _chatHistoryBox?.clear();
     await _bookmarksBox?.clear();
+    await _userProfileBox?.clear();
   }
 
   /// Delete all Hive data (nuclear option)
@@ -148,5 +166,6 @@ class HiveService {
     await Hive.deleteBoxFromDisk(progressBoxName);
     await Hive.deleteBoxFromDisk(chatHistoryBoxName);
     await Hive.deleteBoxFromDisk(bookmarksBoxName);
+    await Hive.deleteBoxFromDisk(userProfileBoxName);
   }
 }

@@ -9,6 +9,7 @@ class SharedPrefsService {
   // KEYS
   static const String _keyFirstLaunch = 'is_first_launch';
   static const String _keyOnboardingCompleted = 'onboarding_completed';
+  static const String _keyProfileCompleted = 'profile_completed';
   static const String _keyDataSeeded = 'data_seeded'; // NEW: for data seeding
   static const String _keySeedVersion = 'seed_version';
   static const int _currentSeedVersion = 2; // Bump when seed data changes
@@ -38,10 +39,21 @@ class SharedPrefsService {
     await _prefs?.setBool(_keyOnboardingCompleted, true);
   }
 
+  /// Check if profile setup is completed
+  static bool get isProfileCompleted {
+    return _prefs?.getBool(_keyProfileCompleted) ?? false;
+  }
+
+  /// Mark profile setup as completed
+  static Future<void> setProfileCompleted() async {
+    await _prefs?.setBool(_keyProfileCompleted, true);
+  }
+
   /// Reset to first launch (useful for testing)
   static Future<void> resetFirstLaunch() async {
     await _prefs?.setBool(_keyFirstLaunch, true);
     await _prefs?.setBool(_keyOnboardingCompleted, false);
+    await _prefs?.setBool(_keyProfileCompleted, false);
   }
 
   // NEW: Data Seeding Methods

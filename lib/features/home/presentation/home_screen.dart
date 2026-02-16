@@ -27,6 +27,10 @@ import '../../../services/data/data_seeder_service.dart';
 import '../../chat/presentation/widgets/floating_chat_button.dart';
 import '../../chat/data/providers/character_provider.dart';
 import '../../chat/data/repositories/chat_repository.dart';
+import '../../profile/data/models/user_profile_model.dart';
+import '../../profile/data/providers/user_profile_provider.dart';
+import '../../profile/data/repositories/user_profile_repository.dart';
+import 'widgets/daily_check_in_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -40,20 +44,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _lessonRepo = LessonRepository();
   final _progressRepo = ProgressRepository();
   final _bookmarkRepo = BookmarkRepository();
-  
+  final _profileRepo = UserProfileRepository();
+
   // Search functionality
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   bool _isSearchActive = false;
   List<LessonModel> _searchSuggestions = [];
   Timer? _searchDebounce; // Phase 0: Debounce search to prevent UI blocking
+  bool _hasCheckedLogin = false; // Ensures daily login check runs once
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _searchFocusNode.addListener(_onSearchFocusChanged);
-    
+
     // Update navigation context to home and activate aristotle_general scenario
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(characterContextManagerProvider).navigateToHome();
@@ -61,6 +67,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(characterContextManagerProvider).setScenario(scenario);
       ChatRepository().setScenario(scenario);
     });
+  }
+
+  /// Check if user has logged in today. If not, record login and show popup.
+  Future<void> _checkDailyLogin() async {
+    try {
+      final profileAsync = ref.read(userProfileProvider);
+      final profile = profileAsync.valueOrNull;
+      if (profile == null) return;
+
+      final today = DateTime.now();
+      final alreadyLoggedToday = profile.lastLoginDate != null &&
+          profile.lastLoginDate!.year == today.year &&
+          profile.lastLoginDate!.month == today.month &&
+          profile.lastLoginDate!.day == today.day;
+
+      if (!alreadyLoggedToday) {
+        // Record login first so we get the updated streak
+        final updatedProfile =
+            await ref.read(userProfileProvider.notifier).recordDailyLogin();
+        if (!mounted || updatedProfile == null) return;
+
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => DailyCheckInDialog(
+            studentName: updatedProfile.name,
+            currentStreak: updatedProfile.currentStreak,
+          ),
+        );
+      }
+    } catch (e) {
+      // Silently fail - streak is non-critical
+      print('Error checking daily login: $e');
+    }
   }
 
   @override
@@ -160,6 +200,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for profile provider to load, then check daily login once
+    ref.listen<AsyncValue<UserProfileModel?>>(userProfileProvider, (previous, next) {
+      if (!_hasCheckedLogin && next.hasValue && next.value != null) {
+        _hasCheckedLogin = true;
+        _checkDailyLogin();
+      }
+    });
+
     // Get real data from Hive
     final topics = _topicRepo.getAllTopics();
     final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
@@ -234,18 +282,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: QuickStatsCard(
                 lessonsCompleted: completedLessonsCount,
                 totalLessons: _lessonRepo.getLessonsCount(),
-                currentStreak: 0, // TODO: Calculate streak
+                currentStreak: ref.watch(userProfileProvider).valueOrNull?.currentStreak ?? 0,
               ),
             ),
           ),
 
           // Streak Tracker Card (Separate)
-         const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s16),
-              child: StreakTrackerCard(
-                currentStreak: 0, // TODO: Calculate real streak
-                last7Days: const [false, false, false, false, false, false, false],
+              child: Builder(
+                builder: (context) {
+                  final profileAsync = ref.watch(userProfileProvider);
+                  final profile = profileAsync.valueOrNull;
+                  final streak = profile?.currentStreak ?? 0;
+                  final last7 = _profileRepo.getCurrentWeekStatus(
+                    profile?.loginDates ?? [],
+                  );
+                  return StreakTrackerCard(
+                    currentStreak: streak,
+                    last7Days: last7,
+                  );
+                },
               ),
             ),
           ),

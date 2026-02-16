@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../profile/data/providers/user_profile_provider.dart';
+import '../../profile/presentation/widgets/profile_avatar.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(userProfileProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
@@ -43,17 +47,18 @@ class SettingsScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSizes.s16),
                     child: Row(
                       children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            shape: BoxShape.circle,
+                        profileAsync.when(
+                          data: (profile) => ProfileAvatar(
+                            imagePath: profile?.profileImagePath,
+                            size: 64,
+                            borderColor: AppColors.primary,
+                            borderWidth: 2,
                           ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 32,
-                            color: AppColors.primary,
+                          loading: () => const ProfileAvatar(
+                            size: 64,
+                          ),
+                          error: (_, __) => const ProfileAvatar(
+                            size: 64,
                           ),
                         ),
                         const SizedBox(width: AppSizes.s16),
@@ -61,9 +66,19 @@ class SettingsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Grade 9 Student',
-                                style: AppTextStyles.headingSmall,
+                              profileAsync.when(
+                                data: (profile) => Text(
+                                  profile?.name ?? 'Grade 9 Student',
+                                  style: AppTextStyles.headingSmall,
+                                ),
+                                loading: () => Text(
+                                  'Grade 9 Student',
+                                  style: AppTextStyles.headingSmall,
+                                ),
+                                error: (_, __) => Text(
+                                  'Grade 9 Student',
+                                  style: AppTextStyles.headingSmall,
+                                ),
                               ),
                               const SizedBox(height: AppSizes.s4),
                               Text(
@@ -252,7 +267,25 @@ class SettingsScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: AppSizes.s8),
+              const SizedBox(height: AppSizes.s12),
+              Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary,
+                      width: 2.5,
+                    ),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/profile.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSizes.s12),
               Text(
                 'This mobile app was developed by Joecil Orola Villanueva, a graduate student of West Visayas State University – La Paz Campus, taking up Master of Arts in Education (MAEd), Major in Biological Science. He is currently a Teacher II at Roxas City School for Philippine Craftsmen, where he actively teaches science and works closely with high school learners.',
                 style: AppTextStyles.bodyMedium,

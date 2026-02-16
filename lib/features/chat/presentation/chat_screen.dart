@@ -9,6 +9,7 @@ import '../../../shared/models/chat_message_extended.dart';
 import '../../../shared/models/ai_character_model.dart';
 import '../../../shared/models/scenario_model.dart';
 import '../data/repositories/chat_repository.dart';
+import '../../profile/data/providers/user_profile_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
@@ -80,7 +81,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       _ensureAristotleScenario();
       await _chatRepo.initialize();
-      
+
+      // Set user's name for personalized AI responses
+      final profile = await ref.read(userProfileProvider.future);
+      _chatRepo.setUserName(profile?.name);
+
       if (!mounted) return;
       
       setState(() {

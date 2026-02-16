@@ -91,149 +91,78 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     }
   }
 
-  /// Show educational exit confirmation dialog with character avatar
-  Future<bool> _showLessonExitConfirmation(AiCharacter character) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: character.themeColor.withValues(alpha: 0.15),
-              child: Image.asset(
-                character.avatarAsset,
-                width: 24,
-                height: 24,
-              ),
-            ),
-            const SizedBox(width: AppSizes.s12),
-            Text(
-              'End the Lesson?',
-              style: AppTextStyles.headingSmall,
-            ),
-          ],
-        ),
-        content: Text(
-          "You're making great progress, ${character.name} is proud! "
-          "Are you sure you want to end this lesson now?",
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grey600,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Keep Learning',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: character.themeColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'End Lesson',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.grey600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final activeCharacter = ref.watch(activeCharacterProvider);
+    return Scaffold(
+      backgroundColor: AppColors.grey50,
+      body: CustomScrollView(
+        slivers: [
+          // App Bar with Topic Info
+          _buildAppBar(),
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final shouldExit = await _showLessonExitConfirmation(activeCharacter);
-        if (shouldExit && mounted) {
-          // Clear expert scenario when leaving lesson menu
-          final scenarioId = '${activeCharacter.id}_lesson_menu_${widget.topicId}';
-          ChatRepository().clearScenario(scenarioId);
-          ref.read(currentScenarioProvider.notifier).state = null;
-          context.pop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.grey50,
-        body: CustomScrollView(
-          slivers: [
-            // App Bar with Topic Info
-            _buildAppBar(),
-
-            // Loading State - Phase 8: Skeleton cards instead of bare spinner
-            if (_isLoading)
-              SliverPadding(
-                padding: const EdgeInsets.all(AppSizes.s20),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => const Padding(
-                      padding: EdgeInsets.only(bottom: AppSizes.s16),
-                      child: SkeletonLessonCard(),
-                    ),
-                    childCount: 3,
+          // Loading State - Phase 8: Skeleton cards instead of bare spinner
+          if (_isLoading)
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSizes.s20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const Padding(
+                    padding: EdgeInsets.only(bottom: AppSizes.s16),
+                    child: SkeletonLessonCard(),
                   ),
+                  childCount: 3,
                 ),
               ),
+            ),
 
-            // Error State (Topic not found)
-            if (!_isLoading && _topic == null)
-              SliverFillRemaining(
-                child: _buildErrorState(),
-              ),
+          // Error State (Topic not found)
+          if (!_isLoading && _topic == null)
+            SliverFillRemaining(
+              child: _buildErrorState(),
+            ),
 
-            // Empty State (No lessons)
-            if (!_isLoading && _topic != null && _lessons.isEmpty)
-              SliverFillRemaining(
-                child: _buildEmptyState(),
-              ),
+          // Empty State (No lessons)
+          if (!_isLoading && _topic != null && _lessons.isEmpty)
+            SliverFillRemaining(
+              child: _buildEmptyState(),
+            ),
 
-            // Lessons List
-            if (!_isLoading && _topic != null && _lessons.isNotEmpty)
-              _buildLessonsList(),
-          ],
-        ),
-      ), // Scaffold
-    ); // PopScope
+          // Lessons List
+          if (!_isLoading && _topic != null && _lessons.isNotEmpty)
+            _buildLessonsList(),
+        ],
+      ),
+    ); // Scaffold
   }
+
+  /// Learning competencies mapped by topic ID
+  static const Map<String, String> _learningCompetencies = {
+    'topic_body_systems': 'Explain how the respiratory and circulatory systems work together to transport nutrients, gases and other molecules to and from the different parts of the body (S9LT-la-b-26)',
+    'topic_heredity': 'Explain the different patterns of non-Mendelian inheritance (S9LT-Id-29)',
+    'topic_energy': 'Differentiate basic features and importance of photosynthesis and respiration (S9LT-lg-j-31)',
+  };
 
   /// App Bar with gradient and topic info - FIXED LAYOUT
   Widget _buildAppBar() {
-    final topicColor = _topic != null 
-        ? _parseColor(_topic!.colorHex) 
+    final topicColor = _topic != null
+        ? _parseColor(_topic!.colorHex)
         : AppColors.primary;
+    final competency = _learningCompetencies[widget.topicId];
 
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: competency != null ? 185 : 140,
       floating: false,
       pinned: true,
       backgroundColor: topicColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: AppColors.white),
-        onPressed: () async {
-          // Show exit confirmation dialog
+        onPressed: () {
+          // Clear expert scenario when leaving lesson menu
           final character = ref.read(activeCharacterProvider);
-          final shouldExit = await _showLessonExitConfirmation(character);
-          if (shouldExit && mounted) {
-            // Clear expert scenario when leaving lesson menu
-            final scenarioId = '${character.id}_lesson_menu_${widget.topicId}';
-            ChatRepository().clearScenario(scenarioId);
-            ref.read(currentScenarioProvider.notifier).state = null;
-            if (mounted) context.pop();
-          }
+          final scenarioId = '${character.id}_lesson_menu_${widget.topicId}';
+          ChatRepository().clearScenario(scenarioId);
+          ref.read(currentScenarioProvider.notifier).state = null;
+          context.pop();
         },
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -254,10 +183,10 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSizes.s20,
-                AppSizes.s64, // Below back button
-                AppSizes.s20,
                 AppSizes.s16,
+                AppSizes.s40, // Below back button
+                AppSizes.s16,
+                AppSizes.s12,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -265,48 +194,60 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Topic Name
-                  Flexible(
-                    child: Text(
-                      _topic?.name ?? 'Lessons',
-                      style: AppTextStyles.headingMedium.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.s4),
-
-                  // Topic Description
                   Text(
-                    _topic?.description ?? '',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.white.withOpacity(0.95),
+                    _topic?.name ?? 'Lessons',
+                    style: AppTextStyles.headingSmall.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.s4),
 
-                  // Lesson Count
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.play_circle_outline,
-                        size: 16,
-                        color: AppColors.white.withOpacity(0.95),
+                  // Learning Competency
+                  if (competency != null) ...[
+                    const SizedBox(height: AppSizes.s8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.s12,
+                        vertical: AppSizes.s8,
                       ),
-                      const SizedBox(width: AppSizes.s4),
-                      Text(
-                        '${_lessons.length} ${_lessons.length == 1 ? 'lesson' : 'lessons'}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.white.withOpacity(0.95),
-                          fontWeight: FontWeight.w500,
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                        border: Border(
+                          left: BorderSide(
+                            color: AppColors.white.withOpacity(0.8),
+                            width: 3,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Learning Competency',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.s4),
+                          Text(
+                            competency,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.white.withOpacity(0.95),
+                              height: 1.3,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
