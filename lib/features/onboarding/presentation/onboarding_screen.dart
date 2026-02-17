@@ -138,10 +138,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _skipOnboarding() {
-    _completeOnboarding();
-  }
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -155,26 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip Button (hidden on profile setup page)
-            if (_currentPage != 4)
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.s16),
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: TextButton(
-                    onPressed: _skipOnboarding,
-                    child: Text(
-                      'Skip',
-                      style: AppTextStyles.buttonLabel.copyWith(
-                        color: AppColors.grey600,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            else
-              // Empty space to maintain layout when skip button is hidden
-              const SizedBox(height: 56),
+            const SizedBox(height: 56),
 
             // PageView
             Expanded(
