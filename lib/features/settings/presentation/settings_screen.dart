@@ -43,56 +43,60 @@ class SettingsScreen extends ConsumerWidget {
               delegate: SliverChildListDelegate([
                 // Profile Section
                 Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.s16),
-                    child: Row(
-                      children: [
-                        profileAsync.when(
-                          data: (profile) => ProfileAvatar(
-                            imagePath: profile?.profileImagePath,
-                            size: 64,
-                            borderColor: AppColors.primary,
-                            borderWidth: 2,
+                  child: InkWell(
+                    onTap: () => context.push('/profile'),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.s16),
+                      child: Row(
+                        children: [
+                          profileAsync.when(
+                            data: (profile) => ProfileAvatar(
+                              imagePath: profile?.profileImagePath,
+                              size: 64,
+                              borderColor: AppColors.primary,
+                              borderWidth: 2,
+                            ),
+                            loading: () => const ProfileAvatar(
+                              size: 64,
+                            ),
+                            error: (_, __) => const ProfileAvatar(
+                              size: 64,
+                            ),
                           ),
-                          loading: () => const ProfileAvatar(
-                            size: 64,
-                          ),
-                          error: (_, __) => const ProfileAvatar(
-                            size: 64,
-                          ),
-                        ),
-                        const SizedBox(width: AppSizes.s16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              profileAsync.when(
-                                data: (profile) => Text(
-                                  profile?.name ?? 'Grade 9 Student',
-                                  style: AppTextStyles.headingSmall,
+                          const SizedBox(width: AppSizes.s16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                profileAsync.when(
+                                  data: (profile) => Text(
+                                    profile?.name ?? 'Grade 9 Student',
+                                    style: AppTextStyles.headingSmall,
+                                  ),
+                                  loading: () => Text(
+                                    'Grade 9 Student',
+                                    style: AppTextStyles.headingSmall,
+                                  ),
+                                  error: (_, __) => Text(
+                                    'Grade 9 Student',
+                                    style: AppTextStyles.headingSmall,
+                                  ),
                                 ),
-                                loading: () => Text(
-                                  'Grade 9 Student',
-                                  style: AppTextStyles.headingSmall,
+                                const SizedBox(height: AppSizes.s4),
+                                Text(
+                                  'Learning Science with SCI-Bot',
+                                  style: AppTextStyles.caption,
                                 ),
-                                error: (_, __) => Text(
-                                  'Grade 9 Student',
-                                  style: AppTextStyles.headingSmall,
-                                ),
-                              ),
-                              const SizedBox(height: AppSizes.s4),
-                              Text(
-                                'Learning Science with SCI-Bot',
-                                style: AppTextStyles.caption,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppColors.grey600,
-                        ),
-                      ],
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.grey600,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -113,13 +117,6 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Learning History',
                   subtitle: 'View your past lessons',
                   onTap: () => context.push('/learning-history'),
-                ),
-                _buildSettingsTile(
-                  context,
-                  icon: Icons.leaderboard,
-                  title: 'Progress Stats',
-                  subtitle: 'Detailed progress analytics',
-                  onTap: () => context.push('/progress-stats'),
                 ),
                 const SizedBox(height: AppSizes.s24),
 

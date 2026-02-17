@@ -14,6 +14,7 @@ import '../data/repositories/progress_repository.dart';
 import '../data/repositories/bookmark_repository.dart';
 import '../../topics/data/repositories/topic_repository.dart';
 import '../../chat/data/providers/character_provider.dart';
+import '../../../shared/models/scenario_model.dart';
 import '../../chat/data/repositories/chat_repository.dart';
 import '../../chat/presentation/widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
@@ -118,6 +119,17 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           lessonId: widget.lessonId,
           moduleIndex: _currentModuleIndex.toString(),
         );
+
+        // Set module scenario to block messenger chat —
+        // chat head is narration-only inside modules
+        final expert = AiCharacter.getCharacterForTopic(_lesson!.topicId);
+        final scenario = ChatScenario.expertModule(
+          expertId: expert.id,
+          topicId: _lesson!.topicId,
+          lessonId: widget.lessonId,
+          moduleId: _currentModuleIndex.toString(),
+        );
+        ref.read(currentScenarioProvider.notifier).state = scenario;
       }
     });
   }
@@ -570,8 +582,16 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     // hiding narrative bubbles, and setting bubble mode back to greeting.
     try {
       ref.read(lessonChatProvider.notifier).reset();
-      // Clear scenario to prevent bubble leak on backward navigation
-      ref.read(currentScenarioProvider.notifier).state = null;
+      // Restore lessonMenu scenario so messenger works on lessons screen
+      if (_lesson != null) {
+        final expert = AiCharacter.getCharacterForTopic(_lesson!.topicId);
+        ref.read(currentScenarioProvider.notifier).state = ChatScenario.expertLessonMenu(
+          expertId: expert.id,
+          topicId: _lesson!.topicId,
+        );
+      } else {
+        ref.read(currentScenarioProvider.notifier).state = null;
+      }
     } catch (e) {
       // Ignore error if ref is already invalid during disposal
     }
@@ -783,11 +803,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             return;
           }
           debugPrint('🔙 [POPSCOPE] User chose "End Lesson" - clearing state and popping screen');
-          // Clear scenario and reset state BEFORE popping to prevent bubble leak
+          // Restore lessonMenu scenario and reset state BEFORE popping
           try {
             ref.read(lessonChatProvider.notifier).reset();
-            ref.read(currentScenarioProvider.notifier).state = null;
-            debugPrint('🔙 [POPSCOPE] Scenario cleared successfully');
+            if (_lesson != null) {
+              final expert = AiCharacter.getCharacterForTopic(_lesson!.topicId);
+              ref.read(currentScenarioProvider.notifier).state = ChatScenario.expertLessonMenu(
+                expertId: expert.id,
+                topicId: _lesson!.topicId,
+              );
+            } else {
+              ref.read(currentScenarioProvider.notifier).state = null;
+            }
+            debugPrint('🔙 [POPSCOPE] Scenario restored to lessonMenu');
           } catch (e) {
             debugPrint('🔙 [POPSCOPE] ERROR clearing scenario: $e');
           }
@@ -837,11 +865,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                   return;
                 }
                 debugPrint('❌ [CLOSE BUTTON] User chose "End Lesson" - clearing state and popping');
-                // Clear scenario and reset state BEFORE popping to prevent bubble leak
+                // Restore lessonMenu scenario and reset state BEFORE popping
                 try {
                   ref.read(lessonChatProvider.notifier).reset();
-                  ref.read(currentScenarioProvider.notifier).state = null;
-                  debugPrint('❌ [CLOSE BUTTON] Scenario cleared successfully');
+                  if (_lesson != null) {
+                    final expert = AiCharacter.getCharacterForTopic(_lesson!.topicId);
+                    ref.read(currentScenarioProvider.notifier).state = ChatScenario.expertLessonMenu(
+                      expertId: expert.id,
+                      topicId: _lesson!.topicId,
+                    );
+                  } else {
+                    ref.read(currentScenarioProvider.notifier).state = null;
+                  }
+                  debugPrint('❌ [CLOSE BUTTON] Scenario restored to lessonMenu');
                 } catch (e) {
                   debugPrint('❌ [CLOSE BUTTON] ERROR clearing scenario: $e');
                 }

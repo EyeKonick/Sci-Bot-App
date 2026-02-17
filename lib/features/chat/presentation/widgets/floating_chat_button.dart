@@ -912,8 +912,8 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       if (_canOpenMessenger()) {
         _openChat();
       } else {
-        // In modules, tap just hides bubble
-        setState(() => _showSpeechBubble = false);
+        // In modules, ignore tap — narration continues uninterrupted
+        return;
       }
     }
   }
@@ -1134,6 +1134,9 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
                 },
                 child: GestureDetector(
                   onTap: () {
+                    // In modules, ignore tap entirely — narration continues
+                    final scenario = ref.read(currentScenarioProvider);
+                    if (scenario != null && scenario.type == ScenarioType.module) return;
                     setState(() {
                       _showSpeechBubble = false;
                     });

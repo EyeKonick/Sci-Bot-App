@@ -4,7 +4,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../profile/data/providers/user_profile_provider.dart';
-import '../../../profile/presentation/widgets/profile_avatar.dart';
 
 /// Greeting header with personalized welcome message
 class GreetingHeader extends ConsumerWidget {
@@ -35,67 +34,65 @@ class GreetingHeader extends ConsumerWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      profileAsync.when(
-                        data: (profile) => Text(
-                          profile != null
-                              ? '${_getGreeting()}, ${profile.name}! 👋'
-                              : '${_getGreeting()}! 👋',
-                          style: AppTextStyles.headingMedium.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        loading: () => Text(
-                          '${_getGreeting()}! 👋',
-                          style: AppTextStyles.headingMedium.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        error: (_, __) => Text(
-                          '${_getGreeting()}! 👋',
-                          style: AppTextStyles.headingMedium.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.s4),
-                      Text(
-                        'Ready to learn something new today?',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.white.withOpacity(0.9),
-                        ),
-                      ),
-                    ],
-                  ),
+            // App Icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.white.withOpacity(0.2),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/icons/scibot-icon.png',
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
                 ),
-                // Profile Avatar
-                profileAsync.when(
-                  data: (profile) => ProfileAvatar(
-                    imagePath: profile?.profileImagePath,
-                    size: 44,
-                    borderColor: AppColors.white.withOpacity(0.6),
-                    borderWidth: 2,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s12),
+            // Greeting Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  profileAsync.when(
+                    data: (profile) => Text(
+                      profile != null
+                          ? '${_getGreeting()}, ${profile.name}!'
+                          : '${_getGreeting()}!',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    loading: () => Text(
+                      '${_getGreeting()}!',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    error: (_, __) => Text(
+                      '${_getGreeting()}!',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                  loading: () => const ProfileAvatar(
-                    size: 44,
+                  const SizedBox(height: AppSizes.s4),
+                  Text(
+                    'Ready to learn something new today?',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.white.withOpacity(0.9),
+                    ),
                   ),
-                  error: (_, __) => const ProfileAvatar(
-                    size: 44,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

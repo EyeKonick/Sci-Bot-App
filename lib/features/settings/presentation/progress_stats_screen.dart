@@ -73,7 +73,7 @@ class ProgressStatsScreen extends StatelessWidget {
                 const SizedBox(height: AppSizes.s8),
 
                 // Overall Progress Card
-                _OverallProgressCard(
+                OverallProgressCard(
                   completedLessons: completedLessons,
                   totalLessons: totalLessons,
                   percentage: overallPercentage,
@@ -82,7 +82,7 @@ class ProgressStatsScreen extends StatelessWidget {
                 const SizedBox(height: AppSizes.s24),
 
                 // Summary Stats Row
-                _SummaryStatsRow(
+                SummaryStatsRow(
                   totalModulesCompleted: totalModulesCompleted,
                   recentActivity: recentActivity,
                   totalLessons: totalLessons,
@@ -123,9 +123,9 @@ class ProgressStatsScreen extends StatelessWidget {
                     }
                   }
 
-                  return _TopicProgressCard(
+                  return TopicProgressCard(
                     topicName: topic.name,
-                    topicColor: _parseColor(topic.colorHex),
+                    topicColor: parseTopicColor(topic.colorHex),
                     lessonsCompleted: topicCompleted,
                     totalLessons: topicLessons.length,
                     modulesCompleted: topicModulesCompleted,
@@ -141,26 +141,28 @@ class ProgressStatsScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  static Color _parseColor(String hexString) {
-    try {
-      final buffer = StringBuffer();
-      if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-      buffer.write(hexString.replaceFirst('#', ''));
-      return Color(int.parse(buffer.toString(), radix: 16));
-    } catch (e) {
-      return AppColors.primary;
-    }
+/// Parse a hex color string to Color
+Color parseTopicColor(String hexString) {
+  try {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
+  } catch (e) {
+    return AppColors.primary;
   }
 }
 
 /// Large circular progress indicator card
-class _OverallProgressCard extends StatelessWidget {
+class OverallProgressCard extends StatelessWidget {
   final int completedLessons;
   final int totalLessons;
   final double percentage;
 
-  const _OverallProgressCard({
+  const OverallProgressCard({
+    super.key,
     required this.completedLessons,
     required this.totalLessons,
     required this.percentage,
@@ -243,13 +245,14 @@ class _OverallProgressCard extends StatelessWidget {
 }
 
 /// Summary stats in a row of cards
-class _SummaryStatsRow extends StatelessWidget {
+class SummaryStatsRow extends StatelessWidget {
   final int totalModulesCompleted;
   final int recentActivity;
   final int totalLessons;
   final int completedLessons;
 
-  const _SummaryStatsRow({
+  const SummaryStatsRow({
+    super.key,
     required this.totalModulesCompleted,
     required this.recentActivity,
     required this.totalLessons,
@@ -261,7 +264,7 @@ class _SummaryStatsRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _StatCard(
+          child: ProgressStatCard(
             icon: Icons.view_module,
             label: 'Modules Done',
             value: '$totalModulesCompleted',
@@ -270,7 +273,7 @@ class _SummaryStatsRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.s12),
         Expanded(
-          child: _StatCard(
+          child: ProgressStatCard(
             icon: Icons.trending_up,
             label: 'This Week',
             value: '$recentActivity',
@@ -279,7 +282,7 @@ class _SummaryStatsRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.s12),
         Expanded(
-          child: _StatCard(
+          child: ProgressStatCard(
             icon: Icons.emoji_events,
             label: 'Rate',
             value: totalLessons > 0
@@ -294,13 +297,14 @@ class _SummaryStatsRow extends StatelessWidget {
 }
 
 /// Individual stat card
-class _StatCard extends StatelessWidget {
+class ProgressStatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final Color color;
 
-  const _StatCard({
+  const ProgressStatCard({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
@@ -347,7 +351,7 @@ class _StatCard extends StatelessWidget {
 }
 
 /// Per-topic progress card
-class _TopicProgressCard extends StatelessWidget {
+class TopicProgressCard extends StatelessWidget {
   final String topicName;
   final Color topicColor;
   final int lessonsCompleted;
@@ -355,7 +359,8 @@ class _TopicProgressCard extends StatelessWidget {
   final int modulesCompleted;
   final int totalModules;
 
-  const _TopicProgressCard({
+  const TopicProgressCard({
+    super.key,
     required this.topicName,
     required this.topicColor,
     required this.lessonsCompleted,

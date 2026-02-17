@@ -30,7 +30,8 @@ class AppRoutes {
   static const String privacyPolicy = '/privacy-policy';
   static const String searchResults = '/search';
   static const String about = '/about';
-  
+  static const String profile = '/profile';
+
   // ERROR ROUTES
   static const String notFound = '/not-found';
   static const String error = '/error';
@@ -54,4 +55,5 @@ class AppRoutes {
   static const String privacyPolicyName = 'privacy_policy';
   static const String searchResultsName = 'search';
   static const String aboutName = 'about';
+  static const String profileName = 'profile';
 }

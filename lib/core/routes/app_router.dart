@@ -14,6 +14,7 @@ import '../../features/settings/presentation/progress_stats_screen.dart';
 import '../../features/settings/presentation/text_size_screen.dart';
 import '../../features/settings/presentation/help_screen.dart';
 import '../../features/settings/presentation/privacy_policy_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/error/presentation/not_found_screen.dart';
 import 'app_routes.dart';
 import 'bottom_nav_shell.dart';
@@ -118,6 +119,13 @@ class AppRouter {
         path: AppRoutes.privacyPolicy,
         name: AppRoutes.privacyPolicyName,
         builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+
+      // PROFILE SCREEN
+      GoRoute(
+        path: AppRoutes.profile,
+        name: AppRoutes.profileName,
+        builder: (context, state) => const ProfileScreen(),
       ),
 
       // BOTTOM NAVIGATION SHELL (Persistent navigation for main app)
