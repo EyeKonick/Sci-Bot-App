@@ -419,6 +419,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
           return TopicProgressCard(
             topicName: topic.name,
+            imageAsset: topic.imageAsset,
             topicColor: parseTopicColor(topic.colorHex),
             lessonsCompleted: topicCompleted,
             totalLessons: topicLessons.length,

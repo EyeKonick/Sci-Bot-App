@@ -125,6 +125,7 @@ class ProgressStatsScreen extends StatelessWidget {
 
                   return TopicProgressCard(
                     topicName: topic.name,
+                    imageAsset: topic.imageAsset,
                     topicColor: parseTopicColor(topic.colorHex),
                     lessonsCompleted: topicCompleted,
                     totalLessons: topicLessons.length,
@@ -353,6 +354,7 @@ class ProgressStatCard extends StatelessWidget {
 /// Per-topic progress card
 class TopicProgressCard extends StatelessWidget {
   final String topicName;
+  final String? imageAsset;
   final Color topicColor;
   final int lessonsCompleted;
   final int totalLessons;
@@ -362,6 +364,7 @@ class TopicProgressCard extends StatelessWidget {
   const TopicProgressCard({
     super.key,
     required this.topicName,
+    this.imageAsset,
     required this.topicColor,
     required this.lessonsCompleted,
     required this.totalLessons,
@@ -398,11 +401,21 @@ class TopicProgressCard extends StatelessWidget {
                     color: topicColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
-                  child: Icon(
-                    Icons.science,
-                    color: topicColor,
-                    size: AppSizes.iconM,
-                  ),
+                  child: imageAsset != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                          child: Image.asset(
+                            imageAsset!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Icon(
+                          Icons.science,
+                          color: topicColor,
+                          size: AppSizes.iconM,
+                        ),
                 ),
                 const SizedBox(width: AppSizes.s12),
                 Expanded(

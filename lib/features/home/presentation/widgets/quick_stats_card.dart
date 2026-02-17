@@ -19,8 +19,8 @@ class QuickStatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completionPercentage = totalLessons > 0 
-        ? (lessonsCompleted / totalLessons) 
+    final completionPercentage = totalLessons > 0
+        ? (lessonsCompleted / totalLessons)
         : 0.0;
 
     return Card(
@@ -42,7 +42,7 @@ class QuickStatsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.s24),
-            
+
             // Progress Circle with Text on Side
             Row(
               children: [
@@ -105,9 +105,9 @@ class QuickStatsCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: AppSizes.s24),
-                
+
                 // Text on Side
                 Expanded(
                   child: Column(
@@ -132,7 +132,7 @@ class QuickStatsCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ), 
+            ),
           ],
         ),
       ),
