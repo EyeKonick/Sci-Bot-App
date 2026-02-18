@@ -38,8 +38,9 @@ class ProgressStatsScreen extends StatelessWidget {
     final overallPercentage =
         totalLessons > 0 ? completedLessons / totalLessons : 0.0;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -100,7 +101,7 @@ class ProgressStatsScreen extends StatelessWidget {
                   child: Text(
                     'Progress by Topic',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -171,9 +172,10 @@ class OverallProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
@@ -194,7 +196,7 @@ class OverallProgressCard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: percentage.clamp(0.0, 1.0),
                       strokeWidth: 10,
-                      backgroundColor: AppColors.grey300,
+                      backgroundColor: isDark ? AppColors.darkBorder : AppColors.border,
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         AppColors.primary,
                       ),
@@ -214,7 +216,7 @@ class OverallProgressCard extends StatelessWidget {
                       Text(
                         'Complete',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey600,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -229,13 +231,14 @@ class OverallProgressCard extends StatelessWidget {
               'Lessons Completed',
               style: AppTextStyles.bodyLarge.copyWith(
                 fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSizes.s4),
             Text(
               '$completedLessons of $totalLessons',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
           ],
@@ -314,9 +317,10 @@ class ProgressStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusM),
       ),
@@ -340,7 +344,7 @@ class ProgressStatCard extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.grey600,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -374,11 +378,12 @@ class TopicProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = totalLessons > 0 ? lessonsCompleted / totalLessons : 0.0;
 
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       margin: const EdgeInsets.only(bottom: AppSizes.s12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
@@ -432,7 +437,7 @@ class TopicProgressCard extends StatelessWidget {
                       Text(
                         '$lessonsCompleted of $totalLessons lessons completed',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey600,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -455,7 +460,7 @@ class TopicProgressCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppSizes.radiusFull),
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
-                backgroundColor: AppColors.grey300,
+                backgroundColor: isDark ? AppColors.darkBorder : AppColors.border,
                 valueColor: AlwaysStoppedAnimation<Color>(topicColor),
                 minHeight: 8,
               ),
@@ -469,13 +474,13 @@ class TopicProgressCard extends StatelessWidget {
                 Icon(
                   Icons.view_module,
                   size: AppSizes.iconXS,
-                  color: AppColors.grey600,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                 ),
                 const SizedBox(width: AppSizes.s4),
                 Text(
                   '$modulesCompleted of $totalModules modules completed',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.grey600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
               ],

@@ -59,4 +59,30 @@ class AppSizes {
   static const double aspectRatio16x9 = 16 / 9;
   static const double aspectRatio4x3 = 4 / 3;
   static const double aspectRatioSquare = 1.0;
+
+  // ==================== NEUMORPHIC CONSTANTS ====================
+
+  // Shadow blur radii
+  static const double neumorphicBlurS = 8.0;
+  static const double neumorphicBlurM = 16.0;
+  static const double neumorphicBlurL = 24.0;
+
+  // Shadow offset distances (applied as both x and y)
+  static const double neumorphicOffsetS = 3.0;
+  static const double neumorphicOffset = 4.0;
+  static const double neumorphicOffsetL = 6.0;
+
+  // Shadow spread
+  static const double neumorphicSpreadS = 0.0;
+  static const double neumorphicSpread = 1.0;
+
+  // Extra large border radius for prominent cards
+  static const double radiusXXL = 32.0;
+
+  // Chat bubble specific radius
+  static const double chatBubbleRadius = 18.0;
+
+  // Chathead size (enlarged 25% from original 70px)
+  static const double chatheadSize = 88.0;
+  static const double chatheadSizeDragging = 96.0;
 }

@@ -27,8 +27,9 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
     final allProgress = _progressRepo.getAllProgress()
       ..sort((a, b) => b.lastAccessed.compareTo(a.lastAccessed));
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -73,7 +74,7 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
                 child: Text(
                   '${allProgress.length} ${allProgress.length == 1 ? 'lesson' : 'lessons'} accessed',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -140,20 +141,20 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
             Icon(
               Icons.history,
               size: AppSizes.iconXL * 2,
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             const SizedBox(height: AppSizes.s24),
             Text(
               'No Learning History Yet',
               style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
             Text(
               'Start a lesson to track your learning journey.\nYour progress will appear here.',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -288,13 +289,13 @@ class _HistoryLessonCard extends StatelessWidget {
                   Icon(
                     Icons.access_time,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     _formatLastAccessed(progress.lastAccessed),
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -320,26 +321,26 @@ class _HistoryLessonCard extends StatelessWidget {
                   Icon(
                     Icons.access_time,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     '${lesson.estimatedMinutes} min',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: AppSizes.s12),
                   Icon(
                     Icons.list_alt,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     '${progress.completedModuleIds.length}/${lesson.modules.length} modules',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const Spacer(),
@@ -385,7 +386,7 @@ class _HistoryLessonCard extends StatelessWidget {
                   Text(
                     'Progress',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   Text(
@@ -402,7 +403,7 @@ class _HistoryLessonCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                 child: LinearProgressIndicator(
                   value: completionPct.clamp(0.0, 1.0),
-                  backgroundColor: AppColors.grey300,
+                  backgroundColor: AppColors.border,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     isCompleted ? AppColors.success : topicColor,
                   ),

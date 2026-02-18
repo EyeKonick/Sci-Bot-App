@@ -13,6 +13,7 @@ import '../../../profile/data/providers/user_profile_provider.dart';
 import 'chat_bubble.dart';
 import 'typing_indicator.dart';
 import '../../../../shared/widgets/loading_spinner.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Messenger-Style Chat Window (INTERACTION CHANNEL ONLY)
 ///
@@ -281,20 +282,25 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
       removeTop: false,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: AppColors.shadowLight.withValues(alpha: 0.8),
+              blurRadius: 8,
+              offset: const Offset(-2, -2),
             ),
           ],
         ),
         child: Material(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           clipBehavior: Clip.antiAlias,
-          color: Colors.white,
+          color: AppColors.surface,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -425,7 +431,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.2),
+              color: AppColors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: ClipOval(
@@ -463,7 +469,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                 Text(
                   character.specialization,
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.white.withOpacity(0.9),
+                    color: AppColors.white.withValues(alpha: 0.9),
                     decoration: TextDecoration.none,
                   ),
                 ),
@@ -491,7 +497,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
           Text(
             'Try asking:',
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSizes.s8),
@@ -574,7 +580,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
             Text(
               errorMessage.content,
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s8),
@@ -597,7 +603,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                 Text(
                   'Check your connection',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -676,6 +682,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
   }
 
   Widget _buildInputArea() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final character = ref.watch(activeCharacterProvider);
     final bool isDisabled = _isStreaming;
 
@@ -685,14 +692,14 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
         : _getContextualPlaceholder();
 
     return Material(
-      color: Colors.white,
+      color: isDark ? AppColors.darkBackground : AppColors.background,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: const Border(
+          color: isDark ? AppColors.darkBackground : AppColors.background,
+          border: Border(
             top: BorderSide(
-              color: AppColors.grey300,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
               width: 1,
             ),
           ),
@@ -710,17 +717,9 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                     minHeight: 48,
                     maxHeight: 120,
                   ),
-                  decoration: BoxDecoration(
-                    color: isDisabled
-                        ? AppColors.grey100
-                        : AppColors.grey100,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDisabled
-                          ? AppColors.grey300
-                          : AppColors.grey300,
-                      width: 1,
-                    ),
+                  decoration: NeumorphicStyles.inset(
+                    context,
+                    borderRadius: 24,
                   ),
                   child: TextField(
                     controller: _controller,
@@ -730,7 +729,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                       hintStyle: AppTextStyles.bodyMedium.copyWith(
                         color: isDisabled
                             ? character.themeColor.withValues(alpha: 0.5)
-                            : AppColors.grey600,
+                            : AppColors.textSecondary,
                         fontStyle: isDisabled ? FontStyle.italic : FontStyle.normal,
                       ),
                       border: InputBorder.none,
@@ -741,7 +740,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                       isDense: true,
                     ),
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.grey900,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                       height: 1.4,
                     ),
                     textCapitalization: TextCapitalization.sentences,
@@ -767,7 +766,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                     ? null
                     : character.themeGradient,
                 color: (_controller.text.isEmpty || isDisabled)
-                    ? AppColors.grey300
+                    ? AppColors.border
                     : null,
                 shape: BoxShape.circle,
               ),

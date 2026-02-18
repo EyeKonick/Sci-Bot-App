@@ -5,6 +5,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_feedback.dart';
 import '../../../shared/models/models.dart';
+import '../../../shared/widgets/neumorphic_styles.dart';
 import '../data/repositories/bookmark_repository.dart';
 import '../data/repositories/lesson_repository.dart';
 import '../data/repositories/progress_repository.dart';
@@ -29,8 +30,9 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   Widget build(BuildContext context) {
     final bookmarks = _bookmarkRepo.getAllBookmarks();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -75,7 +77,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 child: Text(
                   '${bookmarks.length} ${bookmarks.length == 1 ? 'Bookmark' : 'Bookmarks'}',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -137,7 +139,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                                   ),
                                 ),
                                 duration: AppFeedback.toastDuration,
-                                backgroundColor: AppColors.grey900,
+                                backgroundColor: AppColors.textPrimary,
                                 action: SnackBarAction(
                                   label: 'Undo',
                                   textColor: AppColors.primary,
@@ -176,20 +178,20 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             Icon(
               Icons.bookmark_border,
               size: AppSizes.iconXL * 2,
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             const SizedBox(height: AppSizes.s24),
             Text(
               'No Bookmarks Yet',
               style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
             Text(
               'Bookmark lessons to save them for later.\nTap the bookmark icon while viewing a lesson.',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -273,6 +275,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final daysSince = DateTime.now().difference(bookmarkedAt).inDays;
     final bookmarkedText = daysSince == 0
         ? 'Today'
@@ -280,20 +283,19 @@ class _BookmarkedLessonCard extends StatelessWidget {
             ? 'Yesterday'
             : '$daysSince days ago';
 
-    return Card(
-      elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        side: isCompleted
-            ? const BorderSide(color: AppColors.success, width: 2)
-            : BorderSide.none,
+    return Container(
+      decoration: NeumorphicStyles.card(context).copyWith(
+        border: isCompleted
+            ? Border.all(color: AppColors.success, width: 2)
+            : null,
       ),
-      child: InkWell(
-        onTap: onTap,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.cardPadding),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.cardPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -307,7 +309,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
                       vertical: AppSizes.s4,
                     ),
                     decoration: BoxDecoration(
-                      color: topicColor.withOpacity(0.15),
+                      color: topicColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                     ),
                     child: Text(
@@ -347,7 +349,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
               Text(
                 lesson.description,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.grey600,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -361,39 +363,39 @@ class _BookmarkedLessonCard extends StatelessWidget {
                   Icon(
                     Icons.access_time,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     '${lesson.estimatedMinutes} min',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: AppSizes.s12),
                   Icon(
                     Icons.list_alt,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     '${lesson.modules.length} modules',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                   const Spacer(),
                   Icon(
                     Icons.bookmark,
                     size: AppSizes.iconXS,
-                    color: AppColors.grey600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   const SizedBox(width: AppSizes.s4),
                   Text(
                     bookmarkedText,
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -411,7 +413,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
                       Text(
                         'Progress',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey600,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
                       Text(
@@ -428,7 +430,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: AppColors.grey300,
+                      backgroundColor: AppColors.border,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isCompleted ? AppColors.success : topicColor,
                       ),
@@ -441,6 +443,7 @@ class _BookmarkedLessonCard extends StatelessWidget {
           ),
         ),
       ),
+        ),
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/models/chat_message_extended.dart';
 import '../../../../shared/models/ai_character_model.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Chat Bubble Widget
 /// Clean, modern chat bubbles with per-character theming
@@ -25,10 +26,15 @@ class ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
     final isSystem = message.role == 'system';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isSystem) {
-      return _buildSystemMessage();
+      return _buildSystemMessage(isDark);
     }
+
+    final bubbleColor = isUser
+        ? (isDark ? AppColors.darkPrimary : AppColors.primary)
+        : (isDark ? AppColors.darkSurface : AppColors.surfaceTint);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -53,32 +59,13 @@ class ChatBubble extends StatelessWidget {
                 maxWidth: MediaQuery.of(context).size.width * 0.75,
               ),
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.s12,
-                vertical: AppSizes.s8,
+                horizontal: AppSizes.s16,
+                vertical: AppSizes.s12,
               ),
-              decoration: BoxDecoration(
-                color: isUser
-                    ? _character.themeColor
-                    : AppColors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isUser ? 18 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 18),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-                border: isUser
-                    ? null
-                    : Border.all(
-                        color: AppColors.grey300.withOpacity(0.5),
-                        width: 0.5,
-                      ),
+              decoration: NeumorphicStyles.chatBubble(
+                context,
+                color: bubbleColor,
+                isUser: isUser,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +86,7 @@ class ChatBubble extends StatelessWidget {
                   ],
 
                   // Message content with bold support
-                  _buildMessageContent(isUser),
+                  _buildMessageContent(isUser, isDark),
 
                   // Streaming indicator
                   if (message.isStreaming) ...[
@@ -117,9 +104,11 @@ class ChatBubble extends StatelessWidget {
 
   /// Build message content with bold text support
   /// Supports **bold** markdown syntax
-  Widget _buildMessageContent(bool isUser) {
+  Widget _buildMessageContent(bool isUser, bool isDark) {
     final text = message.content;
-    final textColor = isUser ? AppColors.white : AppColors.grey900;
+    final textColor = isUser
+        ? AppColors.white
+        : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary);
 
     // Parse bold markers (**text**)
     final spans = _parseBoldText(text, textColor);
@@ -196,33 +185,33 @@ class ChatBubble extends StatelessWidget {
   Widget _buildAvatar() {
     final character = _character;
     return Container(
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: character.themeColor.withOpacity(0.3),
+          color: character.themeColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       child: ClipOval(
         child: Image.asset(
           character.avatarAsset,
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              width: 28,
-              height: 28,
-              color: character.themeColor.withOpacity(0.15),
+              width: 32,
+              height: 32,
+              color: character.themeColor.withValues(alpha: 0.15),
               child: Center(
                 child: Text(
                   character.name.substring(0, 1),
                   style: AppTextStyles.caption.copyWith(
                     fontWeight: FontWeight.w700,
                     color: character.themeColor,
-                    fontSize: 12,
+                    fontSize: 13,
                   ),
                 ),
               ),
@@ -233,7 +222,7 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildSystemMessage() {
+  Widget _buildSystemMessage(bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.s16,
@@ -246,13 +235,13 @@ class ChatBubble extends StatelessWidget {
             vertical: AppSizes.s4,
           ),
           decoration: BoxDecoration(
-            color: AppColors.grey100,
+            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           child: Text(
             message.content,
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.grey600,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               fontSize: 11,
               backgroundColor: Colors.transparent,
               decoration: TextDecoration.none,

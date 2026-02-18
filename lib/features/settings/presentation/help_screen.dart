@@ -54,8 +54,9 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -96,7 +97,7 @@ class HelpScreen extends StatelessWidget {
                   child: Text(
                     'Frequently Asked Questions',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -118,7 +119,7 @@ class HelpScreen extends StatelessWidget {
                   child: Text(
                     'Contact & Feedback',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -177,7 +178,7 @@ class HelpScreen extends StatelessWidget {
                         Text(
                           'Have a question or suggestion? We would love to hear from you!',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.grey600,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -227,7 +228,7 @@ class HelpScreen extends StatelessWidget {
                               Text(
                                 'Last updated: February 2026',
                                 style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.grey600,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -281,7 +282,7 @@ class _FAQCard extends StatelessWidget {
           ),
         ),
         iconColor: AppColors.primary,
-        collapsedIconColor: AppColors.grey600,
+        collapsedIconColor: AppColors.textSecondary,
         childrenPadding: const EdgeInsets.fromLTRB(
           AppSizes.s16,
           0,
@@ -292,7 +293,7 @@ class _FAQCard extends StatelessWidget {
           Text(
             answer,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
               height: 1.6,
             ),
           ),

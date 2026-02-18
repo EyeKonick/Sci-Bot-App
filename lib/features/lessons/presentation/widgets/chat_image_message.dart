@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 
 /// Widget for displaying images inline with chat messages.
@@ -39,7 +40,7 @@ class ChatImageMessage extends StatelessWidget {
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -49,26 +50,29 @@ class ChatImageMessage extends StatelessWidget {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
               child: Image.asset(
                 imageAssetPath,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return Container(
                     padding: const EdgeInsets.all(AppSizes.s16),
-                    color: Colors.grey[200],
+                    color: isDark ? AppColors.darkSurfaceElevated : AppColors.grey100,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.image_not_supported,
                           size: 48,
-                          color: Colors.grey[400],
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
                         ),
                         const SizedBox(height: AppSizes.s8),
                         Text(
                           'Image not found',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.grey600,
+                          ),
                         ),
                       ],
                     ),

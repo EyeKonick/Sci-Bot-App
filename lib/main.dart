@@ -5,9 +5,10 @@ import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'services/preferences/shared_prefs_service.dart';
 import 'services/storage/hive_service.dart';
-import 'services/data/data_seeder_service.dart'; 
+import 'services/data/data_seeder_service.dart';
 import 'services/data/test_data_seeding.dart';
 import 'services/ai/openai_service.dart';
+import 'features/settings/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,19 +67,20 @@ void main() async {
   );
 }
 
-class SCIBotApp extends StatelessWidget {
+class SCIBotApp extends ConsumerWidget {
   const SCIBotApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textScale = SharedPrefsService.textScaleFactor;
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'SCI-Bot',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: themeMode,
       routerConfig: AppRouter.router,
       builder: (context, child) {
         return MediaQuery(

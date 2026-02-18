@@ -57,7 +57,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           Text(
             'Create Your Profile',
             style: AppTextStyles.headingLarge.copyWith(
-              color: AppColors.grey900,
+              color: AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -67,7 +67,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           Text(
             'Let\'s personalize your learning experience!',
             style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -90,7 +90,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
               Text(
                 'What should we call you?',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.grey600,
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -112,7 +112,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           Text(
             'Your name will be used throughout the app',
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
               fontStyle: FontStyle.italic,
             ),
             textAlign: TextAlign.center,

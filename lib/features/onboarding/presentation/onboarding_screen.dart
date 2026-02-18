@@ -214,7 +214,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 160,
             height: 160,
             decoration: BoxDecoration(
-              color: page.iconColor.withOpacity(0.1),
+              color: page.iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusXL),
             ),
             child: page.isCustomIcon == true
@@ -244,7 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.description,
             style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -260,7 +260,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       width: _currentPage == index ? 24 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? AppColors.primary : AppColors.grey300,
+        color: _currentPage == index ? AppColors.primary : AppColors.border,
         borderRadius: BorderRadius.circular(AppSizes.radiusFull),
       ),
     );

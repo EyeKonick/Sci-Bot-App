@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 import '../../../profile/data/providers/user_profile_provider.dart';
 
 /// Greeting header with personalized welcome message
+/// Phase 5: Neumorphic raised panel with sage accent
 class GreetingHeader extends ConsumerWidget {
   const GreetingHeader({super.key});
 
@@ -23,37 +25,35 @@ class GreetingHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s20, AppSizes.s20, AppSizes.s20),
+      padding: const EdgeInsets.fromLTRB(
+          AppSizes.s20, AppSizes.s20, AppSizes.s20, AppSizes.s24),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        color: AppColors.primary,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(AppSizes.radiusXL),
-          bottomRight: Radius.circular(AppSizes.radiusXL),
+          bottomLeft: Radius.circular(AppSizes.radiusXXL),
+          bottomRight: Radius.circular(AppSizes.radiusXXL),
         ),
       ),
       child: SafeArea(
         bottom: false,
         child: Row(
           children: [
-            // App Icon
+            // App Icon — circular neumorphic raised
             Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.white.withOpacity(0.2),
-              ),
+              width: 52,
+              height: 52,
               child: ClipOval(
                 child: Image.asset(
                   'assets/icons/scibot-icon.png',
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            const SizedBox(width: AppSizes.s12),
+            const SizedBox(width: AppSizes.s16),
             // Greeting Text
             Expanded(
               child: Column(
@@ -88,7 +88,7 @@ class GreetingHeader extends ConsumerWidget {
                   Text(
                     'Ready to learn something new today?',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.white.withOpacity(0.9),
+                      color: AppColors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ],

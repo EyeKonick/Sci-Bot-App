@@ -59,7 +59,7 @@ class _LoadingSpinnerState extends State<LoadingSpinner> {
             Text(
               widget.message!,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -69,7 +69,7 @@ class _LoadingSpinnerState extends State<LoadingSpinner> {
             Text(
               'Taking longer than usual...',
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
                 fontStyle: FontStyle.italic,
               ),
               textAlign: TextAlign.center,

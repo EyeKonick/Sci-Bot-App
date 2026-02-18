@@ -105,9 +105,9 @@ class _ProfilePictureSelectorState extends State<ProfilePictureSelector> {
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.grey100,
+            color: AppColors.surfaceTint,
             border: Border.all(
-              color: AppColors.grey300,
+              color: AppColors.border,
               width: 2,
             ),
           ),
@@ -124,7 +124,7 @@ class _ProfilePictureSelectorState extends State<ProfilePictureSelector> {
                     : Icon(
                         Icons.person,
                         size: 60,
-                        color: AppColors.grey300,
+                        color: AppColors.border,
                       ),
           ),
         ),
@@ -200,7 +200,7 @@ class _ActionButton extends StatelessWidget {
                 color: isDestructive
                     ? AppColors.error
                     : onTap == null
-                        ? AppColors.grey300
+                        ? AppColors.border
                         : AppColors.primary,
                 size: 28,
               ),
@@ -211,8 +211,8 @@ class _ActionButton extends StatelessWidget {
                   color: isDestructive
                       ? AppColors.error
                       : onTap == null
-                          ? AppColors.grey300
-                          : AppColors.grey600,
+                          ? AppColors.border
+                          : AppColors.textSecondary,
                 ),
               ),
             ],

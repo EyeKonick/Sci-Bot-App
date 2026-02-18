@@ -49,6 +49,7 @@ class DailyCheckInDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -115,7 +116,7 @@ class DailyCheckInDialog extends StatelessWidget {
           Text(
             _getMessage(),
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.grey600,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -128,7 +129,7 @@ class DailyCheckInDialog extends StatelessWidget {
           child: TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: AppSizes.s12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusM),

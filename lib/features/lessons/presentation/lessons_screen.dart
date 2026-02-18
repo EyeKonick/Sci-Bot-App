@@ -15,6 +15,7 @@ import '../../chat/data/services/expert_greeting_service.dart';
 import '../../../shared/models/scenario_model.dart';
 import '../../../shared/models/ai_character_model.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
+import '../../../shared/widgets/neumorphic_styles.dart';
 
 /// Lesson List Screen - Shows all lessons for a selected topic
 /// Week 2 Day 3 Implementation + Week 3 Day 3 Character Integration
@@ -94,7 +95,9 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.grey50,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkBackground
+          : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar with Topic Info
@@ -144,9 +147,16 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
 
   /// App Bar with gradient and topic info - FIXED LAYOUT
   Widget _buildAppBar() {
-    final topicColor = _topic != null
-        ? _parseColor(_topic!.colorHex)
-        : AppColors.primary;
+    // Per-topic-ID colors — must match home screen gradient starts exactly
+    Color topicHeaderColor() {
+      switch (widget.topicId) {
+        case 'topic_body_systems': return const Color(0xFFD4907A); // warm peach
+        case 'topic_heredity':     return const Color(0xFF6B8FA0); // muted steel blue
+        case 'topic_energy':       return const Color(0xFF7BA08A); // sage green
+        default:                   return AppColors.primary;
+      }
+    }
+    final topicColor = topicHeaderColor();
     final competency = _learningCompetencies[widget.topicId];
 
     return SliverAppBar(
@@ -176,7 +186,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 topicColor,
-                topicColor.withOpacity(0.9),
+                topicColor.withValues(alpha: 0.9),
               ],
             ),
           ),
@@ -214,11 +224,11 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                         vertical: AppSizes.s8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.white.withOpacity(0.15),
+                        color: AppColors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         border: Border(
                           left: BorderSide(
-                            color: AppColors.white.withOpacity(0.8),
+                            color: AppColors.white.withValues(alpha: 0.8),
                             width: 3,
                           ),
                         ),
@@ -239,7 +249,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                           Text(
                             competency,
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.white.withOpacity(0.95),
+                              color: AppColors.white.withValues(alpha: 0.95),
                               height: 1.3,
                               fontSize: 11,
                             ),
@@ -318,20 +328,20 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'Topic Not Found',
               style: AppTextStyles.headingSmall.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
               'The topic you\'re looking for doesn\'t exist',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -362,20 +372,20 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
             const Icon(
               Icons.school_outlined,
               size: 80,
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'No Lessons Yet',
               style: AppTextStyles.headingSmall.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
               'Lessons for this topic are coming soon! Explore other topics in the meantime.',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -466,36 +476,41 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        side: isCompleted
-            ? BorderSide(color: AppColors.success, width: 2)
-            : BorderSide.none,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Row
-              Row(
-                children: [
-                  // Lesson Icon / Number Badge
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppColors.success
-                          : topicColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                    ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final trackColor = isDark ? AppColors.darkBorder : AppColors.border;
+
+    BoxDecoration cardDecoration = NeumorphicStyles.raised(context);
+    if (isCompleted) {
+      cardDecoration = cardDecoration.copyWith(
+        border: Border.all(color: AppColors.success, width: 2),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: cardDecoration,
+        padding: const EdgeInsets.all(AppSizes.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row
+            Row(
+              children: [
+                // Lesson Icon / Number Badge
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? AppColors.success
+                        : topicColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                  ),
                     child: isCompleted
                         ? const Center(
                             child: Icon(
@@ -545,26 +560,26 @@ class _LessonCard extends StatelessWidget {
                             Icon(
                               Icons.access_time,
                               size: 14,
-                              color: AppColors.grey600,
+                              color: textSecondary,
                             ),
                             const SizedBox(width: AppSizes.s4),
                             Text(
                               '${lesson.estimatedMinutes} min',
                               style: AppTextStyles.caption.copyWith(
-                                color: AppColors.grey600,
+                                color: textSecondary,
                               ),
                             ),
                             const SizedBox(width: AppSizes.s12),
                             Icon(
                               Icons.list_alt,
                               size: 14,
-                              color: AppColors.grey600,
+                              color: textSecondary,
                             ),
                             const SizedBox(width: AppSizes.s4),
                             Text(
                               '${lesson.modules.length} modules',
                               style: AppTextStyles.caption.copyWith(
-                                color: AppColors.grey600,
+                                color: textSecondary,
                               ),
                             ),
                           ],
@@ -590,7 +605,7 @@ class _LessonCard extends StatelessWidget {
               Text(
                 lesson.description,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.grey600,
+                  color: textSecondary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -604,7 +619,7 @@ class _LessonCard extends StatelessWidget {
                   Text(
                     'Modules:',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: textSecondary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -638,7 +653,7 @@ class _LessonCard extends StatelessWidget {
                       Text(
                         'Progress',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey600,
+                          color: textSecondary,
                         ),
                       ),
                       Text(
@@ -655,7 +670,7 @@ class _LessonCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: AppColors.grey300,
+                      backgroundColor: trackColor,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isCompleted ? AppColors.success : topicColor,
                       ),
@@ -667,7 +682,6 @@ class _LessonCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -677,17 +691,17 @@ class _LessonCard extends StatelessWidget {
     Color getModuleColor() {
       switch (moduleType) {
         case ModuleType.pre_scintation:
-          return const Color(0xFF2196F3); // Blue
+          return AppColors.info;
         case ModuleType.fa_scinate:
-          return const Color(0xFF9C27B0); // Purple
+          return AppColors.secondary;
         case ModuleType.inve_scitigation:
-          return const Color(0xFFFF9800); // Orange
+          return AppColors.warning;
         case ModuleType.goal_scitting:
-          return const Color(0xFF4CAF50); // Green
+          return AppColors.success;
         case ModuleType.self_a_scissment:
-          return const Color(0xFFF44336); // Red
+          return AppColors.error;
         case ModuleType.scipplementary:
-          return AppColors.primary; // Teal
+          return AppColors.primary;
       }
     }
 
@@ -720,8 +734,8 @@ class _LessonCard extends StatelessWidget {
           height: 32,
           decoration: BoxDecoration(
             color: isCompleted 
-                ? AppColors.success.withOpacity(0.15)
-                : moduleColor.withOpacity(0.15),
+                ? AppColors.success.withValues(alpha: 0.15)
+                : moduleColor.withValues(alpha: 0.15),
             shape: BoxShape.circle,
             border: Border.all(
               color: isCompleted ? AppColors.success : moduleColor,

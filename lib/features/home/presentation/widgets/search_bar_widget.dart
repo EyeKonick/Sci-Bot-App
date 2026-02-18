@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Search bar for finding lessons and topics
+/// Phase 5: Neumorphic inset style
 class SearchBarWidget extends StatelessWidget {
   final VoidCallback? onTap;
   final Function(String)? onChanged;
@@ -24,17 +26,11 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.grey300.withOpacity(0.5),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+      decoration: NeumorphicStyles.inset(
+        context,
+        borderRadius: AppSizes.radiusFull,
       ),
       child: TextField(
         controller: controller,
@@ -42,21 +38,25 @@ class SearchBarWidget extends StatelessWidget {
         onChanged: onChanged,
         onTap: onTap,
         readOnly: readOnly,
-        style: AppTextStyles.bodyMedium,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+        ),
         decoration: InputDecoration(
           hintText: 'Search lessons and topics...',
           hintStyle: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grey600,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
-            color: AppColors.primary,
+            color: isDark ? AppColors.darkPrimary : AppColors.primary,
           ),
           suffixIcon: controller != null && controller!.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.clear,
-                    color: AppColors.grey600,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
                   ),
                   onPressed: onClear,
                 )

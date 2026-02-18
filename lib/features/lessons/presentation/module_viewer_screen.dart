@@ -210,15 +210,15 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
   Color _getModuleColor(ModuleModel module) {
     switch (module.type) {
       case ModuleType.pre_scintation:
-        return const Color(0xFF2196F3);
+        return AppColors.info;
       case ModuleType.fa_scinate:
-        return const Color(0xFF9C27B0);
+        return AppColors.secondary;
       case ModuleType.inve_scitigation:
-        return const Color(0xFFFF9800);
+        return AppColors.warning;
       case ModuleType.goal_scitting:
-        return const Color(0xFF4CAF50);
+        return AppColors.success;
       case ModuleType.self_a_scissment:
-        return const Color(0xFFF44336);
+        return AppColors.error;
       case ModuleType.scipplementary:
         return AppColors.primary;
     }
@@ -418,7 +418,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             Container(
               padding: const EdgeInsets.all(AppSizes.s16),
               decoration: BoxDecoration(
-                color: AppColors.grey100,
+                color: AppColors.surfaceTint,
                 borderRadius: BorderRadius.circular(AppSizes.radiusM),
               ),
               child: Column(
@@ -520,7 +520,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                   Text(
                     '$completedLessonsCount lesson${completedLessonsCount == 1 ? '' : 's'} mastered in Grade 9 Science',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -560,7 +560,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           child: Text(
             label,
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
           ),
         ),
@@ -568,7 +568,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           value,
           style: AppTextStyles.bodySmall.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.grey900,
+            color: AppColors.textPrimary,
           ),
         ),
       ],
@@ -634,7 +634,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           "You're making great progress, ${character.name} is proud! "
           "Are you sure you want to end this lesson now?",
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grey600,
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [
@@ -653,7 +653,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             child: Text(
               'End Lesson',
               style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -666,16 +666,17 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
   @override
   Widget build(BuildContext context) {
     // Phase 8: Contextual loading spinner instead of bare spinner
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.grey50,
-        body: LoadingSpinner(message: 'Loading lesson...'),
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+        body: const LoadingSpinner(message: 'Loading lesson...'),
       );
     }
 
     if (_lesson == null) {
       return Scaffold(
-        backgroundColor: AppColors.grey50,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Error'),
           backgroundColor: AppColors.primary,
@@ -686,19 +687,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 80, color: AppColors.grey300),
+                const Icon(Icons.error_outline, size: 80, color: AppColors.border),
                 const SizedBox(height: AppSizes.s16),
                 Text(
                   'Lesson Not Found',
                   style: AppTextStyles.headingSmall.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.s8),
                 Text(
                   'This lesson may have been removed or is temporarily unavailable.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -722,7 +723,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     final module = _currentModule;
     if (module == null) {
       return Scaffold(
-        backgroundColor: AppColors.grey50,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Error'),
           backgroundColor: AppColors.primary,
@@ -733,19 +734,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 80, color: AppColors.grey300),
+                const Icon(Icons.error_outline, size: 80, color: AppColors.border),
                 const SizedBox(height: AppSizes.s16),
                 Text(
                   'Module Not Found',
                   style: AppTextStyles.headingSmall.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.s8),
                 Text(
                   'This module could not be loaded.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -833,7 +834,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.grey50,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: moduleColor,
           elevation: 0,
@@ -1065,8 +1066,8 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                           ),
                           decoration: BoxDecoration(
                             color: guidedState.canProceed
-                                ? Colors.green.shade700
-                                : Colors.orange.shade700,
+                                ? AppColors.success
+                                : AppColors.warning,
                             borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                           ),
                           child: Text(
@@ -1161,7 +1162,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     });
 
     return Container(
-      color: AppColors.grey50,
+      color: AppColors.background,
       child: qaMessages.isEmpty
           ? Center(
               child: Padding(
@@ -1178,7 +1179,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                     Text(
                       '${character.name} is preparing your lesson',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.grey600,
+                        color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
@@ -1187,7 +1188,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                     Text(
                       'Questions and answers will appear here.',
                       style: AppTextStyles.caption.copyWith(
-                        color: AppColors.grey600,
+                        color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -1226,6 +1227,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   /// Build a chat bubble for lesson messages
   Widget _buildLessonChatBubble(LessonChatMessage msg, AiCharacter character) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Handle image messages
     // Handle image messages WITH avatar (same pattern as text messages)
     if (msg.imageAssetPath != null && msg.imageAssetPath!.isNotEmpty) {
@@ -1283,7 +1285,9 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                 vertical: AppSizes.s8,
               ),
               decoration: BoxDecoration(
-                color: isUser ? character.themeColor : AppColors.white,
+                color: isUser
+                    ? character.themeColor
+                    : (isDark ? AppColors.darkSurface : AppColors.white),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -1300,11 +1304,11 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                 border: isUser
                     ? null
                     : Border.all(
-                        color: AppColors.grey300.withValues(alpha:0.5),
+                        color: (isDark ? AppColors.darkBorder : AppColors.border).withValues(alpha: 0.5),
                         width: 0.5,
                       ),
               ),
-              child: _buildBubbleContent(msg, isUser, character),
+              child: _buildBubbleContent(msg, isUser, character, isDark),
             ),
           ),
         ],
@@ -1317,8 +1321,11 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     LessonChatMessage msg,
     bool isUser,
     AiCharacter character,
+    bool isDark,
   ) {
-    final textColor = isUser ? AppColors.white : AppColors.grey900;
+    final textColor = isUser
+        ? AppColors.white
+        : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary);
     final spans = _parseBoldText(msg.content, textColor);
 
     return Column(
@@ -1454,6 +1461,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   /// Phase 3: "Checking your answer..." indicator before AI evaluation
   Widget _buildCheckingIndicator(AiCharacter character) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.s12,
@@ -1470,7 +1478,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
               vertical: AppSizes.s8,
             ),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: isDark ? AppColors.darkSurface : AppColors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(18),
                 topRight: Radius.circular(18),
@@ -1478,7 +1486,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                 bottomRight: Radius.circular(18),
               ),
               border: Border.all(
-                color: AppColors.grey300.withValues(alpha: 0.5),
+                color: (isDark ? AppColors.darkBorder : AppColors.border).withValues(alpha: 0.5),
                 width: 0.5,
               ),
               boxShadow: [
@@ -1504,7 +1512,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                 Text(
                   'Checking your answer...',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.grey600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -1572,10 +1580,10 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                   listBullet: AppTextStyles.bodyMedium,
                   code: AppTextStyles.bodySmall.copyWith(
                     fontFamily: 'monospace',
-                    backgroundColor: AppColors.grey100,
+                    backgroundColor: AppColors.surfaceTint,
                   ),
                   blockquote: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -1590,6 +1598,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
   /// Text input area - always visible with contextual state indicators
   /// Phase 2: Shows disabled reason, pulse on enable, character context
   Widget _buildInputArea(Color moduleColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final character = ref.watch(activeCharacterProvider);
     final chatState = ref.watch(lessonChatProvider);
     final guidedState = ref.watch(guidedLessonProvider);
@@ -1635,9 +1644,9 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
         return Container(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           decoration: BoxDecoration(
-            color: AppColors.white,
-            border: const Border(
-              top: BorderSide(color: AppColors.grey300),
+            color: isDark ? AppColors.darkSurface : AppColors.white,
+            border: Border(
+              top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
             ),
             boxShadow: glowOpacity > 0
                 ? [
@@ -1660,12 +1669,14 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                     maxHeight: 120,
                   ),
                   decoration: BoxDecoration(
-                    color: isEnabled ? AppColors.white : AppColors.grey100,
+                    color: isEnabled
+                        ? (isDark ? AppColors.darkSurfaceElevated : AppColors.white)
+                        : (isDark ? AppColors.darkSurface : AppColors.surfaceTint),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isEnabled
                           ? character.themeColor.withValues(alpha: 0.5)
-                          : AppColors.grey300,
+                          : (isDark ? AppColors.darkBorder : AppColors.border),
                       width: isEnabled ? 1.5 : 1.0,
                     ),
                   ),
@@ -1676,10 +1687,10 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       hintText: hintText,
                       hintStyle: AppTextStyles.bodyMedium.copyWith(
                         color: isEnabled
-                            ? AppColors.grey600
+                            ? AppColors.textSecondary
                             : isStreaming
                                 ? character.themeColor.withValues(alpha: 0.5)
-                                : AppColors.grey600.withValues(alpha: 0.6),
+                                : AppColors.textSecondary.withValues(alpha: 0.6),
                         fontStyle: isEnabled ? FontStyle.normal : FontStyle.italic,
                         fontSize: 14,
                       ),
@@ -1691,7 +1702,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       isDense: true,
                     ),
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.grey900,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                       height: 1.4,
                     ),
                     textCapitalization: TextCapitalization.sentences,
@@ -1712,7 +1723,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       ? null
                       : character.themeGradient,
                   color: (_inputController.text.trim().isEmpty || !isEnabled)
-                      ? AppColors.grey300
+                      ? AppColors.border
                       : null,
                   shape: BoxShape.circle,
                 ),
@@ -1827,7 +1838,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            canProceed ? moduleColor : AppColors.grey300,
+                            canProceed ? moduleColor : AppColors.border,
                         foregroundColor: AppColors.white,
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSizes.s16,
@@ -1875,7 +1886,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                     ? AppColors.success
                     : isCurrent
                         ? _getModuleColor(module)
-                        : AppColors.grey300,
+                        : AppColors.border,
                 borderRadius: BorderRadius.circular(AppSizes.radiusFull),
               ),
             ),

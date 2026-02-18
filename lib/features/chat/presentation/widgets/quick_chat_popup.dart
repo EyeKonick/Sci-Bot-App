@@ -161,7 +161,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -175,7 +175,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey300,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
               ),
@@ -246,7 +246,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -281,9 +281,9 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.grey100,
+        color: AppColors.surfaceTint,
         border: Border(
-          top: BorderSide(color: AppColors.grey300),
+          top: BorderSide(color: AppColors.border),
         ),
       ),
       child: Row(
@@ -315,7 +315,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
           IconButton(
             icon: Icon(
               Icons.send,
-              color: _isStreaming ? AppColors.grey300 : AppColors.primary,
+              color: _isStreaming ? AppColors.border : AppColors.primary,
             ),
             onPressed: _isStreaming ? null : _sendMessage,
           ),

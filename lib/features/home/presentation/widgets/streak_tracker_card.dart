@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Streak Tracker Card
 /// Shows user's learning streak with calendar dots for the current week.
@@ -21,84 +22,83 @@ class StreakTrackerCard extends StatelessWidget {
     final todayWeekday = DateTime.now().weekday; // 1=Mon, 7=Sun
     const weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-    return Card(
-      elevation: AppSizes.cardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusL),
-      ),
-      color: AppColors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.s20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with fire emoji
-            Row(
-              children: [
-                const Text(
-                  '🔥',
-                  style: TextStyle(fontSize: 24),
-                ),
-                const SizedBox(width: AppSizes.s8),
-                Text(
-                  currentStreak > 0
-                      ? '$currentStreak Day Streak!'
-                      : '0 Day Streak!',
-                  style: AppTextStyles.headingSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
-            const SizedBox(height: AppSizes.s4),
-
-            // Subtitle
-            Padding(
-              padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
-              child: Text(
+    return Container(
+      decoration: NeumorphicStyles.raised(context),
+      padding: const EdgeInsets.all(AppSizes.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with fire emoji
+          Row(
+            children: [
+              const Text(
+                '🔥',
+                style: TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: AppSizes.s8),
+              Text(
                 currentStreak > 0
-                    ? 'Keep it up!'
-                    : 'Start learning to begin your streak',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.grey600,
+                    ? '$currentStreak Day Streak!'
+                    : '0 Day Streak!',
+                style: AppTextStyles.headingSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
                 ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: AppSizes.s4),
+
+          // Subtitle
+          Padding(
+            padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
+            child: Text(
+              currentStreak > 0
+                  ? 'Keep it up!'
+                  : 'Start learning to begin your streak',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: textSecondary,
+              ),
             ),
+          ),
 
-            const SizedBox(height: AppSizes.s16),
+          const SizedBox(height: AppSizes.s16),
 
-            // Calendar dots (Monday through Sunday)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(7, (index) {
-                final dayLabel = weekdayLabels[index];
-                final isCompleted =
-                    index < last7Days.length && last7Days[index];
-                final isToday = (index + 1) == todayWeekday;
+          // Calendar dots (Monday through Sunday)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (index) {
+              final dayLabel = weekdayLabels[index];
+              final isCompleted =
+                  index < last7Days.length && last7Days[index];
+              final isToday = (index + 1) == todayWeekday;
 
-                return Column(
-                  children: [
-                    // Day label - uniform color for all days
-                    Text(
-                      dayLabel,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.grey600,
-                        fontWeight: FontWeight.w600,
-                      ),
+              return Column(
+                children: [
+                  Text(
+                    dayLabel,
+                    style: AppTextStyles.caption.copyWith(
+                      color: textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: AppSizes.s8),
-                    // Day indicator
-                    _buildDayIndicator(
-                      isCompleted: isCompleted,
-                      isToday: isToday,
-                    ),
-                  ],
-                );
-              }),
-            ),
-          ],
-        ),
+                  ),
+                  const SizedBox(height: AppSizes.s8),
+                  _buildDayIndicator(
+                    isCompleted: isCompleted,
+                    isToday: isToday,
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -190,7 +190,7 @@ class StreakTrackerCard extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.grey300.withValues(alpha: 0.5),
+        color: AppColors.border.withValues(alpha: 0.5),
       ),
     );
   }

@@ -3,6 +3,7 @@
 /// Week 3, Day 3 Implementation
 
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 class AiCharacter {
   final String id;
@@ -80,9 +81,9 @@ class AiCharacter {
     specialization: 'Father of Biology - AI Companion',
     avatarAsset: 'assets/icons/chathead-icons/Aristotle_icon.png',
     greeting: 'Hello! I\'m Aristotle, the Father of Biology and your AI companion here in SCI-Bot. How can I help you learn today?',
-    themeColor: Color(0xFF4A90A4),
-    themeLightColor: Color(0xFF7BC9A4),
-    bubbleAccentColor: Color(0xFFE0F2F1),
+    themeColor: AppColors.characterTheme,
+    themeLightColor: Color(0xFF9BBFA7),
+    bubbleAccentColor: AppColors.surfaceTint,
     systemPrompt: '''You are Aristotle (384-322 BC), the ancient Greek philosopher known as the Father of Biology. You pioneered the systematic study of living organisms, classified over 500 animal species, and laid the foundations for scientific observation. You are adapted as a friendly AI companion in SCI-Bot, an educational app for Grade 9 Filipino students.
 
 Your personality:
@@ -144,9 +145,9 @@ Scope:
     specialization: 'Circulation & Gas Exchange',
     avatarAsset: 'assets/icons/chathead-icons/HEROPHILOS - FOR CIRCULATION AND GAS EXCHANGE.png',
     greeting: 'Greetings! I am Herophilus, ancient physician and anatomist. Let me guide you through the wonders of the circulatory system!',
-    themeColor: Color(0xFFC62828),
-    themeLightColor: Color(0xFFEF5350),
-    bubbleAccentColor: Color(0xFFFFEBEE),
+    themeColor: AppColors.characterTheme,
+    themeLightColor: Color(0xFF9BBFA7),
+    bubbleAccentColor: AppColors.surfaceTint,
     systemPrompt: '''You are Herophilus of Alexandria, the ancient Greek physician who pioneered human anatomy through systematic dissection. You're adapted as an AI tutor for Grade 9 Filipino students learning about circulation and gas exchange.
 
 Your personality:
@@ -226,9 +227,9 @@ Scope:
     specialization: 'Heredity & Variation',
     avatarAsset: 'assets/icons/chathead-icons/GREGOR MENDEL - FOR HEREDITY AND VARIATION.png',
     greeting: 'Welcome! I am Gregor Mendel, the father of genetics. Let us explore the fascinating world of heredity together!',
-    themeColor: Color(0xFF2E7D32),
-    themeLightColor: Color(0xFF66BB6A),
-    bubbleAccentColor: Color(0xFFE8F5E9),
+    themeColor: AppColors.characterTheme,
+    themeLightColor: Color(0xFF9BBFA7),
+    bubbleAccentColor: AppColors.surfaceTint,
     systemPrompt: '''You are Gregor Mendel, the Augustinian friar whose pea plant experiments founded the science of genetics. You're adapted as an AI tutor for Grade 9 Filipino students learning about heredity and variation.
 
 Your personality:
@@ -307,9 +308,9 @@ Scope:
     specialization: 'Energy in the Ecosystem',
     avatarAsset: 'assets/icons/chathead-icons/EUEGENE ODUM - FOR ENERGY IN THE ECOSYSTEM.png',
     greeting: 'Hello! I\'m Eugene Odum, ecologist and systems thinker. Ready to explore how energy flows through nature?',
-    themeColor: Color(0xFFE65100),
-    themeLightColor: Color(0xFFFFB74D),
-    bubbleAccentColor: Color(0xFFFFF3E0),
+    themeColor: AppColors.characterTheme,
+    themeLightColor: Color(0xFF9BBFA7),
+    bubbleAccentColor: AppColors.surfaceTint,
     systemPrompt: '''You are Eugene Odum, the American ecologist who pioneered ecosystem ecology and energy flow studies. You're adapted as an AI tutor for Grade 9 Filipino students learning about energy in ecosystems.
 
 Your personality:

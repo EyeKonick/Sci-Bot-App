@@ -13,7 +13,7 @@ class AppTextStyles {
   static TextStyle displayLarge = GoogleFonts.poppins(
     fontSize: 32,
     fontWeight: FontWeight.w700,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.2,
   );
 
@@ -21,7 +21,7 @@ class AppTextStyles {
   static TextStyle headingLarge = GoogleFonts.poppins(
     fontSize: 28,
     fontWeight: FontWeight.w700,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.3,
   );
 
@@ -29,7 +29,7 @@ class AppTextStyles {
   static TextStyle headingMedium = GoogleFonts.poppins(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.3,
   );
 
@@ -37,7 +37,7 @@ class AppTextStyles {
   static TextStyle headingSmall = GoogleFonts.poppins(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.4,
   );
 
@@ -45,7 +45,7 @@ class AppTextStyles {
   static TextStyle subtitle = GoogleFonts.poppins(
     fontSize: 18,
     fontWeight: FontWeight.w500,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.4,
   );
 
@@ -55,7 +55,7 @@ class AppTextStyles {
   static TextStyle bodyLarge = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.5,
   );
 
@@ -63,7 +63,7 @@ class AppTextStyles {
   static TextStyle bodyMedium = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.5,
   );
 
@@ -71,7 +71,7 @@ class AppTextStyles {
   static TextStyle bodySmall = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    color: AppColors.grey600,
+    color: AppColors.textSecondary,
     height: 1.5,
   );
 
@@ -89,7 +89,7 @@ class AppTextStyles {
   static TextStyle caption = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    color: AppColors.grey600,
+    color: AppColors.textSecondary,
     height: 1.4,
   );
 
@@ -97,7 +97,7 @@ class AppTextStyles {
   static TextStyle overline = GoogleFonts.inter(
     fontSize: 10,
     fontWeight: FontWeight.w500,
-    color: AppColors.grey600,
+    color: AppColors.textSecondary,
     letterSpacing: 1.5,
   );
 
@@ -114,14 +114,14 @@ class AppTextStyles {
   static TextStyle bottomNavLabel = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w500,
-    color: AppColors.grey600,
+    color: AppColors.textSecondary,
   );
 
   /// Lesson card title (16px, SemiBold)
   static TextStyle lessonCardTitle = GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.3,
   );
 
@@ -129,16 +129,16 @@ class AppTextStyles {
   static TextStyle moduleTitle = GoogleFonts.poppins(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    color: AppColors.grey900,
+    color: AppColors.textPrimary,
     height: 1.3,
   );
 
-  /// Chat message (14px, Regular)
+  /// Chat message (16px, Regular) — enlarged for readability
   static TextStyle chatMessage = GoogleFonts.inter(
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.grey900,
-    height: 1.5,
+    color: AppColors.textPrimary,
+    height: 1.6,
   );
 
   /// Error message (14px, Medium)

@@ -59,7 +59,7 @@ class TopicCard extends StatelessWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
                     child: imageAsset != null
@@ -97,7 +97,7 @@ class TopicCard extends StatelessWidget {
                         Text(
                           '$lessonCount ${lessonCount == 1 ? 'lesson' : 'lessons'} • ${(progress * 100).toInt()}% complete',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
@@ -113,7 +113,7 @@ class TopicCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: Colors.white.withOpacity(0.3),
+                  backgroundColor: Colors.white.withValues(alpha: 0.3),
                   valueColor: const AlwaysStoppedAnimation<Color>(
                     Colors.white,
                   ),

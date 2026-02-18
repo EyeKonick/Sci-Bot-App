@@ -752,7 +752,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
 
   /// Snap to nearest edge with animation
   void _snapToEdge(Offset dragEndPosition, Size screenSize) {
-    const buttonSize = 70.0;
+    const buttonSize = AppSizes.chatheadSize;
     const edgePadding = 16.0;
     
     final screenCenter = screenSize.width / 2;
@@ -824,7 +824,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
     }
 
     final screenSize = MediaQuery.of(context).size;
-    const buttonSize = 70.0;
+    const buttonSize = AppSizes.chatheadSize;
     const topPadding = 16.0;
     const rightPadding = 16.0;
 
@@ -1060,7 +1060,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             builder: (context, child) {
               final currentPos = _isDragging ? _position : _snapAnimation.value;
               final isOnRight = currentPos.dx > screenSize.width / 2;
-              const buttonSize = 70.0;
+              const buttonSize = AppSizes.chatheadSize;
 
               return Positioned(
                 top: currentPos.dy + 8,
@@ -1069,7 +1069,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
                 // Phase 5: Subtle fade-in only (no scale transform)
                 child: Opacity(
                   opacity: _speechBubbleAnimation.value.clamp(0.0, 1.0),
-                  child: _buildSpeechBubble(isOnRight),
+                  child: _buildSpeechBubble(isOnRight, context),
                 ),
               );
             },
@@ -1092,7 +1092,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: currentCharacter.themeColor.withOpacity(0.4),
+                          color: currentCharacter.themeColor.withValues(alpha: 0.4),
                           blurRadius: 24,
                           spreadRadius: 4,
                           offset: const Offset(0, 8),
@@ -1188,7 +1188,8 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   }
 
   /// Build speech bubble tooltip next to the FAB
-  Widget _buildSpeechBubble(bool isOnRight) {
+  Widget _buildSpeechBubble(bool isOnRight, BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final character = ref.watch(activeCharacterProvider);
     final narrativeBubbleState = ref.watch(lessonNarrativeBubbleProvider);
 
@@ -1226,30 +1227,35 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             CustomPaint(
               size: const Size(8, 12),
               painter: _BubbleTailPainter(
-                color: AppColors.white,
-                borderColor: character.themeColor.withOpacity(0.2),
+                color: isDark ? AppColors.darkSurfaceElevated : AppColors.white,
+                borderColor: character.themeColor.withValues(alpha: 0.2),
                 pointsRight: true,
               ),
             ),
           // Speech bubble container
           Container(
-            constraints: const BoxConstraints(maxWidth: 220),
+            constraints: const BoxConstraints(maxWidth: 260),
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.s12,
-              vertical: AppSizes.s8,
+              horizontal: AppSizes.s16,
+              vertical: AppSizes.s12,
             ),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: isDark ? AppColors.darkSurfaceElevated : AppColors.surface,
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
               border: Border.all(
-                color: character.themeColor.withOpacity(0.2),
+                color: isDark ? AppColors.darkBorder : AppColors.border,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: AppColors.shadowLight.withValues(alpha: isDark ? 0.05 : 0.8),
+                  blurRadius: 4,
+                  offset: const Offset(-1, -1),
                 ),
               ],
             ),
@@ -1257,9 +1263,10 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
               text: _parseMarkdownText(
                 currentMessage,
                 AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.grey900,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
-                  height: 1.3,
+                  fontSize: 13,
+                  height: 1.4,
                   backgroundColor: Colors.transparent,
                   decoration: TextDecoration.none,
                 ),
@@ -1271,8 +1278,8 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
             CustomPaint(
               size: const Size(8, 12),
               painter: _BubbleTailPainter(
-                color: AppColors.white,
-                borderColor: character.themeColor.withOpacity(0.2),
+                color: isDark ? AppColors.darkSurfaceElevated : AppColors.white,
+                borderColor: character.themeColor.withValues(alpha: 0.2),
                 pointsRight: false,
               ),
             ),
@@ -1282,7 +1289,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
   }
 
   Widget _buildButton({bool isDragging = false}) {
-    final size = isDragging ? 78.0 : 70.0;
+    final size = isDragging ? AppSizes.chatheadSizeDragging : AppSizes.chatheadSize;
 
     // Get current character from provider
     final character = ref.watch(activeCharacterProvider);
@@ -1292,7 +1299,7 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
       height: size,
       child: Stack(
         children: [
-          // Character avatar with Phase 3 fade transition
+          // Character avatar with Phase 3 fade transition + contrast ring
           Center(
             child: AnimatedBuilder(
               animation: _characterFadeAnimation,
@@ -1358,11 +1365,6 @@ class _FloatingChatButtonState extends ConsumerState<FloatingChatButton> with Ti
               ),
             ),
 
-          // Breathing animation
-          if (!isDragging && !_isChatOpen)
-            Positioned.fill(
-              child: _BreathingAnimation(),
-            ),
         ],
       ),
     );
@@ -1397,7 +1399,7 @@ class _BreathingRingPainter extends CustomPainter {
     final opacity = 1.0 - progress;
 
     final paint = Paint()
-      ..color = color.withOpacity(opacity * 0.3)
+      ..color = color.withValues(alpha: opacity * 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -1411,7 +1413,8 @@ class _BreathingRingPainter extends CustomPainter {
 }
 
 class _BreathingAnimation extends StatefulWidget {
-  const _BreathingAnimation();
+  final Color ringColor;
+  const _BreathingAnimation({required this.ringColor});
 
   @override
   State<_BreathingAnimation> createState() => _BreathingAnimationState();
@@ -1447,7 +1450,7 @@ class _BreathingAnimationState extends State<_BreathingAnimation>
         return CustomPaint(
           painter: _BreathingRingPainter(
             progress: _animation.value,
-            color: Colors.white,
+            color: widget.ringColor,
           ),
         );
       },

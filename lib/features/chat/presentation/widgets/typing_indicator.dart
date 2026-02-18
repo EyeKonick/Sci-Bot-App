@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_feedback.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Typing Indicator Widget
 /// Animated dots showing AI is typing, with character context
@@ -57,7 +58,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = widget.color ?? AppColors.grey600;
+    final themeColor = widget.color ?? AppColors.primary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -122,7 +123,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
                         ? 'Taking longer than usual...'
                         : '${widget.characterName} is typing',
                     style: AppTextStyles.caption.copyWith(
-                      color: _isSlow ? AppColors.grey600 : themeColor,
+                      color: _isSlow ? AppColors.textSecondary : themeColor,
                       fontWeight: FontWeight.w500,
                       fontSize: 11,
                       fontStyle: _isSlow ? FontStyle.italic : FontStyle.normal,
@@ -130,20 +131,13 @@ class _TypingIndicatorState extends State<TypingIndicator>
                   ),
                 ),
 
-              // Animated dots bubble
+              // Animated dots bubble — neumorphic raised style
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.s16,
                   vertical: AppSizes.s12,
                 ),
-                decoration: BoxDecoration(
-                  color: themeColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  border: Border.all(
-                    color: themeColor.withValues(alpha: 0.15),
-                    width: 0.5,
-                  ),
-                ),
+                decoration: NeumorphicStyles.raisedSmall(context),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (index) {

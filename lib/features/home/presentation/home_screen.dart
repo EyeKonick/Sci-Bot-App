@@ -15,6 +15,7 @@ import '../../../features/lessons/data/repositories/bookmark_repository.dart';
 import '../../../shared/models/models.dart';
 import '../../../shared/models/scenario_model.dart';
 import '../../../shared/models/ai_character_model.dart';
+import '../../../shared/widgets/neumorphic_styles.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
 import 'widgets/topic_card.dart';
@@ -212,6 +213,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final topics = _topicRepo.getAllTopics();
     final completedLessonsCount = _progressRepo.getCompletedLessonsCount();
     
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -231,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Stack(
         children: [
           Scaffold(
-      backgroundColor: AppColors.grey50,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
        slivers: [
           // Greeting Header
@@ -244,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Search Bar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s12, AppSizes.s20, 0),
+              padding: const EdgeInsets.fromLTRB(AppSizes.s20, AppSizes.s12, AppSizes.s20, AppSizes.s16),
               child: Column(
                 children: [
                   // Search Bar
@@ -275,6 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
+   
           // Quick Stats (progress circle only)
           SliverToBoxAdapter(
             child: Padding(
@@ -320,13 +323,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s24),
-              child: Card(
-                elevation: AppSizes.cardElevation,
-                color: AppColors.surface,
-                child: InkWell(
+              child: Builder(builder: (context) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return GestureDetector(
                   onTap: () => context.push('/bookmarks'),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  child: Padding(
+                  child: Container(
+                    decoration: NeumorphicStyles.raised(context),
                     padding: const EdgeInsets.all(AppSizes.s16),
                     child: Row(
                       children: [
@@ -334,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppColors.warning.withOpacity(0.15),
+                            color: AppColors.warning.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(AppSizes.radiusM),
                           ),
                           child: const Icon(
@@ -352,27 +354,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 'My Bookmarks',
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: AppSizes.s4),
                               Text(
                                 '${_bookmarkRepo.getBookmarksCount()} saved lessons',
                                 style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.grey600,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.chevron_right,
-                          color: AppColors.grey600,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.textSecondary,
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
           ),
 
@@ -431,20 +440,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ? (completedCount / totalCount)
                       : 0.0;
                   
-                  // Gradient colors per topic (NEW)
+                  // Gradient colors per topic — aligned to new palette
                   List<Color> gradientColors;
                   if (topic.id == 'topic_body_systems') {
-                    // Circulation: Pink gradient
-                    gradientColors = [const Color(0xFFE91E63), const Color(0xFFF06292)];
+                    // Circulation: warm peach/coral
+                    gradientColors = [const Color(0xFFD4907A), const Color(0xFFE8A898)];
                   } else if (topic.id == 'topic_heredity') {
-                    // Heredity: Purple gradient
-                    gradientColors = [const Color(0xFF9C27B0), const Color(0xFFBA68C8)];
+                    // Heredity: muted teal
+                    gradientColors = [const Color(0xFF6B8FA0), const Color(0xFF8BAABB)];
                   } else if (topic.id == 'topic_energy') {
-                    // Energy: Green gradient
-                    gradientColors = [const Color(0xFF4CAF50), const Color(0xFF81C784)];
+                    // Energy: sage green
+                    gradientColors = [const Color(0xFF7BA08A), const Color(0xFF9BBFA7)];
                   } else {
-                    // Default gradient
-                    gradientColors = [const Color(0xFF4DB8C4), const Color(0xFF7BC9A4)];
+                    // Default: accent gold
+                    gradientColors = [const Color(0xFFC9A84C), const Color(0xFFD4B870)];
                   }
                   
                   return Padding(
@@ -476,36 +485,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Development Tools Card
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s24),
-              child: Card(
-                elevation: AppSizes.cardElevation,
-                color: AppColors.surface,
-                child: ListTile(
-                  leading: const Icon(Icons.build, color: AppColors.primary),
-                  title: Text(
-                    'Development Tools',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Debug and testing options',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: AppSizes.iconXS),
-                  onTap: () => _showDevTools(context),
-                ),
-              ),
-            ),
-          ),
+          // // Development Tools Card
+          // SliverToBoxAdapter(
+          //   child: Padding(
+          //     padding: const EdgeInsets.fromLTRB(AppSizes.s20, 0, AppSizes.s20, AppSizes.s24),
+          //     child: Builder(builder: (context) {
+          //       final isDark = Theme.of(context).brightness == Brightness.dark;
+          //       return GestureDetector(
+          //         onTap: () => _showDevTools(context),
+          //         child: Container(
+          //           decoration: NeumorphicStyles.raised(context),
+          //           child: ListTile(
+          //             leading: Icon(
+          //               Icons.build,
+          //               color: isDark ? AppColors.darkPrimary : AppColors.primary,
+          //             ),
+          //             title: Text(
+          //               'Development Tools',
+          //               style: AppTextStyles.bodyMedium.copyWith(
+          //                 fontWeight: FontWeight.w600,
+          //                 color: isDark
+          //                     ? AppColors.darkTextPrimary
+          //                     : AppColors.textPrimary,
+          //               ),
+          //             ),
+          //             subtitle: Text(
+          //               'Debug and testing options',
+          //               style: AppTextStyles.bodySmall.copyWith(
+          //                 color: isDark
+          //                     ? AppColors.darkTextSecondary
+          //                     : AppColors.textSecondary,
+          //               ),
+          //             ),
+          //             trailing: Icon(
+          //               Icons.arrow_forward_ios,
+          //               size: AppSizes.iconXS,
+          //               color: isDark
+          //                   ? AppColors.darkTextSecondary
+          //                   : AppColors.textSecondary,
+          //             ),
+          //           ),
+          //         ),
+          //       );
+          //     }),
+          //   ),
+          // ),
 
           // Bottom padding
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
-          ),
+          // const SliverToBoxAdapter(
+          //   child: SizedBox(height: 100),
+          // ),
         ],
       ),
           ), // Close Scaffold
@@ -545,7 +574,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           "Leaving so soon? Your learning journey awaits! "
           "I'll be here when you return, my friend.",
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.grey600,
+            color: AppColors.textSecondary,
           ),
         ),
         actions: [

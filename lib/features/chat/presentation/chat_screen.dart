@@ -13,6 +13,7 @@ import '../../profile/data/providers/user_profile_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
+import '../../../shared/widgets/neumorphic_styles.dart';
 
 /// Full Chat Screen (INTERACTION CHANNEL ONLY)
 ///
@@ -221,7 +222,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.grey50,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildAppBar(),
@@ -261,7 +262,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.2),
+                  color: AppColors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: ClipOval(
@@ -295,7 +296,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     Text(
                       character.specialization,
                       style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white.withOpacity(0.9),
+                        color: AppColors.white.withValues(alpha: 0.9),
                         decoration: TextDecoration.none,
                       ),
                     ),
@@ -326,7 +327,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(AppSizes.s16),
-      color: AppColors.grey100,
+      color: AppColors.background,
       child: TextField(
         autofocus: true,
         decoration: InputDecoration(
@@ -336,7 +337,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
           filled: true,
-          fillColor: AppColors.white,
+          fillColor: AppColors.surfaceTint,
         ),
         onChanged: (value) {
           setState(() {
@@ -379,13 +380,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const Icon(
               Icons.search_off,
               size: 64,
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'No messages found',
               style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -475,7 +476,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Text(
             'Try asking:',
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSizes.s8),
@@ -555,7 +556,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               errorMessage.content,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
@@ -578,7 +579,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Text(
                   'Check your connection',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.grey600,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -618,10 +619,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? '${character.name} is thinking...'
         : 'Ask ${character.name} anything...';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(AppSizes.s12, AppSizes.s12, AppSizes.s12, AppSizes.s12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -642,13 +644,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   minHeight: 48,
                   maxHeight: 120,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.grey100,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppColors.grey300,
-                    width: 0.5,
-                  ),
+                decoration: NeumorphicStyles.inset(
+                  context,
+                  borderRadius: 24,
                 ),
                 child: TextField(
                   controller: _controller,
@@ -657,7 +655,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     hintStyle: AppTextStyles.bodyMedium.copyWith(
                       color: isDisabled
                           ? character.themeColor.withValues(alpha: 0.5)
-                          : AppColors.grey600,
+                          : AppColors.textSecondary,
                       fontStyle: isDisabled ? FontStyle.italic : FontStyle.normal,
                     ),
                     border: InputBorder.none,
@@ -668,7 +666,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     isDense: true,
                   ),
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey900,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     height: 1.4,
                   ),
                   textCapitalization: TextCapitalization.sentences,
@@ -687,7 +685,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               height: 48,
               decoration: BoxDecoration(
                 color: (_controller.text.trim().isEmpty || isDisabled)
-                    ? AppColors.grey300
+                    ? AppColors.border
                     : character.themeColor,
                 shape: BoxShape.circle,
               ),
@@ -762,7 +760,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               'Powered by OpenAI GPT-4',
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
               ),
             ),
           ],

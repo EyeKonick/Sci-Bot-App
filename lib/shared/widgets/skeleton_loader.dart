@@ -86,7 +86,7 @@ class _SkeletonBone extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.grey300,
+        color: AppColors.border,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );

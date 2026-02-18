@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../shared/widgets/neumorphic_styles.dart';
 
 /// Daily Science Tip Card
 /// Shows random fun science facts that cycle every 1 minute
@@ -89,53 +90,54 @@ class _DailyTipCardState extends State<DailyTipCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: AppSizes.cardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusL),
-      ),
-      color: AppColors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.s20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with lightbulb emoji
-            Row(
-              children: [
-                const Text(
-                  '💡',
-                  style: TextStyle(fontSize: 24),
-                ),
-                const SizedBox(width: AppSizes.s8),
-                Text(
-                  'Did you know?',
-                  style: AppTextStyles.headingSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
-            const SizedBox(height: AppSizes.s12),
+    return Container(
+      decoration: NeumorphicStyles.raised(context),
+      padding: const EdgeInsets.all(AppSizes.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with lightbulb emoji
+          Row(
+            children: [
+              const Text(
+                '💡',
+                style: TextStyle(fontSize: 24),
+              ),
+              const SizedBox(width: AppSizes.s8),
+              Text(
+                'Did you know?',
+                style: AppTextStyles.headingSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
 
-            // Tip text with crossfade animation
-            Padding(
-              padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child: Text(
-                  _currentTip,
-                  key: ValueKey<String>(_currentTip),
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.grey600,
-                    height: 1.5,
-                  ),
+          const SizedBox(height: AppSizes.s12),
+
+          // Tip text with crossfade animation
+          Padding(
+            padding: const EdgeInsets.only(left: AppSizes.s32 + AppSizes.s4),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: Text(
+                _currentTip,
+                key: ValueKey<String>(_currentTip),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: textSecondary,
+                  height: 1.5,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

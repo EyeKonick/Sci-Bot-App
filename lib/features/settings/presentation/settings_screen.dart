@@ -6,6 +6,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../profile/data/providers/user_profile_provider.dart';
 import '../../profile/presentation/widgets/profile_avatar.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -13,8 +14,9 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar with Gradient
@@ -93,7 +95,7 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                           const Icon(
                             Icons.chevron_right,
-                            color: AppColors.grey600,
+                            color: AppColors.textSecondary,
                           ),
                         ],
                       ),
@@ -128,6 +130,44 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Text Size',
                   subtitle: 'Adjust reading comfort',
                   onTap: () => context.push('/text-size'),
+                ),
+                // Dark Mode Toggle
+                Card(
+                  margin: const EdgeInsets.only(bottom: AppSizes.s8),
+                  child: ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkPrimary.withValues(alpha: 0.2)
+                            : AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                      ),
+                      child: Icon(
+                        ref.watch(isDarkModeProvider)
+                            ? Icons.dark_mode
+                            : Icons.dark_mode_outlined,
+                        color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                        size: AppSizes.iconM,
+                      ),
+                    ),
+                    title: Text(
+                      'Dark Mode',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Switch to dark theme',
+                      style: AppTextStyles.caption,
+                    ),
+                    trailing: Switch(
+                      value: ref.watch(isDarkModeProvider),
+                      onChanged: (_) =>
+                          ref.read(themeModeProvider.notifier).toggle(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
@@ -171,7 +211,7 @@ class SettingsScreen extends ConsumerWidget {
       child: Text(
         title,
         style: AppTextStyles.headingSmall.copyWith(
-          color: AppColors.grey600,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -184,6 +224,7 @@ class SettingsScreen extends ConsumerWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.s8),
       child: ListTile(
@@ -191,12 +232,14 @@ class SettingsScreen extends ConsumerWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: isDark
+                ? AppColors.darkPrimary.withValues(alpha: 0.2)
+                : AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Icon(
             icon,
-            color: AppColors.primary,
+            color: isDark ? AppColors.darkPrimary : AppColors.primary,
             size: AppSizes.iconM,
           ),
         ),
@@ -210,9 +253,9 @@ class SettingsScreen extends ConsumerWidget {
           subtitle,
           style: AppTextStyles.caption,
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right,
-          color: AppColors.grey600,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
         ),
         onTap: onTap,
       ),

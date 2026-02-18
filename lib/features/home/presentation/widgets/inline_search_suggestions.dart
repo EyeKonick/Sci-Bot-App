@@ -20,8 +20,9 @@ class InlineSearchSuggestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (suggestions.isEmpty) {
-      return _buildNoResults();
+      return _buildNoResults(isDark);
     }
 
     return AnimatedContainer(
@@ -36,19 +37,20 @@ class InlineSearchSuggestions extends StatelessWidget {
             child: Text(
               'Suggestions',
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.grey600,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           const SizedBox(height: AppSizes.s8),
-          ...suggestions.map((lesson) => _buildSuggestionCard(lesson)),
+          ...suggestions.map((lesson) => _buildSuggestionCard(lesson, isDark)),
         ],
       ),
     );
   }
 
-  Widget _buildSuggestionCard(LessonModel lesson) {
+  Widget _buildSuggestionCard(LessonModel lesson, bool isDark) {
+    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primary;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.s8),
       child: Card(
@@ -69,17 +71,17 @@ class InlineSearchSuggestions extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: primaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.book,
                     size: 20,
-                    color: AppColors.primary,
+                    color: primaryColor,
                   ),
                 ),
                 const SizedBox(width: AppSizes.s12),
-                
+
                 // Title and module count
                 Expanded(
                   child: Column(
@@ -96,17 +98,17 @@ class InlineSearchSuggestions extends StatelessWidget {
                       Text(
                         '${lesson.modules.length} modules • ${lesson.estimatedMinutes} min',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey600,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 // Arrow
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppColors.grey600,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   size: 20,
                 ),
               ],
@@ -117,14 +119,14 @@ class InlineSearchSuggestions extends StatelessWidget {
     );
   }
 
-  Widget _buildNoResults() {
+  Widget _buildNoResults(bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.s16),
       child: Row(
         children: [
           Icon(
             Icons.search_off,
-            color: AppColors.grey300,
+            color: isDark ? AppColors.darkBorder : AppColors.border,
             size: 20,
           ),
           const SizedBox(width: AppSizes.s12),
@@ -132,7 +134,7 @@ class InlineSearchSuggestions extends StatelessWidget {
             child: Text(
               'No lessons found for "$query"',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.grey600,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
           ),
@@ -171,7 +173,7 @@ class InlineSearchSuggestions extends StatelessWidget {
       spans.add(TextSpan(
         text: text.substring(index, index + query.length),
         style: style.copyWith(
-          backgroundColor: AppColors.warning.withOpacity(0.3),
+          backgroundColor: AppColors.warning.withValues(alpha: 0.3),
           fontWeight: FontWeight.w700,
         ),
       ));

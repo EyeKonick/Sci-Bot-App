@@ -26,17 +26,17 @@ class ProfileAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: borderColor ?? AppColors.white.withOpacity(0.6),
+          color: borderColor ?? AppColors.white.withValues(alpha: 0.6),
           width: borderWidth,
         ),
       ),
       child: ClipOval(
-        child: _buildAvatarContent(),
+        child: _buildAvatarContent(context),
       ),
     );
   }
 
-  Widget _buildAvatarContent() {
+  Widget _buildAvatarContent(BuildContext context) {
     // If image path exists and file is valid, show image
     if (imagePath != null && imagePath!.isNotEmpty) {
       final file = File(imagePath!);
@@ -46,23 +46,25 @@ class ProfileAvatar extends StatelessWidget {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             // Fallback to icon if image loading fails
-            return _buildDefaultIcon();
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return _buildDefaultIcon(isDark);
           },
         );
       }
     }
 
     // Default: show person icon
-    return _buildDefaultIcon();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return _buildDefaultIcon(isDark);
   }
 
-  Widget _buildDefaultIcon() {
+  Widget _buildDefaultIcon(bool isDark) {
     return Container(
-      color: AppColors.white.withOpacity(0.2),
+      color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
       child: Icon(
-        Icons.person,
-        color: AppColors.white,
-        size: size * 0.5, // Icon is 50% of avatar size
+        Icons.person_rounded,
+        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+        size: size * 0.5,
       ),
     );
   }

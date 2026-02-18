@@ -102,13 +102,14 @@ class _SplashScreenState extends State<SplashScreen>
                           fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: AppSizes.s8),
+                      const SizedBox(height: AppSizes.s4),
                     
                       // Tagline
                       Text(
-                        'Your AI Science Learning Companion',
+                        'Science Contextualized Instruction through \nAI-based Chatbot',
                         style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.white.withOpacity(0.9),
+                          color: AppColors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -121,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.white.withOpacity(0.8),
+                            AppColors.white.withValues(alpha: 0.8),
                           ),
                         ),
                       ),

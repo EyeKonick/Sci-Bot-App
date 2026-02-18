@@ -76,8 +76,8 @@ class NarrationMessage {
   /// Returns milliseconds to display the bubble before starting fade-out.
   int get displayMs {
     final wordCount = content.split(RegExp(r'\s+')).length;
-    // ~300ms per word, min 2s, max 8s
-    return (wordCount * 300).clamp(2000, 8000);
+    // ~400ms per word, min 3s, max 10s
+    return (wordCount * 400).clamp(3000, 10000);
   }
 
   /// Calculate inter-bubble gap (pause after fade-out before next bubble).
@@ -85,19 +85,19 @@ class NarrationMessage {
   /// Pacing hints override length-based calculation.
   int get gapMs {
     // Questions get a thinking pause
-    if (content.trimRight().endsWith('?')) return 1500;
+    if (content.trimRight().endsWith('?')) return 2000;
 
     switch (pacingHint) {
       case PacingHint.fast:
-        return 800;
+        return 1200;
       case PacingHint.slow:
-        return 1800;
+        return 2500;
       case PacingHint.normal:
         // Length-based for normal pacing
         final length = content.length;
-        if (length < 50) return 800;
-        if (length < 120) return 1200;
-        return 1800;
+        if (length < 50) return 1200;
+        if (length < 120) return 1800;
+        return 2500;
     }
   }
 

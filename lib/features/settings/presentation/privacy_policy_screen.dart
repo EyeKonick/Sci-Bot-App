@@ -59,8 +59,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -101,7 +102,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   child: Text(
                     'Effective as of August, 2025',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -150,14 +151,14 @@ class _PolicySection extends StatelessWidget {
             Text(
               title,
               style: AppTextStyles.headingSmall.copyWith(
-                color: AppColors.grey900,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
             Text(
               content,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.grey600,
+                color: AppColors.textSecondary,
                 height: 1.6,
               ),
             ),

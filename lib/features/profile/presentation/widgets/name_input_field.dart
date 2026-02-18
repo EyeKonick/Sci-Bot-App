@@ -73,17 +73,17 @@ class _NameInputFieldState extends State<NameInputField> {
           decoration: InputDecoration(
             hintText: 'Enter your name',
             hintStyle: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.grey300,
+              color: AppColors.border,
             ),
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
-              borderSide: BorderSide(color: AppColors.grey300),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
-              borderSide: BorderSide(color: AppColors.grey300),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -118,7 +118,7 @@ class _NameInputFieldState extends State<NameInputField> {
               style: AppTextStyles.bodySmall.copyWith(
                 color: widget.controller.text.length > _maxLength
                     ? AppColors.error
-                    : AppColors.grey600,
+                    : AppColors.textSecondary,
               ),
             ),
           ),

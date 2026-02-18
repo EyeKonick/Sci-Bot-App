@@ -103,8 +103,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -174,9 +175,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProfileCard(AsyncValue profileAsync) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
@@ -299,7 +301,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         const SizedBox(width: AppSizes.s8),
                         Icon(
                           Icons.edit,
-                          color: AppColors.grey600,
+                          color: AppColors.textSecondary,
                           size: AppSizes.iconS,
                         ),
                       ],
@@ -309,7 +311,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text(
                     'Learning Science with SCI-Bot',
                     style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -363,7 +365,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Text(
             'Learning Progress',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
           ),
         ),
@@ -396,7 +398,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Text(
             'Progress by Topic',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.grey600,
+              color: AppColors.textSecondary,
             ),
           ),
         ),

@@ -103,6 +103,19 @@ class SharedPrefsService {
     await _prefs?.setDouble(_keyTextScale, _defaultTextScale);
   }
 
+  // THEME MODE PREFERENCE
+  static const String _keyThemeMode = 'theme_mode';
+
+  /// Get stored theme mode string ('light' | 'dark' | 'system')
+  static String get themeMode {
+    return _prefs?.getString(_keyThemeMode) ?? 'light';
+  }
+
+  /// Persist theme mode preference
+  static Future<void> setThemeMode(String mode) async {
+    await _prefs?.setString(_keyThemeMode, mode);
+  }
+
   /// Clear all preferences (useful for testing)
   static Future<void> clearAll() async {
     await _prefs?.clear();
