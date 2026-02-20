@@ -97,6 +97,7 @@ class _ProfilePictureSelectorState extends State<ProfilePictureSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // Circular preview
@@ -105,9 +106,9 @@ class _ProfilePictureSelectorState extends State<ProfilePictureSelector> {
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.surfaceTint,
+            color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
             border: Border.all(
-              color: AppColors.border,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
               width: 2,
             ),
           ),
@@ -124,7 +125,7 @@ class _ProfilePictureSelectorState extends State<ProfilePictureSelector> {
                     : Icon(
                         Icons.person,
                         size: 60,
-                        color: AppColors.border,
+                        color: isDark ? AppColors.darkBorder : AppColors.border,
                       ),
           ),
         ),
@@ -182,6 +183,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -200,7 +202,7 @@ class _ActionButton extends StatelessWidget {
                 color: isDestructive
                     ? AppColors.error
                     : onTap == null
-                        ? AppColors.border
+                        ? (isDark ? AppColors.darkBorder : AppColors.border)
                         : AppColors.primary,
                 size: 28,
               ),
@@ -211,8 +213,8 @@ class _ActionButton extends StatelessWidget {
                   color: isDestructive
                       ? AppColors.error
                       : onTap == null
-                          ? AppColors.border
-                          : AppColors.textSecondary,
+                          ? (isDark ? AppColors.darkBorder : AppColors.border)
+                          : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 ),
               ),
             ],

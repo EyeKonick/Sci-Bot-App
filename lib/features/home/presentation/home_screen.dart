@@ -408,7 +408,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Text(
                       'See All',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primary,
+                        color: isDark ? AppColors.darkPrimary : AppColors.primary,
                       ),
                     ),
                   ),
@@ -441,19 +441,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       : 0.0;
                   
                   // Gradient colors per topic — aligned to new palette
+                  // Dark mode uses deeper, more saturated colors
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   List<Color> gradientColors;
                   if (topic.id == 'topic_body_systems') {
                     // Circulation: warm peach/coral
-                    gradientColors = [const Color(0xFFD4907A), const Color(0xFFE8A898)];
+                    gradientColors = isDark
+                        ? [const Color(0xFFB0705A), const Color(0xFFC98878)]
+                        : [const Color(0xFFD4907A), const Color(0xFFE8A898)];
                   } else if (topic.id == 'topic_heredity') {
                     // Heredity: muted teal
-                    gradientColors = [const Color(0xFF6B8FA0), const Color(0xFF8BAABB)];
+                    gradientColors = isDark
+                        ? [const Color(0xFF4D7080), const Color(0xFF6B8FA0)]
+                        : [const Color(0xFF6B8FA0), const Color(0xFF8BAABB)];
                   } else if (topic.id == 'topic_energy') {
                     // Energy: sage green
-                    gradientColors = [const Color(0xFF7BA08A), const Color(0xFF9BBFA7)];
+                    gradientColors = isDark
+                        ? [const Color(0xFF5B806A), const Color(0xFF7BA08A)]
+                        : [const Color(0xFF7BA08A), const Color(0xFF9BBFA7)];
                   } else {
                     // Default: accent gold
-                    gradientColors = [const Color(0xFFC9A84C), const Color(0xFFD4B870)];
+                    gradientColors = isDark
+                        ? [const Color(0xFFA88830), const Color(0xFFC9A84C)]
+                        : [const Color(0xFFC9A84C), const Color(0xFFD4B870)];
                   }
                   
                   return Padding(
@@ -546,6 +556,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// Show exit confirmation dialog with Aristotle's personality
   Future<bool> _showExitConfirmation() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -556,7 +567,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+              backgroundColor: (isDark ? AppColors.darkPrimary : AppColors.primary).withValues(alpha: 0.15),
               child: Image.asset(
                 AiCharacter.aristotle.avatarAsset,
                 width: 24,
@@ -574,20 +585,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           "Leaving so soon? Your learning journey awaits! "
           "I'll be here when you return, my friend.",
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Stay',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
@@ -596,6 +597,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 color: AppColors.error,
               ),
             ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isDark ? AppColors.darkPrimary : AppColors.primary,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+            ),
+            child: Text('Stay', style: AppTextStyles.buttonLabel),
           ),
         ],
       ),

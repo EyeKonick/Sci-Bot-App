@@ -78,7 +78,7 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                 // Current Setting
                 Card(
                   elevation: AppSizes.cardElevation,
-                  color: AppColors.surface,
+                  color: isDark ? AppColors.darkSurface : AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
@@ -102,7 +102,7 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                         Text(
                           'Current text size',
                           style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -121,7 +121,7 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                   child: Text(
                     'Choose a Size',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -168,14 +168,14 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                   child: Text(
                     'Preview',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ),
 
                 Card(
                   elevation: AppSizes.cardElevation,
-                  color: AppColors.surface,
+                  color: isDark ? AppColors.darkSurface : AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppSizes.cardRadius),
                   ),
@@ -203,7 +203,7 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                           Text(
                             'Module 1 of 6 - Estimated reading time: 15 min',
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textSecondary,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -255,7 +255,7 @@ class _TextSizeScreenState extends State<TextSizeScreen> {
                       icon: const Icon(Icons.restore),
                       label: const Text('Reset to Default'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.textSecondary,
+                        foregroundColor: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -286,14 +286,15 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: isSelected ? AppSizes.cardElevation : 0,
-      color: isSelected ? AppColors.primary : AppColors.surface,
+      color: isSelected ? AppColors.primary : (isDark ? AppColors.darkSurface : AppColors.surface),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusM),
         side: isSelected
             ? BorderSide.none
-            : BorderSide(color: AppColors.border, width: 1),
+            : BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border, width: 1),
       ),
       child: InkWell(
         onTap: onTap,
@@ -309,14 +310,14 @@ class _PresetButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14 * scale,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.white : AppColors.textSecondary,
+                  color: isSelected ? AppColors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 ),
               ),
               const SizedBox(height: AppSizes.s4),
               Text(
                 label,
                 style: AppTextStyles.caption.copyWith(
-                  color: isSelected ? AppColors.white : AppColors.textSecondary,
+                  color: isSelected ? AppColors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),

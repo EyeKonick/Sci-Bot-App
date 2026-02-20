@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet permission (required for OpenAI API calls in release builds) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Permissions for profile picture selection -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

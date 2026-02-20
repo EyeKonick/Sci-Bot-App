@@ -39,6 +39,7 @@ class _ShimmerEffectState extends State<_ShimmerEffect>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -47,11 +48,17 @@ class _ShimmerEffectState extends State<_ShimmerEffect>
             return LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: const [
-                Color(0xFFEEEEEE),
-                Color(0xFFF5F5F5),
-                Color(0xFFEEEEEE),
-              ],
+              colors: isDark
+                  ? const [
+                      AppColors.darkSurface,
+                      AppColors.darkSurfaceElevated,
+                      AppColors.darkSurface,
+                    ]
+                  : const [
+                      Color(0xFFEEEEEE),
+                      Color(0xFFF5F5F5),
+                      Color(0xFFEEEEEE),
+                    ],
               stops: [
                 (_controller.value - 0.3).clamp(0.0, 1.0),
                 _controller.value,
@@ -82,11 +89,12 @@ class _SkeletonBone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.border,
+        color: isDark ? AppColors.darkBorder : AppColors.border,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
@@ -102,7 +110,7 @@ class SkeletonTopicCard extends StatelessWidget {
     return _ShimmerEffect(
       child: Card(
         elevation: AppSizes.cardElevation,
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
@@ -183,7 +191,7 @@ class SkeletonLessonCard extends StatelessWidget {
     return _ShimmerEffect(
       child: Card(
         elevation: AppSizes.cardElevation,
-        color: AppColors.surface,
+        color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),

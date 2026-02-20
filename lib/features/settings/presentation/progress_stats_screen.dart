@@ -101,7 +101,7 @@ class ProgressStatsScreen extends StatelessWidget {
                   child: Text(
                     'Progress by Topic',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -265,37 +265,40 @@ class SummaryStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ProgressStatCard(
-            icon: Icons.view_module,
-            label: 'Modules Done',
-            value: '$totalModulesCompleted',
-            color: AppColors.info,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ProgressStatCard(
+              icon: Icons.view_module,
+              label: 'Modules Done',
+              value: '$totalModulesCompleted',
+              color: AppColors.info,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSizes.s12),
-        Expanded(
-          child: ProgressStatCard(
-            icon: Icons.trending_up,
-            label: 'This Week',
-            value: '$recentActivity',
-            color: AppColors.success,
+          const SizedBox(width: AppSizes.s12),
+          Expanded(
+            child: ProgressStatCard(
+              icon: Icons.trending_up,
+              label: 'This Week',
+              value: '$recentActivity',
+              color: AppColors.success,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSizes.s12),
-        Expanded(
-          child: ProgressStatCard(
-            icon: Icons.emoji_events,
-            label: 'Rate',
-            value: totalLessons > 0
-                ? '${((completedLessons / totalLessons) * 100).toInt()}%'
-                : '0%',
-            color: AppColors.warning,
+          const SizedBox(width: AppSizes.s12),
+          Expanded(
+            child: ProgressStatCard(
+              icon: Icons.emoji_events,
+              label: 'Rate',
+              value: totalLessons > 0
+                  ? '${((completedLessons / totalLessons) * 100).toInt()}%'
+                  : '0%',
+              color: AppColors.warning,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -330,6 +333,7 @@ class ProgressStatCard extends StatelessWidget {
           vertical: AppSizes.s16,
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: color, size: AppSizes.iconL),
             const SizedBox(height: AppSizes.s8),

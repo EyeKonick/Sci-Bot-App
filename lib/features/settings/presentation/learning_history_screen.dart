@@ -74,7 +74,7 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
                 child: Text(
                   '${allProgress.length} ${allProgress.length == 1 ? 'lesson' : 'lessons'} accessed',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -132,6 +132,7 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.s24),
@@ -141,20 +142,20 @@ class _LearningHistoryScreenState extends State<LearningHistoryScreen> {
             Icon(
               Icons.history,
               size: AppSizes.iconXL * 2,
-              color: AppColors.border,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
             ),
             const SizedBox(height: AppSizes.s24),
             Text(
               'No Learning History Yet',
               style: AppTextStyles.headingMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSizes.s12),
             Text(
               'Start a lesson to track your learning journey.\nYour progress will appear here.',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -246,10 +247,11 @@ class _HistoryLessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompleted = progress.isCompleted;
     final completionPct = progress.completionPercentage;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         side: isCompleted

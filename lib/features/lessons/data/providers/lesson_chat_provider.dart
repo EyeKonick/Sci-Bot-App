@@ -878,8 +878,7 @@ THIS MESSAGE APPEARS IN MAIN CHAT AREA.''';
         print('✅ Max attempts reached (3/3) - auto-advancing with encouragement');
       } else {
         final isCorrect = fullExplanation.toLowerCase().contains('correct!') ||
-                         fullExplanation.toLowerCase().contains('tama!') ||
-                         fullExplanation.toLowerCase().contains('partially correct');
+                         fullExplanation.toLowerCase().contains('tama!');
 
         canProceed = isCorrect;
         print(canProceed
@@ -3313,9 +3312,17 @@ RESPONSE RULES:
     return [
      ScriptStep(
         botMessages: [
-          'Hello, SCI-learner! Welcome to another science adventure here in Roxas City!',
+          'Hello, SCI-learner!'
         ],
         channel: MessageChannel.narration,
+        pacingHint: PacingHint.slow,
+        waitForUser: false,
+      ),
+     ScriptStep(
+        botMessages: [
+          'Welcome to another science adventure here in Roxas City!',
+        ],
+        channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
@@ -3539,7 +3546,7 @@ RESPONSE RULES:
       ),
       ScriptStep(
         botMessages: [
-          'Do you have any questions about these learning goals?',
+          'Do you you understand the “goals”?',
           'Type your question, or type "ready" if you\'re ready to continue.',
         ],
         channel: MessageChannel.interaction,

@@ -26,6 +26,7 @@ class BottomNavShell extends ConsumerWidget {
     // When inside a topic, Home nav item should NOT appear active.
     final navContext = ref.watch(navigationContextProvider);
     final isInsideTopic = navContext.currentTopicId != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     void handleTap(int index) {
       // Only reset character context when tapping Home while already ON the Home branch.
@@ -54,10 +55,12 @@ class BottomNavShell extends ConsumerWidget {
           body: navigationShell,
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: isDark ? AppColors.darkSurface : AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -74,6 +77,7 @@ class BottomNavShell extends ConsumerWidget {
                       label: 'Home',
                       // Home is active only when on branch 0 AND not inside a topic
                       isActive: navigationShell.currentIndex == 0 && !isInsideTopic,
+                      isDark: isDark,
                       onTap: () => handleTap(0),
                     ),
                     _NavItem(
@@ -81,6 +85,7 @@ class BottomNavShell extends ConsumerWidget {
                       activeIcon: Icons.chat_bubble,
                       label: 'Chat',
                       isActive: navigationShell.currentIndex == 1,
+                      isDark: isDark,
                       onTap: () => handleTap(1),
                     ),
                     _NavItem(
@@ -88,6 +93,7 @@ class BottomNavShell extends ConsumerWidget {
                       activeIcon: Icons.more_horiz,
                       label: 'More',
                       isActive: navigationShell.currentIndex == 2,
+                      isDark: isDark,
                       onTap: () => handleTap(2),
                     ),
                   ],
@@ -111,6 +117,7 @@ class _NavItem extends StatelessWidget {
   final IconData activeIcon;
   final String label;
   final bool isActive;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -118,12 +125,15 @@ class _NavItem extends StatelessWidget {
     required this.activeIcon,
     required this.label,
     required this.isActive,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.primary : AppColors.textSecondary;
+    final Color activeColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+    final Color inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final color = isActive ? activeColor : inactiveColor;
     return Expanded(
       child: InkWell(
         onTap: onTap,

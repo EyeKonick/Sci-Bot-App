@@ -146,8 +146,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -244,7 +245,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.description,
             style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -260,7 +263,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       width: _currentPage == index ? 24 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? AppColors.primary : AppColors.border,
+        color: _currentPage == index
+            ? AppColors.primary
+            : (Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkBorder
+                : AppColors.border),
         borderRadius: BorderRadius.circular(AppSizes.radiusFull),
       ),
     );

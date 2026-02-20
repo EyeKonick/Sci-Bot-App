@@ -221,8 +221,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: Column(
         children: [
           _buildAppBar(),
@@ -325,9 +326,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildSearchBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(AppSizes.s16),
-      color: AppColors.background,
+      color: isDark ? AppColors.darkBackground : AppColors.background,
       child: TextField(
         autofocus: true,
         decoration: InputDecoration(
@@ -337,7 +339,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
           filled: true,
-          fillColor: AppColors.surfaceTint,
+          fillColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
         ),
         onChanged: (value) {
           setState(() {
@@ -373,20 +375,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     // Search produced no results
     if (displayMessages.isEmpty) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.search_off,
               size: 64,
-              color: AppColors.border,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'No messages found',
               style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
           ],
@@ -465,6 +468,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// Phase 4: Conversation starter chips below greeting
   Widget _buildConversationStarters() {
     const character = AiCharacter.aristotle;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -476,7 +480,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Text(
             'Try asking:',
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSizes.s8),
@@ -685,7 +689,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               height: 48,
               decoration: BoxDecoration(
                 color: (_controller.text.trim().isEmpty || isDisabled)
-                    ? AppColors.border
+                    ? (isDark ? AppColors.darkBorder : AppColors.border)
                     : character.themeColor,
                 shape: BoxShape.circle,
               ),

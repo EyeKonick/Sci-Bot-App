@@ -282,7 +282,9 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
       removeTop: false,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurface
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
@@ -300,7 +302,9 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
         child: Material(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           clipBehavior: Clip.antiAlias,
-          color: AppColors.surface,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkSurface
+              : AppColors.surface,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -766,7 +770,7 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                     ? null
                     : character.themeGradient,
                 color: (_controller.text.isEmpty || isDisabled)
-                    ? AppColors.border
+                    ? (isDark ? AppColors.darkBorder : AppColors.border)
                     : null,
                 shape: BoxShape.circle,
               ),

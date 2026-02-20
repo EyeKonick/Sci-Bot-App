@@ -606,6 +606,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   /// Show educational exit confirmation dialog with character avatar
   Future<bool> _showLessonExitConfirmation(AiCharacter character) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -634,28 +635,29 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           "You're making great progress, ${character.name} is proud! "
           "Are you sure you want to end this lesson now?",
           style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              'Keep Learning',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: character.themeColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               'End Lesson',
               style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: character.themeColor,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+            ),
+            child: Text('Keep Learning', style: AppTextStyles.buttonLabel),
           ),
         ],
       ),
@@ -676,7 +678,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
     if (_lesson == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
         appBar: AppBar(
           title: const Text('Error'),
           backgroundColor: AppColors.primary,
@@ -687,19 +689,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 80, color: AppColors.border),
+                Icon(Icons.error_outline, size: 80, color: isDark ? AppColors.darkBorder : AppColors.border),
                 const SizedBox(height: AppSizes.s16),
                 Text(
                   'Lesson Not Found',
                   style: AppTextStyles.headingSmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.s8),
                 Text(
                   'This lesson may have been removed or is temporarily unavailable.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -723,7 +725,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     final module = _currentModule;
     if (module == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
         appBar: AppBar(
           title: const Text('Error'),
           backgroundColor: AppColors.primary,
@@ -734,19 +736,19 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 80, color: AppColors.border),
+                Icon(Icons.error_outline, size: 80, color: isDark ? AppColors.darkBorder : AppColors.border),
                 const SizedBox(height: AppSizes.s16),
                 Text(
                   'Module Not Found',
                   style: AppTextStyles.headingSmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: AppSizes.s8),
                 Text(
                   'This module could not be loaded.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -834,7 +836,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
         appBar: AppBar(
           backgroundColor: moduleColor,
           elevation: 0,
@@ -907,7 +909,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              'Module ${_currentModuleIndex + 1} of ${_lesson!.modules.length}',
+              'Part ${_currentModuleIndex + 1} of ${_lesson!.modules.length}',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.white.withValues(alpha: 0.8),
               ),
@@ -1023,7 +1025,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                 children: [
                   // Module title
                   Text(
-                    module.title,
+                    'Part ${module.order}: ${module.type.displayName}',
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: AppColors.white,
                       fontWeight: FontWeight.w700,
@@ -1033,17 +1035,9 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                   ),
                   const SizedBox(height: AppSizes.s4),
 
-                  // Type name + time + status
+                  // Time + status
                   Row(
                     children: [
-                      Text(
-                        module.type.displayName,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: AppSizes.s8),
                       Icon(
                         Icons.access_time,
                         size: 12,
@@ -1135,6 +1129,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
   ) {
     final chatState = ref.watch(lessonChatProvider);
     final character = ref.watch(activeCharacterProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Phase 1 Channel Enforcement: Only interaction-channel messages
     // appear in the main chat area. Narration messages go to speech bubbles.
@@ -1162,7 +1157,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     });
 
     return Container(
-      color: AppColors.background,
+      color: isDark ? AppColors.darkBackground : AppColors.background,
       child: qaMessages.isEmpty
           ? Center(
               child: Padding(
@@ -1526,6 +1521,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   /// Offline fallback: static markdown content
   Widget _buildOfflineContent(ModuleModel module) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // Offline banner
@@ -1555,7 +1551,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
         // Static markdown content
         Expanded(
           child: Container(
-            color: AppColors.white,
+            color: isDark ? AppColors.darkBackground : AppColors.white,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.s20),
               child: MarkdownBody(
@@ -1580,10 +1576,10 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                   listBullet: AppTextStyles.bodyMedium,
                   code: AppTextStyles.bodySmall.copyWith(
                     fontFamily: 'monospace',
-                    backgroundColor: AppColors.surfaceTint,
+                    backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
                   ),
                   blockquote: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -1723,7 +1719,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       ? null
                       : character.themeGradient,
                   color: (_inputController.text.trim().isEmpty || !isEnabled)
-                      ? AppColors.border
+                      ? (isDark ? AppColors.darkBorder : AppColors.border)
                       : null,
                   shape: BoxShape.circle,
                 ),
@@ -1762,13 +1758,14 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
     }
     _wasModuleComplete = canProceed;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(AppSizes.s20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -1790,8 +1787,8 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                       icon: const Icon(Icons.arrow_back),
                       label: const Text('Previous'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
+                        foregroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
+                        side: BorderSide(color: isDark ? AppColors.darkPrimary : AppColors.primary),
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSizes.s16,
                         ),
@@ -1865,6 +1862,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
 
   Widget _buildModuleProgressDots() {
     if (_lesson == null) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1886,7 +1884,7 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
                     ? AppColors.success
                     : isCurrent
                         ? _getModuleColor(module)
-                        : AppColors.border,
+                        : (isDark ? AppColors.darkBorder : AppColors.border),
                 borderRadius: BorderRadius.circular(AppSizes.radiusFull),
               ),
             ),

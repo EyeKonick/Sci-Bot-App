@@ -25,15 +25,15 @@ class HelpScreen extends StatelessWidget {
           'While viewing a lesson, tap the bookmark icon to save it for later. You can access all your bookmarks from the More tab or the Bookmarks section on the Home screen.',
     },
     {
-      'question': 'What are the 6 module types?',
+      'question': 'What are the 6 parts of the lesson?',
       'answer':
-          'Each lesson has 6 modules:\n\n'
-          'Pre-SCI-ntation - Introduction to the topic\n'
-          'Fa-SCI-nate - Main content and key concepts\n'
-          'Inve-SCI-tigation - Hands-on investigation activities\n'
-          'Goal-SCI-tting - Learning objectives and goals\n'
-          'Self-A-SCI-ssment - Quiz to test your understanding\n'
-          'SCI-pplementary - Additional resources and materials',
+          'Each lesson has 6 parts:\n\n'
+          'Fa-SCI-nate – introductory activities to activate prior knowledge;\n'
+          'Goal SCI-tting – learning objectives and targets;\n'
+          'Pre-SCI-ntation – engaging explanations and discussions;\n'
+          'Inve-SCI-tigation – inquiry-based activities and exploration;\n'
+          'Self-A-SCI-ssment – reflective questions and self-checks; and\n'
+          'SCI-pplumentary – additional resources and examples.',
     },
     {
       'question': 'How is my progress tracked?',
@@ -97,7 +97,7 @@ class HelpScreen extends StatelessWidget {
                   child: Text(
                     'Frequently Asked Questions',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -119,14 +119,14 @@ class HelpScreen extends StatelessWidget {
                   child: Text(
                     'Contact & Feedback',
                     style: AppTextStyles.headingSmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ),
 
                 Card(
                   elevation: AppSizes.cardElevation,
-                  color: AppColors.surface,
+                  color: isDark ? AppColors.darkSurface : AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppSizes.cardRadius),
                   ),
@@ -178,7 +178,7 @@ class HelpScreen extends StatelessWidget {
                         Text(
                           'Have a question or suggestion? We would love to hear from you!',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -191,7 +191,7 @@ class HelpScreen extends StatelessWidget {
                 // Version Info
                 Card(
                   elevation: AppSizes.cardElevation,
-                  color: AppColors.surface,
+                  color: isDark ? AppColors.darkSurface : AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppSizes.cardRadius),
                   ),
@@ -228,7 +228,7 @@ class HelpScreen extends StatelessWidget {
                               Text(
                                 'Last updated: February 2026',
                                 style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -261,9 +261,10 @@ class _FAQCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: AppSizes.cardElevation,
-      color: AppColors.surface,
+      color: isDark ? AppColors.darkSurface : AppColors.surface,
       margin: const EdgeInsets.only(bottom: AppSizes.s8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
@@ -282,7 +283,7 @@ class _FAQCard extends StatelessWidget {
           ),
         ),
         iconColor: AppColors.primary,
-        collapsedIconColor: AppColors.textSecondary,
+        collapsedIconColor: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
         childrenPadding: const EdgeInsets.fromLTRB(
           AppSizes.s16,
           0,
@@ -293,7 +294,7 @@ class _FAQCard extends StatelessWidget {
           Text(
             answer,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               height: 1.6,
             ),
           ),

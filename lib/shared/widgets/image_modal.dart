@@ -46,10 +46,11 @@ class ImageModal extends StatelessWidget {
                     imageAssetPath,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
                       return Container(
                         padding: const EdgeInsets.all(AppSizes.s32),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF2D3B35) : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -58,13 +59,13 @@ class ImageModal extends StatelessWidget {
                             Icon(
                               Icons.image_not_supported,
                               size: 64,
-                              color: Colors.grey[400],
+                              color: isDark ? Colors.grey[600] : Colors.grey[400],
                             ),
                             const SizedBox(height: AppSizes.s16),
                             Text(
                               'Image not found',
                               style: TextStyle(
-                                color: Colors.grey[700],
+                                color: isDark ? Colors.grey[300] : Colors.grey[700],
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
                               ),

@@ -41,12 +41,18 @@ class UserProfileNotifier extends AsyncNotifier<UserProfileModel?> {
   Future<void> updateProfile({
     String? name,
     String? profileImagePath,
+    String? fullName,
+    String? gradeSection,
+    String? school,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.updateProfile(
         name: name,
         profileImagePath: profileImagePath,
+        fullName: fullName,
+        gradeSection: gradeSection,
+        school: school,
       );
       return await _repository.getProfile();
     });

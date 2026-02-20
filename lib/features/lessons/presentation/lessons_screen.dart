@@ -319,6 +319,8 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
 
   /// Error State
   Widget _buildErrorState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.s24),
@@ -328,20 +330,20 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: AppColors.border,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'Topic Not Found',
               style: AppTextStyles.headingSmall.copyWith(
-                color: AppColors.textSecondary,
+                color: secondaryText,
               ),
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
               'The topic you\'re looking for doesn\'t exist',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+                color: secondaryText,
               ),
               textAlign: TextAlign.center,
             ),
@@ -350,10 +352,6 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
               onPressed: () => context.pop(),
               icon: const Icon(Icons.arrow_back),
               label: const Text('Back to Topics'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-              ),
             ),
           ],
         ),
@@ -363,29 +361,31 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
 
   /// Empty State - Phase 4: Forward action added
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryText = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.s24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.school_outlined,
               size: 80,
-              color: AppColors.border,
+              color: isDark ? AppColors.darkBorder : AppColors.border,
             ),
             const SizedBox(height: AppSizes.s16),
             Text(
               'No Lessons Yet',
               style: AppTextStyles.headingSmall.copyWith(
-                color: AppColors.textSecondary,
+                color: secondaryText,
               ),
             ),
             const SizedBox(height: AppSizes.s8),
             Text(
               'Lessons for this topic are coming soon! Explore other topics in the meantime.',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+                color: secondaryText,
               ),
               textAlign: TextAlign.center,
             ),
@@ -394,10 +394,6 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
               onPressed: () => context.pop(),
               icon: const Icon(Icons.explore),
               label: const Text('Explore Other Topics'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-              ),
             ),
           ],
         ),

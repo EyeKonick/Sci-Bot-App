@@ -153,9 +153,10 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
       snap: true,
       snapSizes: const [0.3, 0.5, 0.9],
       builder: (context, scrollController) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppSizes.radiusXL),
             ),
@@ -175,7 +176,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: isDark ? AppColors.darkBorder : AppColors.border,
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
               ),
@@ -278,12 +279,13 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
   }
 
   Widget _buildInput() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceTint,
+        color: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
         border: Border(
-          top: BorderSide(color: AppColors.border),
+          top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.border),
         ),
       ),
       child: Row(
@@ -298,7 +300,7 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: isDark ? AppColors.darkSurface : Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -315,7 +317,9 @@ class _QuickChatPopupState extends State<QuickChatPopup> {
           IconButton(
             icon: Icon(
               Icons.send,
-              color: _isStreaming ? AppColors.border : AppColors.primary,
+              color: _isStreaming
+                  ? (isDark ? AppColors.darkBorder : AppColors.border)
+                  : AppColors.primary,
             ),
             onPressed: _isStreaming ? null : _sendMessage,
           ),

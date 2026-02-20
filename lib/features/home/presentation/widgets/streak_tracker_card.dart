@@ -93,6 +93,7 @@ class StreakTrackerCard extends StatelessWidget {
                   _buildDayIndicator(
                     isCompleted: isCompleted,
                     isToday: isToday,
+                    isDark: isDark,
                   ),
                 ],
               );
@@ -110,6 +111,7 @@ class StreakTrackerCard extends StatelessWidget {
   Widget _buildDayIndicator({
     required bool isCompleted,
     required bool isToday,
+    required bool isDark,
   }) {
     if (isCompleted) {
       // 3D raised green button with white check
@@ -190,7 +192,9 @@ class StreakTrackerCard extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.border.withValues(alpha: 0.5),
+        color: isDark
+            ? AppColors.darkBorder.withValues(alpha: 0.5)
+            : AppColors.border.withValues(alpha: 0.5),
       ),
     );
   }

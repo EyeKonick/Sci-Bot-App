@@ -25,6 +25,9 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _gradeSectionController = TextEditingController();
+  final TextEditingController _schoolController = TextEditingController();
   bool _isNameValid = true;
   bool _isEditing = false;
   bool _isSaving = false;
@@ -34,13 +37,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _fullNameController.dispose();
+    _gradeSectionController.dispose();
+    _schoolController.dispose();
     super.dispose();
   }
 
-  void _startEditing(String currentName) {
+  void _startEditing(String currentName, {String? fullName, String? gradeSection, String? school}) {
     setState(() {
       _isEditing = true;
       _nameController.text = currentName;
+      _fullNameController.text = fullName ?? '';
+      _gradeSectionController.text = gradeSection ?? '';
+      _schoolController.text = school ?? '';
     });
   }
 
@@ -50,6 +59,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _newImage = null;
       _imageChanged = false;
       _nameController.clear();
+      _fullNameController.clear();
+      _gradeSectionController.clear();
+      _schoolController.clear();
     });
   }
 
@@ -67,6 +79,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(userProfileProvider.notifier).updateProfile(
             name: _nameController.text.trim(),
             profileImagePath: _imageChanged ? imagePath : null,
+            fullName: _fullNameController.text.trim().isEmpty
+                ? null
+                : _fullNameController.text.trim(),
+            gradeSection: _gradeSectionController.text.trim().isEmpty
+                ? null
+                : _gradeSectionController.text.trim(),
+            school: _schoolController.text.trim().isEmpty
+                ? null
+                : _schoolController.text.trim(),
           );
 
       setState(() {
@@ -97,6 +118,86 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     } finally {
       setState(() => _isSaving = false);
     }
+  }
+
+  Widget _buildEditField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required int maxLength,
+    required bool isDark,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: AppSizes.s4),
+        TextField(
+          controller: controller,
+          maxLength: maxLength,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.border,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+            ),
+            counterText: '',
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.s12,
+              vertical: AppSizes.s8,
+            ),
+          ),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(
+    IconData icon,
+    String text,
+    bool isDark, {
+    bool isName = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.s8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: AppSizes.iconXS,
+            color: isDark ? AppColors.darkPrimary : AppColors.primary,
+          ),
+          const SizedBox(width: AppSizes.s8),
+          Flexible(
+            child: Text(
+              text,
+              style: isName
+                  ? AppTextStyles.bodyMedium.copyWith(
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    )
+                  : AppTextStyles.bodySmall.copyWith(
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                    ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -207,7 +308,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ] else ...[
                   GestureDetector(
-                    onTap: () => _startEditing(profile.name),
+                    onTap: () => _startEditing(profile.name,
+                        fullName: profile.fullName,
+                        gradeSection: profile.gradeSection,
+                        school: profile.school),
                     child: Stack(
                       children: [
                         ProfileAvatar(
@@ -222,16 +326,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: isDark ? AppColors.darkPrimary : AppColors.primary,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.white,
+                                color: isDark ? AppColors.darkSurface : AppColors.white,
                                 width: 2,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.edit,
-                              color: AppColors.white,
+                              color: isDark ? AppColors.darkBackground : AppColors.white,
                               size: 16,
                             ),
                           ),
@@ -250,6 +354,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onValidationChanged: (isValid) {
                       setState(() => _isNameValid = isValid);
                     },
+                  ),
+                  const SizedBox(height: AppSizes.s12),
+                  _buildEditField(
+                    label: 'Complete Name',
+                    controller: _fullNameController,
+                    hint: 'e.g., Maria Clara Santos',
+                    maxLength: 60,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: AppSizes.s12),
+                  _buildEditField(
+                    label: 'Grade and Section',
+                    controller: _gradeSectionController,
+                    hint: 'e.g., Grade 9 - Mendel',
+                    maxLength: 50,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: AppSizes.s12),
+                  _buildEditField(
+                    label: 'School',
+                    controller: _schoolController,
+                    hint: 'e.g., Roxas City National High School',
+                    maxLength: 80,
+                    isDark: isDark,
                   ),
                   const SizedBox(height: AppSizes.s16),
                   // Save Button
@@ -289,29 +417,117 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                 ] else ...[
+                  // Username badge with background
                   GestureDetector(
-                    onTap: () => _startEditing(profile.name),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          profile.name,
-                          style: AppTextStyles.headingMedium,
+                    onTap: () => _startEditing(profile.name,
+                        fullName: profile.fullName,
+                        gradeSection: profile.gradeSection,
+                        school: profile.school),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.s16,
+                        vertical: AppSizes.s8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkPrimary.withValues(alpha: 0.18)
+                            : AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkPrimary.withValues(alpha: 0.4)
+                              : AppColors.primary.withValues(alpha: 0.35),
+                          width: 1.5,
                         ),
-                        const SizedBox(width: AppSizes.s8),
-                        Icon(
-                          Icons.edit,
-                          color: AppColors.textSecondary,
-                          size: AppSizes.iconS,
-                        ),
-                      ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            profile.name,
+                            style: AppTextStyles.headingMedium.copyWith(
+                              color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.s8),
+                          Icon(
+                            Icons.edit_rounded,
+                            color: isDark
+                                ? AppColors.darkPrimary.withValues(alpha: 0.7)
+                                : AppColors.primary.withValues(alpha: 0.7),
+                            size: 15,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: AppSizes.s4),
-                  Text(
-                    'Learning Science with SCI-Bot',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
+
+                  // Info rows with divider
+                  if ((profile.fullName != null && profile.fullName!.isNotEmpty) ||
+                      (profile.gradeSection != null && profile.gradeSection!.isNotEmpty) ||
+                      (profile.school != null && profile.school!.isNotEmpty)) ...[
+                    const SizedBox(height: AppSizes.s16),
+                    Divider(
+                      color: isDark
+                          ? AppColors.darkBorder.withValues(alpha: 0.4)
+                          : AppColors.border.withValues(alpha: 0.6),
+                      height: 1,
+                    ),
+                    const SizedBox(height: AppSizes.s12),
+                    if (profile.fullName != null && profile.fullName!.isNotEmpty)
+                      _buildInfoRow(
+                        Icons.person_outline_rounded,
+                        profile.fullName!,
+                        isDark,
+                        isName: true,
+                      ),
+                    if (profile.gradeSection != null && profile.gradeSection!.isNotEmpty)
+                      _buildInfoRow(
+                        Icons.school_outlined,
+                        profile.gradeSection!,
+                        isDark,
+                      ),
+                    if (profile.school != null && profile.school!.isNotEmpty)
+                      _buildInfoRow(
+                        Icons.location_on_outlined,
+                        profile.school!,
+                        isDark,
+                      ),
+                  ],
+
+                  const SizedBox(height: AppSizes.s16),
+
+                  // SCI-Bot tag
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.s12,
+                      vertical: AppSizes.s4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkAccent.withValues(alpha: 0.15)
+                          : AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 12,
+                          color: isDark ? AppColors.darkAccent : AppColors.accent,
+                        ),
+                        const SizedBox(width: AppSizes.s4),
+                        Text(
+                          'Learning Science with SCI-Bot',
+                          style: AppTextStyles.caption.copyWith(
+                            color: isDark ? AppColors.darkAccent : AppColors.accent,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -330,6 +546,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProgressSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progressRepo = ProgressRepository();
     final lessonRepo = LessonRepository();
     final topicRepo = TopicRepository();
@@ -353,6 +570,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final overallPercentage =
         totalLessons > 0 ? completedLessons / totalLessons : 0.0;
 
+    final sectionHeaderColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -365,16 +584,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Text(
             'Learning Progress',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.textSecondary,
+              color: sectionHeaderColor,
             ),
           ),
         ),
 
-        // Overall Progress
-        OverallProgressCard(
-          completedLessons: completedLessons,
-          totalLessons: totalLessons,
-          percentage: overallPercentage,
+        // Overall Progress — full width, centered content
+        SizedBox(
+          width: double.infinity,
+          child: OverallProgressCard(
+            completedLessons: completedLessons,
+            totalLessons: totalLessons,
+            percentage: overallPercentage,
+          ),
         ),
 
         const SizedBox(height: AppSizes.s16),
@@ -398,7 +620,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Text(
             'Progress by Topic',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.textSecondary,
+              color: sectionHeaderColor,
             ),
           ),
         ),

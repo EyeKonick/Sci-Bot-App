@@ -57,6 +57,9 @@ class UserProfileRepository {
   Future<void> updateProfile({
     String? name,
     String? profileImagePath,
+    String? fullName,
+    String? gradeSection,
+    String? school,
   }) async {
     try {
       final currentProfile = await getProfile();
@@ -67,6 +70,9 @@ class UserProfileRepository {
       final updatedProfile = currentProfile.copyWith(
         name: name,
         profileImagePath: profileImagePath,
+        fullName: fullName,
+        gradeSection: gradeSection,
+        school: school,
         updatedAt: DateTime.now(),
       );
 

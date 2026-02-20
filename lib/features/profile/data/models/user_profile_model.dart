@@ -11,6 +11,11 @@ class UserProfileModel {
   final int currentStreak;
   final List<DateTime> loginDates; // Last 30 days of login history
 
+  // Student identification fields
+  final String? fullName;     // Complete name of learner
+  final String? gradeSection; // e.g., "Grade 9 - Mendel"
+  final String? school;       // e.g., "Roxas City National High School"
+
   const UserProfileModel({
     required this.name,
     this.profileImagePath,
@@ -19,6 +24,9 @@ class UserProfileModel {
     this.lastLoginDate,
     this.currentStreak = 0,
     this.loginDates = const [],
+    this.fullName,
+    this.gradeSection,
+    this.school,
   });
 
   /// Validation: Check if name meets length requirements (2-20 characters)
@@ -47,6 +55,9 @@ class UserProfileModel {
               ?.map((d) => DateTime.parse(d as String))
               .toList() ??
           const [],
+      fullName: json['full_name'] as String?,
+      gradeSection: json['grade_section'] as String?,
+      school: json['school'] as String?,
     );
   }
 
@@ -60,6 +71,9 @@ class UserProfileModel {
       'last_login_date': lastLoginDate?.toIso8601String(),
       'current_streak': currentStreak,
       'login_dates': loginDates.map((d) => d.toIso8601String()).toList(),
+      'full_name': fullName,
+      'grade_section': gradeSection,
+      'school': school,
     };
   }
 
@@ -72,6 +86,9 @@ class UserProfileModel {
     DateTime? lastLoginDate,
     int? currentStreak,
     List<DateTime>? loginDates,
+    String? fullName,
+    String? gradeSection,
+    String? school,
   }) {
     return UserProfileModel(
       name: name ?? this.name,
@@ -81,6 +98,9 @@ class UserProfileModel {
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       currentStreak: currentStreak ?? this.currentStreak,
       loginDates: loginDates ?? this.loginDates,
+      fullName: fullName ?? this.fullName,
+      gradeSection: gradeSection ?? this.gradeSection,
+      school: school ?? this.school,
     );
   }
 

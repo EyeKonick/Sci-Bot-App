@@ -141,7 +141,7 @@ class ChatContext {
     if (currentModule != null) {
       buffer.writeln('Module: $currentModule ($currentModuleType)');
       if (moduleIndex != null && totalModules != null) {
-        buffer.writeln('Module ${moduleIndex! + 1} of $totalModules');
+        buffer.writeln('Part ${moduleIndex! + 1} of $totalModules');
       }
     }
 

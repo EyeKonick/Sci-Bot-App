@@ -93,9 +93,9 @@ class SettingsScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          const Icon(
+                          Icon(
                             Icons.chevron_right,
-                            color: AppColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                           ),
                         ],
                       ),
@@ -105,7 +105,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: AppSizes.s24),
 
                 // Learning Section
-                _buildSectionHeader('Learning'),
+                _buildSectionHeader('Learning', isDark: isDark),
                 _buildSettingsTile(
                   context,
                   icon: Icons.bookmark,
@@ -123,7 +123,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: AppSizes.s24),
 
                 // Preferences Section
-                _buildSectionHeader('Preferences'),
+                _buildSectionHeader('Preferences', isDark: isDark),
                 _buildSettingsTile(
                   context,
                   icon: Icons.text_fields,
@@ -166,13 +166,18 @@ class SettingsScreen extends ConsumerWidget {
                       value: ref.watch(isDarkModeProvider),
                       onChanged: (_) =>
                           ref.read(themeModeProvider.notifier).toggle(),
+                      activeThumbColor: AppColors.white,
+                      activeTrackColor: AppColors.primary,
+                      inactiveThumbColor: AppColors.primary,
+                      inactiveTrackColor:
+                          AppColors.primary.withValues(alpha: 0.3),
                     ),
                   ),
                 ),
                 const SizedBox(height: AppSizes.s24),
 
                 // About Section
-                _buildSectionHeader('About'),
+                _buildSectionHeader('About', isDark: isDark),
                 _buildSettingsTile(
                   context,
                   icon: Icons.info,
@@ -202,7 +207,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {required bool isDark}) {
     return Padding(
       padding: const EdgeInsets.only(
         left: AppSizes.s8,
@@ -211,7 +216,7 @@ class SettingsScreen extends ConsumerWidget {
       child: Text(
         title,
         style: AppTextStyles.headingSmall.copyWith(
-          color: AppColors.textSecondary,
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
         ),
       ),
     );
