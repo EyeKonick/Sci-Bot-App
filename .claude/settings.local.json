@@ -19,7 +19,10 @@
       "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_avatar.dart\":*)",
       "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/name_input_field.dart\":*)",
       "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_picture_selector.dart\":*)",
-      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_setup_page.dart\":*)"
+      "Bash(\"d:/Program Projects/Flutter/SciBot/sci_bot/lib/features/profile/presentation/widgets/profile_setup_page.dart\":*)",
+      "Bash(grep -l \"Fa-SCI-nate\\\\|Goal-SCI-tting\\\\|Inve-SCI-tigation\\\\|Pre-SCI-ntation\\\\|SCI-pplumentary\\\\|Self-A-SCI-ssment\\\\|scibot-icon\\\\|modules-icons\" \"d:\\\\Program Projects\\\\Flutter\\\\SciBot\\\\sci_bot\"/*.md)",
+      "Bash(ls \"d:\\\\Program Projects\\\\Flutter\\\\SciBot\\\\sci_bot\\\\assets\\\\icons\"\" 2>/dev/null && echo \"---\" && ls \"d:Program ProjectsFlutterSciBotsci_botassetsiconsmodules-icons\"\")",
+      "Bash(xargs grep -l \"Good Morning\\\\|Good Afternoon\\\\|Good Evening\")"
     ]
   }
 }

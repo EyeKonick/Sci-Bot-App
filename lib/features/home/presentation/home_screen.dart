@@ -589,26 +589,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'Exit App',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: AppColors.error,
-              ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.s4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                      ),
+                    ),
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text('Exit App', style: AppTextStyles.buttonLabel)),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.s12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? AppColors.darkPrimary : AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                      ),
+                    ),
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text('Stay', style: AppTextStyles.buttonLabel)),
+                  ),
+                ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isDark ? AppColors.darkPrimary : AppColors.primary,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-            ),
-            child: Text('Stay', style: AppTextStyles.buttonLabel),
           ),
         ],
       ),

@@ -56,21 +56,21 @@ enum ModuleType {
     }
   }
 
-  /// Get the module icon asset path (header variant with "- Copy" suffix)
+  /// Get the module icon asset path
   String get iconAsset {
     switch (this) {
       case ModuleType.pre_scintation:
-        return 'assets/icons/Pre-SCI-ntation - Copy.png';
+        return 'assets/icons/modules-icons/PreSCIntation-icon.png';
       case ModuleType.fa_scinate:
-        return 'assets/icons/Fa-SCI-nate - Copy.png';
+        return 'assets/icons/modules-icons/faSCInate-icon.png';
       case ModuleType.inve_scitigation:
-        return 'assets/icons/Inve-SCI-tigation - Copy.png';
+        return 'assets/icons/modules-icons/InveSCItigation-icon.png';
       case ModuleType.goal_scitting:
-        return 'assets/icons/Goal-SCI-tting - Copy.png';
+        return 'assets/icons/modules-icons/GoalSCItting-Icon.png';
       case ModuleType.self_a_scissment:
-        return 'assets/icons/Self-A-SCI-ssment - Copy.png';
+        return 'assets/icons/modules-icons/SelfASCIssment-icon.png';
       case ModuleType.scipplementary:
-        return 'assets/icons/SCI-pplumentary - Copy.png';
+        return 'assets/icons/modules-icons/SCIpplumentary-icon.png';
     }
   }
 

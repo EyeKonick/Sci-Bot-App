@@ -705,17 +705,17 @@ class _LessonCard extends StatelessWidget {
     String getModuleAssetPath() {
       switch (moduleType) {
         case ModuleType.pre_scintation:
-          return 'assets/icons/modules-icons/Pre-SCI-ntation.png';
+          return 'assets/icons/modules-icons/PreSCIntation-icon.png';
         case ModuleType.fa_scinate:
-          return 'assets/icons/modules-icons/Fa-SCI-nate.png';
+          return 'assets/icons/modules-icons/faSCInate-icon.png';
         case ModuleType.inve_scitigation:
-          return 'assets/icons/modules-icons/Inve-SCI-tigation.png';
+          return 'assets/icons/modules-icons/InveSCItigation-icon.png';
         case ModuleType.goal_scitting:
-          return 'assets/icons/modules-icons/Goal-SCI-tting.png';
+          return 'assets/icons/modules-icons/GoalSCItting-Icon.png';
         case ModuleType.self_a_scissment:
-          return 'assets/icons/modules-icons/Self-A-SCI-ssment.png';
+          return 'assets/icons/modules-icons/SelfASCIssment-icon.png';
         case ModuleType.scipplementary:
-          return 'assets/icons/modules-icons/SCI-pplumentary.png';
+          return 'assets/icons/modules-icons/SCIpplumentary-icon.png';
       }
     }
 
@@ -738,20 +738,20 @@ class _LessonCard extends StatelessWidget {
               width: 2,
             ),
           ),
-          padding: const EdgeInsets.all(4),
-          child: Image.asset(
-            assetPath,
-            width: 20,
-            height: 20,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              // Fallback to icon if image fails to load
-              return Icon(
-                Icons.circle,
-                size: 16,
-                color: moduleColor,
-              );
-            },
+          child: ClipOval(
+            child: Image.asset(
+              assetPath,
+              width: 32,
+              height: 32,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  Icons.circle,
+                  size: 16,
+                  color: moduleColor,
+                );
+              },
+            ),
           ),
         ),
         

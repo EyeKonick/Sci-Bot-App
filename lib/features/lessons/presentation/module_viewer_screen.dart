@@ -639,25 +639,40 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              'End Lesson',
-              style: AppTextStyles.buttonLabel.copyWith(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-              ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.s4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                      ),
+                    ),
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text('End Lesson', style: AppTextStyles.buttonLabel)),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.s12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: character.themeColor,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size(0, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                      ),
+                    ),
+                    child: FittedBox(fit: BoxFit.scaleDown, child: Text('Keep Learning', style: AppTextStyles.buttonLabel)),
+                  ),
+                ),
+              ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: character.themeColor,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-            ),
-            child: Text('Keep Learning', style: AppTextStyles.buttonLabel),
           ),
         ],
       ),
