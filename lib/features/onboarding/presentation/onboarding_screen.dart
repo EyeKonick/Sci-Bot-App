@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -97,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     if (!profileState.isValid) {
-      _showError(profileState.validationMessage);
+      profileState.showErrors();
       return;
     }
 
@@ -220,7 +220,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             child: page.isCustomIcon == true
                 ? Image.asset(
-                    'assets/icons/scibot-icon.png',
+                    'assets/icons/scibot-icon.webp',
                     width: 100,
                     height: 100,
                     fit: BoxFit.contain,

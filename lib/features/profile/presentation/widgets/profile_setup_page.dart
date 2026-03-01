@@ -25,6 +25,19 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
   bool _isNameValid = false;
   String? _selectedGender;
 
+  // Inline field error messages
+  String? _fullNameError;
+  String? _gradeSectionError;
+  String? _schoolError;
+  String? _genderError;
+
+  // Keys for auto-scrolling to first error
+  final GlobalKey _nameFieldKey = GlobalKey();
+  final GlobalKey _fullNameKey = GlobalKey();
+  final GlobalKey _gradeSectionKey = GlobalKey();
+  final GlobalKey _schoolKey = GlobalKey();
+  final GlobalKey _genderKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +102,49 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
   /// Get selected image file
   File? get selectedImage => _selectedImage;
+
+  /// Shows inline errors on all failing fields and scrolls to the first one.
+  /// Called by parent when user presses "Get Started" and form is invalid.
+  void showErrors() {
+    setState(() {
+      _fullNameError = _fullNameController.text.trim().isEmpty
+          ? 'Please enter your complete name.'
+          : null;
+      _gradeSectionError = _gradeSectionController.text.trim().isEmpty
+          ? 'Please enter your grade and section.'
+          : null;
+      _schoolError = _schoolController.text.trim().isEmpty
+          ? 'Please enter your school name.'
+          : null;
+      _genderError = _selectedGender == null
+          ? 'Please select your gender.'
+          : null;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalKey? firstErrorKey;
+      if (!_isNameValid || _nameController.text.trim().isEmpty) {
+        firstErrorKey = _nameFieldKey;
+      } else if (_fullNameController.text.trim().isEmpty) {
+        firstErrorKey = _fullNameKey;
+      } else if (_gradeSectionController.text.trim().isEmpty) {
+        firstErrorKey = _gradeSectionKey;
+      } else if (_schoolController.text.trim().isEmpty) {
+        firstErrorKey = _schoolKey;
+      } else if (_selectedGender == null) {
+        firstErrorKey = _genderKey;
+      }
+
+      if (firstErrorKey?.currentContext != null) {
+        Scrollable.ensureVisible(
+          firstErrorKey!.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+      }
+    });
+  }
 
   /// Builds a field label with a red required asterisk.
   Widget _requiredLabel(String text, bool isDark) {
@@ -159,6 +215,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
           // Display name (required)
           Column(
+            key: _nameFieldKey,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _requiredLabel('What should we call you?', isDark),
@@ -177,6 +234,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
           // Complete Name (required)
           Column(
+            key: _fullNameKey,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _requiredLabel('Complete Name', isDark),
@@ -194,6 +252,10 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   counterText: '',
+                  errorText: (_fullNameError != null && _fullNameController.text.trim().isEmpty)
+                      ? _fullNameError
+                      : null,
+                  errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                 ),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
@@ -205,6 +267,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
           // Grade and Section (required)
           Column(
+            key: _gradeSectionKey,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _requiredLabel('Grade and Section', isDark),
@@ -222,6 +285,10 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   counterText: '',
+                  errorText: (_gradeSectionError != null && _gradeSectionController.text.trim().isEmpty)
+                      ? _gradeSectionError
+                      : null,
+                  errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                 ),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
@@ -233,6 +300,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
           // School (required)
           Column(
+            key: _schoolKey,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _requiredLabel('School', isDark),
@@ -250,6 +318,10 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   counterText: '',
+                  errorText: (_schoolError != null && _schoolController.text.trim().isEmpty)
+                      ? _schoolError
+                      : null,
+                  errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                 ),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
@@ -261,6 +333,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
 
           // Gender (required)
           Column(
+            key: _genderKey,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _requiredLabel('Gender', isDark),
@@ -270,6 +343,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
                 children: ['Male', 'Female', 'Prefer not to say'].map((option) {
                   final selected = _selectedGender == option;
                   return ChoiceChip(
+                    showCheckmark: false,
                     label: Text(
                       option,
                       style: AppTextStyles.bodySmall.copyWith(
@@ -290,11 +364,20 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
                     onSelected: (_) {
                       setState(() {
                         _selectedGender = selected ? null : option;
+                        _genderError = null;
                       });
                     },
                   );
                 }).toList(),
               ),
+              if (_genderError != null && _selectedGender == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    _genderError!,
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: AppSizes.s16),

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/models.dart';
@@ -1200,7 +1200,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/1.png', // Roxas City aerial view
+        imageAssetPath: 'assets/images/topic_1/lesson_1/1.webp', // Roxas City aerial view
       ),
 
      ScriptStep(
@@ -1209,7 +1209,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/2.png', // Fishing boat
+        imageAssetPath: 'assets/images/topic_1/lesson_1/2.webp', // Fishing boat
       ),
 
      ScriptStep(
@@ -1243,7 +1243,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/3.png', // Biking scene
+        imageAssetPath: 'assets/images/topic_1/lesson_1/3.webp', // Biking scene
       ),
 
       ScriptStep(
@@ -1309,7 +1309,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false, // Auto-continue to conclusion
-        imageAssetPath: 'assets/images/topic_1/lesson_1/4.png', // Delivery truck
+        imageAssetPath: 'assets/images/topic_1/lesson_1/4.webp', // Delivery truck
       ),
 
       ScriptStep(
@@ -1492,7 +1492,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/5.png', 
+        imageAssetPath: 'assets/images/topic_1/lesson_1/5.webp', 
       ),
 
       ScriptStep(
@@ -1585,7 +1585,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/6.png', // Open circulatory animals
+        imageAssetPath: 'assets/images/topic_1/lesson_1/6.webp', // Open circulatory animals
       ),
 
      ScriptStep(
@@ -1594,7 +1594,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/7.png', // Closed circulatory animals
+        imageAssetPath: 'assets/images/topic_1/lesson_1/7.webp', // Closed circulatory animals
       ),
 
      ScriptStep(
@@ -1606,7 +1606,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/8.png', // Heart anatomy diagram
+        imageAssetPath: 'assets/images/topic_1/lesson_1/8.webp', // Heart anatomy diagram
       ),
 
      ScriptStep(
@@ -1632,7 +1632,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/9.png', // Barangay roads aerial
+        imageAssetPath: 'assets/images/topic_1/lesson_1/9.webp', // Barangay roads aerial
       ),
 
      ScriptStep(
@@ -1642,7 +1642,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/10.png', // Blood vessels diagram
+        imageAssetPath: 'assets/images/topic_1/lesson_1/10.webp', // Blood vessels diagram
       ),
 
       ScriptStep(
@@ -1663,7 +1663,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_1/11.png', // Blood components diagram
+        imageAssetPath: 'assets/images/topic_1/lesson_1/11.webp', // Blood components diagram
       ),
 
        ScriptStep(
@@ -1951,7 +1951,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow, // Welcoming excitement
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/1.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_2/1.webp',
       ),
 
        ScriptStep(
@@ -1962,7 +1962,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow, // Welcoming excitement
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/2.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_2/2.webp',
       ),
 
      ScriptStep(
@@ -1972,7 +1972,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.normal,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/3.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_2/3.webp',
       ),
 
      ScriptStep(
@@ -1999,7 +1999,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow, // Reflection - let student imagine
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/4.png', 
+        imageAssetPath: 'assets/images/topic_1/lesson_2/4.webp', 
       ),
 
        ScriptStep(
@@ -2195,7 +2195,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/5.png', 
+        imageAssetPath: 'assets/images/topic_1/lesson_2/5.webp', 
       ),
 
        ScriptStep(
@@ -2278,7 +2278,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/6.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_2/6.webp',
       ),
 
       
@@ -2313,7 +2313,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/7.png',      
+        imageAssetPath: 'assets/images/topic_1/lesson_2/7.webp',      
         ),
 
         ScriptStep(
@@ -2349,7 +2349,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/8.png',      
+        imageAssetPath: 'assets/images/topic_1/lesson_2/8.webp',      
       ),
 
      ScriptStep(
@@ -2565,7 +2565,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_2/9.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_2/9.webp',
       ),
 
      ScriptStep(
@@ -2649,7 +2649,7 @@ RESPONSE RULES:
         channel: MessageChannel.narration,
         pacingHint: PacingHint.slow, // Welcoming excitement
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_3/1.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_3/1.webp',
       ),
 
        ScriptStep(
@@ -2695,7 +2695,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow, 
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_3/2.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_3/2.webp',
       ),
 
      ScriptStep(
@@ -2866,7 +2866,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_3/3.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_3/3.webp',
       ),
 
      ScriptStep(
@@ -2975,7 +2975,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_3/4.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_3/4.webp',
       ),
 
      ScriptStep(
@@ -3029,7 +3029,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_1/lesson_3/5.png',
+        imageAssetPath: 'assets/images/topic_1/lesson_3/5.webp',
       ),
 
      ScriptStep(
@@ -3332,7 +3332,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/1.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/1.webp',
       ),
       ScriptStep(
         botMessages: [
@@ -3340,7 +3340,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/2.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/2.webp',
       ),
 
        ScriptStep(
@@ -3364,7 +3364,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/3.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/3.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3596,7 +3596,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/4.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/4.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3621,7 +3621,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/5.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/5.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3654,7 +3654,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/6.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/6.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3680,7 +3680,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/7.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/7.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3707,7 +3707,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_1/8.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_1/8.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -3951,7 +3951,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_2/1.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_2/1.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4193,7 +4193,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_2/2.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_2/2.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4219,7 +4219,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath:  'assets/images/topic_2/lesson_2/3.png',
+        imageAssetPath:  'assets/images/topic_2/lesson_2/3.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4252,7 +4252,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_2/4.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_2/4.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4279,7 +4279,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_2/5.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_2/5.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4306,7 +4306,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_2/lesson_2/6.png',
+        imageAssetPath: 'assets/images/topic_2/lesson_2/6.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4553,7 +4553,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/1.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/1.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -4589,7 +4589,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/2.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/2.webp',
       ),
 
      ScriptStep(
@@ -4795,7 +4795,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/3.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/3.webp',
       ),
 
      ScriptStep(
@@ -4880,7 +4880,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/4.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/4.webp',
       ),
 
      ScriptStep(
@@ -4910,7 +4910,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/5.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/5.webp',
       ),
 
      ScriptStep(
@@ -4937,7 +4937,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/6.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/6.webp',
       ),
 
      ScriptStep(
@@ -4963,7 +4963,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/7.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/7.webp',
       ),
 
      ScriptStep(
@@ -4999,7 +4999,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/8.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/8.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -5007,7 +5007,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/9.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/9.webp',
       ),
 
      ScriptStep(
@@ -5208,7 +5208,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_1/10.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_1/10.webp',
       ),
 
      ScriptStep(
@@ -5275,7 +5275,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_2/1.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_2/1.webp',
       ),
      ScriptStep(
         botMessages: [
@@ -5311,7 +5311,7 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         pacingHint: PacingHint.slow,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_2/2.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_2/2.webp',
       ),
 
      ScriptStep(
@@ -5503,7 +5503,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_2/3.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_2/3.webp',
       ),
 
      ScriptStep(
@@ -5626,7 +5626,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_2/4.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_2/4.webp',
       ),
 
      ScriptStep(
@@ -5680,7 +5680,7 @@ RESPONSE RULES:
         ],
         channel: MessageChannel.interaction,
         waitForUser: false,
-        imageAssetPath: 'assets/images/topic_3/lesson_2/5.png',
+        imageAssetPath: 'assets/images/topic_3/lesson_2/5.webp',
       ),
 
      ScriptStep(

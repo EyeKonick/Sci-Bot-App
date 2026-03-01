@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -26,7 +27,7 @@ class OpenAIService {
   Future<void> initialize() async {
     // Skip if already initialized
     if (_isInitialized) {
-      print('OpenAI service already initialized');
+      if (kDebugMode) debugPrint('OpenAI service already initialized');
       return;
     }
 
@@ -42,7 +43,7 @@ class OpenAIService {
     }
 
     _isInitialized = true;
-    print('✅ OpenAI service initialized successfully');
+    if (kDebugMode) debugPrint('✅ OpenAI service initialized successfully');
   }
 
   /// Send chat completion request with streaming

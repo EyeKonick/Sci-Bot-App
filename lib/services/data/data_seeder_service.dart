@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../shared/models/models.dart';
 import '../../features/topics/data/repositories/topic_repository.dart';
@@ -35,7 +36,7 @@ class DataSeederService {
   /// Load and seed all lesson data
   Future<void> seedAllData() async {
     try {
-      print('🌱 Starting data seeding...');
+      if (kDebugMode) debugPrint('🌱 Starting data seeding...');
 
       // STEP 1: Load all topics from topics.json
       await _loadAllTopics();
@@ -46,9 +47,9 @@ class DataSeederService {
       // Mark as seeded
       await markDataSeeded();
 
-      print('✅ Data seeding complete!');
+      if (kDebugMode) debugPrint('✅ Data seeding complete!');
     } catch (e) {
-      print('❌ Error seeding data: $e');
+      if (kDebugMode) debugPrint('❌ Error seeding data: $e');
       rethrow;
     }
   }
@@ -56,7 +57,7 @@ class DataSeederService {
   /// Load all topics from topics.json
   Future<void> _loadAllTopics() async {
     try {
-      print('📚 Loading topics from topics.json...');
+      if (kDebugMode) debugPrint('📚 Loading topics from topics.json...');
 
       // Load topics.json
       final String jsonString = await rootBundle.loadString(
@@ -70,12 +71,12 @@ class DataSeederService {
       for (var topicData in topicsData) {
         final topic = TopicModel.fromJson(topicData as Map<String, dynamic>);
         await _topicRepo.saveTopic(topic);
-        print('  ✓ Loaded topic: ${topic.name} (${topic.lessonIds.length} lessons)');
+        if (kDebugMode) debugPrint('  ✓ Loaded topic: ${topic.name} (${topic.lessonIds.length} lessons)');
       }
 
-      print('  ✓ Total topics loaded: ${topicsData.length}');
+      if (kDebugMode) debugPrint('  ✓ Total topics loaded: ${topicsData.length}');
     } catch (e) {
-      print('  ❌ Error loading topics: $e');
+      if (kDebugMode) debugPrint('  ❌ Error loading topics: $e');
       rethrow;
     }
   }
@@ -83,7 +84,7 @@ class DataSeederService {
   /// Load all lessons for all topics
   Future<void> _loadAllLessons() async {
     try {
-      print('📖 Loading lessons...');
+      if (kDebugMode) debugPrint('📖 Loading lessons...');
 
       // Get all topics
       final topics = _topicRepo.getAllTopics();
@@ -97,9 +98,9 @@ class DataSeederService {
         }
       }
 
-      print('  ✓ Total lessons loaded: $totalLessonsLoaded');
+      if (kDebugMode) debugPrint('  ✓ Total lessons loaded: $totalLessonsLoaded');
     } catch (e) {
-      print('  ❌ Error loading lessons: $e');
+      if (kDebugMode) debugPrint('  ❌ Error loading lessons: $e');
       rethrow;
     }
   }
@@ -120,9 +121,9 @@ class DataSeederService {
       // Save to Hive
       await _lessonRepo.saveLesson(lesson);
 
-      print('    ✓ Loaded: ${lesson.title} (${lesson.modules.length} modules)');
+      if (kDebugMode) debugPrint('    ✓ Loaded: ${lesson.title} (${lesson.modules.length} modules)');
     } catch (e) {
-      print('    ❌ Error loading lesson $lessonId: $e');
+      if (kDebugMode) debugPrint('    ❌ Error loading lesson $lessonId: $e');
       // Continue with other lessons even if one fails
     }
   }
@@ -140,17 +141,17 @@ class DataSeederService {
     try {
       final topic = _topicRepo.getTopicById(topicId);
       if (topic == null) {
-        print('Topic $topicId not found');
+        if (kDebugMode) debugPrint('Topic $topicId not found');
         return;
       }
 
-      print('Loading lessons for: ${topic.name}');
+      if (kDebugMode) debugPrint('Loading lessons for: ${topic.name}');
 
       for (var lessonId in topic.lessonIds) {
         await _loadLesson(topicId, lessonId);
       }
     } catch (e) {
-      print('Error loading lessons for topic $topicId: $e');
+      if (kDebugMode) debugPrint('Error loading lessons for topic $topicId: $e');
       rethrow;
     }
   }

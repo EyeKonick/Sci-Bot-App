@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/constants/app_sizes.dart';
 
 /// Fullscreen modal overlay for viewing images in enlarged mode.
@@ -8,7 +8,7 @@ import '../../core/constants/app_sizes.dart';
 ///
 /// Usage:
 /// ```dart
-/// ImageModal.show(context, 'assets/images/topic_1/lesson_1/1.png');
+/// ImageModal.show(context, 'assets/images/topic_1/lesson_1/1.webp');
 /// ```
 class ImageModal extends StatelessWidget {
   final String imageAssetPath;

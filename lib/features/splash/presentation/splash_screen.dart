@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -111,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 300,
                         height: 300,
                         child: Image.asset(
-                          'assets/icons/scibot-icon.png',
+                          'assets/icons/scibot-icon.webp',
                           width: 150,
                           height: 150,
                           fit: BoxFit.contain,

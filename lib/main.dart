@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,6 @@ import 'core/routes/app_router.dart';
 import 'services/preferences/shared_prefs_service.dart';
 import 'services/storage/hive_service.dart';
 import 'services/data/data_seeder_service.dart';
-import 'services/data/test_data_seeding.dart';
 import 'services/ai/openai_service.dart';
 import 'features/settings/providers/theme_provider.dart';
 
@@ -22,30 +22,29 @@ void main() async {
   // Initialize OpenAI Service
   try {
     await OpenAIService().initialize();
-    print('✅ OpenAI service initialized');
+    if (kDebugMode) debugPrint('✅ OpenAI service initialized');
   } catch (e) {
-    print('⚠️ OpenAI initialization failed: $e');
-    print('💡 Make sure to add your API key to .env file');
+    if (kDebugMode) {
+      debugPrint('⚠️ OpenAI initialization failed: $e');
+      debugPrint('💡 Make sure to add your API key to .env file');
+    }
   }
-  
+
   // Seed data on first launch or re-seed on version change
   final isDataSeeded = DataSeederService.isDataSeeded;
   final needsReseed = SharedPrefsService.needsReseed;
   if (!isDataSeeded || needsReseed) {
-    print(needsReseed ? '🔄 Seed version changed - re-seeding data...' : '📦 First launch detected - seeding data...');
+    if (kDebugMode) debugPrint(needsReseed ? '🔄 Seed version changed - re-seeding data...' : '📦 First launch detected - seeding data...');
     final seeder = DataSeederService();
     await seeder.seedAllData();
     await SharedPrefsService.setSeedVersion();
 
-    testDataSeeding();
-
-    // Print stats
-    final stats = await seeder.getSeedingStats();
-    print('📊 Seeding complete:');
-    print('   Topics: ${stats['topics']}');
-    print('   Lessons: ${stats['lessons']}');
+    if (kDebugMode) {
+      final stats = await seeder.getSeedingStats();
+      debugPrint('📊 Seeding complete: Topics: ${stats['topics']}, Lessons: ${stats['lessons']}');
+    }
   } else {
-    print('✅ Data already seeded, skipping...');
+    if (kDebugMode) debugPrint('✅ Data already seeded, skipping...');
   }
   
   SystemChrome.setSystemUIOverlayStyle(

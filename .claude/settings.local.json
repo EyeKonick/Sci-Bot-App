@@ -24,7 +24,8 @@
       "Bash(ls \"d:\\\\Program Projects\\\\Flutter\\\\SciBot\\\\sci_bot\\\\assets\\\\icons\"\" 2>/dev/null && echo \"---\" && ls \"d:Program ProjectsFlutterSciBotsci_botassetsiconsmodules-icons\"\")",
       "Bash(xargs grep -l \"Good Morning\\\\|Good Afternoon\\\\|Good Evening\")",
       "WebFetch(domain:www.emailjs.com)",
-      "WebFetch(domain:pub.dev)"
+      "WebFetch(domain:pub.dev)",
+      "Bash(xargs ls -lh)"
     ]
   }
 }

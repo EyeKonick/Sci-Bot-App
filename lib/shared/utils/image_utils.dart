@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,7 +25,7 @@ class ImageUtils {
       if (pickedFile == null) return null;
       return File(pickedFile.path);
     } catch (e) {
-      print('Error picking image from camera: $e');
+      if (kDebugMode) debugPrint('Error picking image from camera: $e');
       return null;
     }
   }
@@ -43,7 +44,7 @@ class ImageUtils {
       if (pickedFile == null) return null;
       return File(pickedFile.path);
     } catch (e) {
-      print('Error picking image from gallery: $e');
+      if (kDebugMode) debugPrint('Error picking image from gallery: $e');
       return null;
     }
   }
@@ -58,7 +59,7 @@ class ImageUtils {
       img.Image? image = img.decodeImage(bytes);
 
       if (image == null) {
-        print('Could not decode image');
+        if (kDebugMode) debugPrint('Could not decode image');
         return null;
       }
 
@@ -93,7 +94,7 @@ class ImageUtils {
 
       return tempFile;
     } catch (e) {
-      print('Error resizing and cropping image: $e');
+      if (kDebugMode) debugPrint('Error resizing and cropping image: $e');
       return null;
     }
   }
@@ -124,7 +125,7 @@ class ImageUtils {
 
       return savedFile.path;
     } catch (e) {
-      print('Error saving profile image: $e');
+      if (kDebugMode) debugPrint('Error saving profile image: $e');
       return null;
     }
   }
@@ -137,7 +138,7 @@ class ImageUtils {
         await file.delete();
       }
     } catch (e) {
-      print('Error deleting profile image: $e');
+      if (kDebugMode) debugPrint('Error deleting profile image: $e');
     }
   }
 
@@ -160,7 +161,7 @@ class ImageUtils {
 
       return savedPath;
     } catch (e) {
-      print('Error processing and saving profile image: $e');
+      if (kDebugMode) debugPrint('Error processing and saving profile image: $e');
       return null;
     }
   }

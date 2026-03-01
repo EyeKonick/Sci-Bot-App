@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -46,7 +46,7 @@ class GreetingHeader extends ConsumerWidget {
               height: 52,
               child: ClipOval(
                 child: Image.asset(
-                  'assets/icons/scibot-icon.png',
+                  'assets/icons/scibot-icon.webp',
                   width: 52,
                   height: 52,
                   fit: BoxFit.cover,

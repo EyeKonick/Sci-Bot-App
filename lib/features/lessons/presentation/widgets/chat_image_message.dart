@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 
@@ -10,7 +10,7 @@ import '../../../../core/constants/app_sizes.dart';
 /// Usage:
 /// ```dart
 /// ChatImageMessage(
-///   imageAssetPath: 'assets/images/topic_1/lesson_1/1.png',
+///   imageAssetPath: 'assets/images/topic_1/lesson_1/1.webp',
 ///   onTap: () => ImageModal.show(context, imagePath),
 /// )
 /// ```

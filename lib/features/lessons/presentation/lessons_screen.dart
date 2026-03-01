@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
@@ -410,7 +410,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
       _ => null,
     };
     if (topicNumber == null) return null;
-    return 'assets/icons/lessons-icons/topic$topicNumber-lesson$lessonNumber-icon.png';
+    return 'assets/icons/lessons-icons/topic$topicNumber-lesson$lessonNumber-icon.webp';
   }
 
   /// Parse hex color
@@ -705,17 +705,17 @@ class _LessonCard extends StatelessWidget {
     String getModuleAssetPath() {
       switch (moduleType) {
         case ModuleType.pre_scintation:
-          return 'assets/icons/modules-icons/PreSCIntation-icon.png';
+          return 'assets/icons/modules-icons/PreSCIntation-icon.webp';
         case ModuleType.fa_scinate:
-          return 'assets/icons/modules-icons/faSCInate-icon.png';
+          return 'assets/icons/modules-icons/faSCInate-icon.webp';
         case ModuleType.inve_scitigation:
-          return 'assets/icons/modules-icons/InveSCItigation-icon.png';
+          return 'assets/icons/modules-icons/InveSCItigation-icon.webp';
         case ModuleType.goal_scitting:
-          return 'assets/icons/modules-icons/GoalSCItting-Icon.png';
+          return 'assets/icons/modules-icons/GoalSCItting-Icon.webp';
         case ModuleType.self_a_scissment:
-          return 'assets/icons/modules-icons/SelfASCIssment-icon.png';
+          return 'assets/icons/modules-icons/SelfASCIssment-icon.webp';
         case ModuleType.scipplementary:
-          return 'assets/icons/modules-icons/SCIpplumentary-icon.png';
+          return 'assets/icons/modules-icons/SCIpplumentary-icon.webp';
       }
     }
 

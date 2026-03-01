@@ -15,6 +15,7 @@ import '../../../features/profile/data/models/user_profile_model.dart';
 ///   7: fullName (String? - complete name of learner)
 ///   8: gradeSection (String? - e.g., "Grade 9 - Mendel")
 ///   9: school (String? - school name)
+///  10: gender (String? - e.g., "Male", "Female", "Prefer not to say")
 class UserProfileAdapter extends TypeAdapter<UserProfileModel> {
   @override
   final int typeId = 6;
@@ -51,13 +52,14 @@ class UserProfileAdapter extends TypeAdapter<UserProfileModel> {
       fullName: fields.containsKey(7) ? fields[7] as String? : null,
       gradeSection: fields.containsKey(8) ? fields[8] as String? : null,
       school: fields.containsKey(9) ? fields[9] as String? : null,
+      gender: fields.containsKey(10) ? fields[10] as String? : null,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfileModel obj) {
     writer
-      ..writeByte(10) // number of fields
+      ..writeByte(11) // number of fields
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -77,6 +79,8 @@ class UserProfileAdapter extends TypeAdapter<UserProfileModel> {
       ..writeByte(8)
       ..write(obj.gradeSection)
       ..writeByte(9)
-      ..write(obj.school);
+      ..write(obj.school)
+      ..writeByte(10)
+      ..write(obj.gender);
   }
 }

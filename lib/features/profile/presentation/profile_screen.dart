@@ -10,6 +10,7 @@ import '../../lessons/data/repositories/lesson_repository.dart';
 import '../../lessons/data/repositories/progress_repository.dart';
 import '../../settings/presentation/progress_stats_screen.dart';
 import '../../topics/data/repositories/topic_repository.dart';
+import '../data/models/user_profile_model.dart';
 import '../data/providers/user_profile_provider.dart';
 import 'widgets/profile_avatar.dart';
 import 'widgets/name_input_field.dart';
@@ -168,40 +169,80 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow(
+  Widget _buildInfoCell(
     IconData icon,
     String text,
     bool isDark, {
     bool isName = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.s8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: AppSizes.iconXS,
-            color: isDark ? AppColors.darkPrimary : AppColors.primary,
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: AppSizes.iconXS,
+          color: isDark ? AppColors.darkPrimary : AppColors.primary,
+        ),
+        const SizedBox(width: AppSizes.s8),
+        Flexible(
+          child: Text(
+            text,
+            style: isName
+                ? AppTextStyles.bodyMedium.copyWith(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  )
+                : AppTextStyles.bodySmall.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                  ),
           ),
-          const SizedBox(width: AppSizes.s8),
-          Flexible(
-            child: Text(
-              text,
-              style: isName
-                  ? AppTextStyles.bodyMedium.copyWith(
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    )
-                  : AppTextStyles.bodySmall.copyWith(
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                    ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildInfoGrid(UserProfileModel profile, bool isDark) {
+    final items = <(IconData, String, bool)>[];
+    if (profile.fullName?.isNotEmpty == true)
+      items.add((Icons.person_outline_rounded, profile.fullName!, true));
+    if (profile.gradeSection?.isNotEmpty == true)
+      items.add((Icons.school_outlined, profile.gradeSection!, false));
+    if (profile.school?.isNotEmpty == true)
+      items.add((Icons.location_on_outlined, profile.school!, false));
+    if (profile.gender?.isNotEmpty == true)
+      items.add((Icons.wc_outlined, profile.gender!, false));
+
+    final rows = <Widget>[];
+    for (int i = 0; i < items.length; i += 2) {
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildInfoCell(
+                items[i].$1,
+                items[i].$2,
+                isDark,
+                isName: items[i].$3,
+              ),
+            ),
+            const SizedBox(width: AppSizes.s16),
+            if (i + 1 < items.length)
+              Expanded(
+                child: _buildInfoCell(
+                  items[i + 1].$1,
+                  items[i + 1].$2,
+                  isDark,
+                  isName: items[i + 1].$3,
+                ),
+              )
+            else
+              const Expanded(child: SizedBox()),
+          ],
+        ),
+      );
+      if (i + 2 < items.length) rows.add(const SizedBox(height: AppSizes.s8));
+    }
+    return Column(children: rows);
   }
 
   @override
@@ -399,9 +440,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: AppSizes.s8),
                       Wrap(
                         spacing: AppSizes.s8,
+                        runSpacing: AppSizes.s8,
                         children: ['Male', 'Female', 'Prefer not to say'].map((option) {
                           final selected = _selectedGender == option;
                           return ChoiceChip(
+                            showCheckmark: false,
                             label: Text(
                               option,
                               style: AppTextStyles.bodySmall.copyWith(
@@ -491,25 +534,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           width: 1.5,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            profile.name,
-                            style: AppTextStyles.headingMedium.copyWith(
-                              color: isDark ? AppColors.darkPrimary : AppColors.primary,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.s8),
-                          Icon(
-                            Icons.edit_rounded,
-                            color: isDark
-                                ? AppColors.darkPrimary.withValues(alpha: 0.7)
-                                : AppColors.primary.withValues(alpha: 0.7),
-                            size: 15,
-                          ),
-                        ],
+                      child: Text(
+                        profile.name,
+                        style: AppTextStyles.headingMedium.copyWith(
+                          color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ),
                   ),
@@ -527,31 +557,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       height: 1,
                     ),
                     const SizedBox(height: AppSizes.s12),
-                    if (profile.fullName != null && profile.fullName!.isNotEmpty)
-                      _buildInfoRow(
-                        Icons.person_outline_rounded,
-                        profile.fullName!,
-                        isDark,
-                        isName: true,
-                      ),
-                    if (profile.gradeSection != null && profile.gradeSection!.isNotEmpty)
-                      _buildInfoRow(
-                        Icons.school_outlined,
-                        profile.gradeSection!,
-                        isDark,
-                      ),
-                    if (profile.school != null && profile.school!.isNotEmpty)
-                      _buildInfoRow(
-                        Icons.location_on_outlined,
-                        profile.school!,
-                        isDark,
-                      ),
-                    if (profile.gender != null && profile.gender!.isNotEmpty)
-                      _buildInfoRow(
-                        Icons.wc_outlined,
-                        profile.gender!,
-                        isDark,
-                      ),
+                    _buildInfoGrid(profile, isDark),
                   ],
 
                   const SizedBox(height: AppSizes.s16),

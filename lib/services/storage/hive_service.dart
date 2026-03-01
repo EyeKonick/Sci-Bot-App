@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../shared/models/models.dart';
 import '../../features/profile/data/models/user_profile_model.dart';
 import 'adapters/module_adapter.dart';
@@ -81,8 +81,10 @@ class HiveService {
     try {
       return await Hive.openBox<T>(boxName);
     } catch (e) {
-      print('⚠️ Hive box "$boxName" corrupted: $e');
-      print('🔄 Recovering by deleting and re-creating box...');
+      if (kDebugMode) {
+        debugPrint('⚠️ Hive box "$boxName" corrupted: $e');
+        debugPrint('🔄 Recovering by deleting and re-creating box...');
+      }
       try {
         await Hive.deleteBoxFromDisk(boxName);
       } catch (_) {

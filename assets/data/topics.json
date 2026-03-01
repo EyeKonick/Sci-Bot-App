@@ -1,11 +1,11 @@
-{
+﻿{
   "topics": [
     {
       "id": "topic_body_systems",
       "name": "Circulation and Gas Exchange",
       "description": "Understand how the circulatory and respiratory systems work together to transport oxygen, nutrients, and waste throughout the body while maintaining homeostasis.",
       "icon_name": "favorite",
-      "image_asset": "assets/icons/topic-icons/Circulation and Gas Exchange.png",
+      "image_asset": "assets/icons/topic-icons/Circulation and Gas Exchange.webp",
       "color_hex": "#D4907A",
       "lesson_ids": [
         "lesson_circulation_001",
@@ -19,7 +19,7 @@
       "name": "Heredity and Variation",
       "description": "Explore how traits are passed from parents to offspring through genes and chromosomes, and discover complex inheritance patterns that explain human diversity.",
       "icon_name": "biotech",
-      "image_asset": "assets/icons/topic-icons/Heredity and Variation.png",
+      "image_asset": "assets/icons/topic-icons/Heredity and Variation.webp",
       "color_hex": "#6B8FA0",
       "lesson_ids": [
         "lesson_genetics_001",
@@ -32,7 +32,7 @@
       "name": "Energy in the Ecosystem",
       "description": "Discover how energy flows through ecosystems—from sunlight captured by plants through photosynthesis to cellular respiration that powers all living things.",
       "icon_name": "wb_sunny",
-      "image_asset": "assets/icons/topic-icons/Energy in the Ecosystem.png",
+      "image_asset": "assets/icons/topic-icons/Energy in the Ecosystem.webp",
       "color_hex": "#7BA08A",
       "lesson_ids": [
         "lesson_photosynthesis_001",

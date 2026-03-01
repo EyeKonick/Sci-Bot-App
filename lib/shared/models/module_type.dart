@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Module types for the 6-module lesson structure
 enum ModuleType {
@@ -60,17 +60,17 @@ enum ModuleType {
   String get iconAsset {
     switch (this) {
       case ModuleType.pre_scintation:
-        return 'assets/icons/modules-icons/PreSCIntation-icon.png';
+        return 'assets/icons/modules-icons/PreSCIntation-icon.webp';
       case ModuleType.fa_scinate:
-        return 'assets/icons/modules-icons/faSCInate-icon.png';
+        return 'assets/icons/modules-icons/faSCInate-icon.webp';
       case ModuleType.inve_scitigation:
-        return 'assets/icons/modules-icons/InveSCItigation-icon.png';
+        return 'assets/icons/modules-icons/InveSCItigation-icon.webp';
       case ModuleType.goal_scitting:
-        return 'assets/icons/modules-icons/GoalSCItting-Icon.png';
+        return 'assets/icons/modules-icons/GoalSCItting-Icon.webp';
       case ModuleType.self_a_scissment:
-        return 'assets/icons/modules-icons/SelfASCIssment-icon.png';
+        return 'assets/icons/modules-icons/SelfASCIssment-icon.webp';
       case ModuleType.scipplementary:
-        return 'assets/icons/modules-icons/SCIpplumentary-icon.png';
+        return 'assets/icons/modules-icons/SCIpplumentary-icon.webp';
     }
   }
 

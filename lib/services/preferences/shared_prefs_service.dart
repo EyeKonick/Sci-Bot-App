@@ -12,7 +12,7 @@ class SharedPrefsService {
   static const String _keyProfileCompleted = 'profile_completed';
   static const String _keyDataSeeded = 'data_seeded'; // NEW: for data seeding
   static const String _keySeedVersion = 'seed_version';
-  static const int _currentSeedVersion = 2; // Bump when seed data changes
+  static const int _currentSeedVersion = 3; // Bumped: PNG assets converted to WebP
 
   /// Initialize SharedPreferences
   static Future<void> init() async {

@@ -1,4 +1,4 @@
-/// AI Character Model
+﻿/// AI Character Model
 /// Represents the different AI tutors in SCI-Bot
 /// Week 3, Day 3 Implementation
 
@@ -79,7 +79,7 @@ class AiCharacter {
     id: 'aristotle',
     name: 'Aristotle',
     specialization: 'Father of Biology - AI Companion',
-    avatarAsset: 'assets/icons/chathead-icons/Aristotle_icon.png',
+    avatarAsset: 'assets/icons/chathead-icons/Aristotle_icon.webp',
     greeting: 'Hello! I\'m Aristotle, the Father of Biology and your AI companion here in SCI-Bot. How can I help you learn today?',
     themeColor: AppColors.characterTheme,
     themeLightColor: Color(0xFF9BBFA7),
@@ -143,7 +143,7 @@ Scope:
     id: 'herophilus',
     name: 'Herophilus',
     specialization: 'Circulation & Gas Exchange',
-    avatarAsset: 'assets/icons/chathead-icons/HEROPHILOS - FOR CIRCULATION AND GAS EXCHANGE.png',
+    avatarAsset: 'assets/icons/chathead-icons/HEROPHILOS - FOR CIRCULATION AND GAS EXCHANGE.webp',
     greeting: 'Greetings! I am Herophilus, ancient physician and anatomist. Let me guide you through the wonders of the circulatory system!',
     themeColor: AppColors.characterTheme,
     themeLightColor: Color(0xFF9BBFA7),
@@ -225,7 +225,7 @@ Scope:
     id: 'mendel',
     name: 'Gregor Mendel',
     specialization: 'Heredity & Variation',
-    avatarAsset: 'assets/icons/chathead-icons/GREGOR MENDEL - FOR HEREDITY AND VARIATION.png',
+    avatarAsset: 'assets/icons/chathead-icons/GREGOR MENDEL - FOR HEREDITY AND VARIATION.webp',
     greeting: 'Welcome! I am Gregor Mendel, the father of genetics. Let us explore the fascinating world of heredity together!',
     themeColor: AppColors.characterTheme,
     themeLightColor: Color(0xFF9BBFA7),
@@ -306,7 +306,7 @@ Scope:
     id: 'odum',
     name: 'Eugene Odum',
     specialization: 'Energy in the Ecosystem',
-    avatarAsset: 'assets/icons/chathead-icons/EUEGENE ODUM - FOR ENERGY IN THE ECOSYSTEM.png',
+    avatarAsset: 'assets/icons/chathead-icons/EUEGENE ODUM - FOR ENERGY IN THE ECOSYSTEM.webp',
     greeting: 'Hello! I\'m Eugene Odum, ecologist and systems thinker. Ready to explore how energy flows through nature?',
     themeColor: AppColors.characterTheme,
     themeLightColor: Color(0xFF9BBFA7),
