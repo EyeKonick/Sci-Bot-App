@@ -22,6 +22,9 @@ class HiveService {
   static const String chatHistoryBoxName = 'chat_history_box';
   static const String bookmarksBoxName = 'bookmarks_box';
   static const String userProfileBoxName = 'user_profile_box';
+  /// Box for scenario-based chat history stored as JSON strings.
+  /// Key = scenario ID, Value = JSON-encoded List<ChatMessage>.
+  static const String scenarioChatJsonBoxName = 'scenario_chat_json_box';
 
   // Box instances
   static Box<TopicModel>? _topicsBox;
@@ -30,6 +33,7 @@ class HiveService {
   static Box<ChatMessageModel>? _chatHistoryBox;
   static Box<BookmarkModel>? _bookmarksBox; // Stores BookmarkModel objects
   static Box<UserProfileModel>? _userProfileBox;
+  static Box<String>? _scenarioChatJsonBox;
 
   /// Initialize Hive and open all boxes
   /// Phase 0: Added integrity check with recovery flow per box
@@ -67,6 +71,7 @@ class HiveService {
     _chatHistoryBox = await _openBoxSafely<ChatMessageModel>(chatHistoryBoxName);
     _bookmarksBox = await _openBoxSafely<BookmarkModel>(bookmarksBoxName);
     _userProfileBox = await _openBoxSafely<UserProfileModel>(userProfileBoxName);
+    _scenarioChatJsonBox = await _openBoxSafely<String>(scenarioChatJsonBoxName);
   }
 
   /// Open a Hive box safely with corruption recovery.
@@ -122,6 +127,14 @@ class HiveService {
   /// Alias for chatHistoryBox (for consistency)
   static Box<ChatMessageModel> get chatBox => chatHistoryBox;
 
+  /// Get Scenario Chat JSON Box (key = scenario ID, value = JSON string).
+  static Box<String> get scenarioChatJsonBox {
+    if (_scenarioChatJsonBox == null || !_scenarioChatJsonBox!.isOpen) {
+      throw Exception('Scenario chat JSON box not initialized. Call HiveService.init() first.');
+    }
+    return _scenarioChatJsonBox!;
+  }
+
   /// Get Bookmarks Box
   static Box<BookmarkModel> get bookmarksBox {
     if (_bookmarksBox == null || !_bookmarksBox!.isOpen) {
@@ -146,6 +159,7 @@ class HiveService {
     await _chatHistoryBox?.close();
     await _bookmarksBox?.close();
     await _userProfileBox?.close();
+    await _scenarioChatJsonBox?.close();
   }
 
   /// Clear all data (useful for testing/debugging)
@@ -156,6 +170,7 @@ class HiveService {
     await _chatHistoryBox?.clear();
     await _bookmarksBox?.clear();
     await _userProfileBox?.clear();
+    await _scenarioChatJsonBox?.clear();
   }
 
   /// Delete all Hive data (nuclear option)
@@ -167,5 +182,6 @@ class HiveService {
     await Hive.deleteBoxFromDisk(chatHistoryBoxName);
     await Hive.deleteBoxFromDisk(bookmarksBoxName);
     await Hive.deleteBoxFromDisk(userProfileBoxName);
+    await Hive.deleteBoxFromDisk(scenarioChatJsonBoxName);
   }
 }

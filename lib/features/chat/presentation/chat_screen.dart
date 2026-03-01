@@ -11,6 +11,7 @@ import '../../../shared/models/scenario_model.dart';
 import '../data/repositories/chat_repository.dart';
 import '../../profile/data/providers/user_profile_provider.dart';
 import 'widgets/chat_bubble.dart';
+import 'widgets/chat_date_divider.dart';
 import 'widgets/typing_indicator.dart';
 import '../../../shared/widgets/loading_spinner.dart';
 import '../../../shared/widgets/neumorphic_styles.dart';
@@ -350,31 +351,59 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  /// Expand messages - split long assistant messages into multiple bubbles
-  List<ChatMessage> get _expandedMessages {
-    final expanded = <ChatMessage>[];
+  /// Returns true when a date/time divider should be injected before [current].
+  bool _needsDivider(ChatMessage? previous, ChatMessage current) {
+    if (previous == null) return true;
+    final prevDay = DateTime(
+        previous.timestamp.year, previous.timestamp.month, previous.timestamp.day);
+    final currDay = DateTime(
+        current.timestamp.year, current.timestamp.month, current.timestamp.day);
+    if (currDay != prevDay) return true;
+    return current.timestamp.difference(previous.timestamp).inHours >= 4;
+  }
+
+  /// Builds the flat display list: DateTime entries become date dividers,
+  /// ChatMessage entries become bubbles (long messages are split).
+  /// Dividers are suppressed during search to avoid misleading temporal context.
+  List<Object> _buildDisplayItems() {
+    // Suppress dividers while the user is actively filtering by search query
+    final showDividers = _searchQuery.isEmpty &&
+        (_chatRepo.currentScenario?.type == ScenarioType.general ||
+            _chatRepo.currentScenario?.type == ScenarioType.lessonMenu);
+
+    final result = <Object>[];
+    ChatMessage? lastVisible;
+
     for (final msg in _filteredMessages) {
+      if (msg.role == 'system') continue;
+
+      // session_return always gets a divider regardless of time elapsed
+      final forcesDivider = msg.context == 'session_return';
+      if (showDividers && (forcesDivider || _needsDivider(lastVisible, msg))) {
+        result.add(msg.timestamp);
+      }
+
+      // Split long assistant messages into multiple bubbles
       if (msg.role == 'assistant' && !msg.isStreaming && msg.content.length > 300) {
         final chunks = ChatBubble.splitLongMessage(msg.content);
         for (int i = 0; i < chunks.length; i++) {
-          expanded.add(msg.copyWith(
+          result.add(msg.copyWith(
             content: chunks[i],
-            // Only first chunk shows character name
             characterName: i == 0 ? msg.characterName : null,
           ));
         }
       } else {
-        expanded.add(msg);
+        result.add(msg);
       }
+
+      lastVisible = msg;
     }
-    return expanded;
+    return result;
   }
 
   Widget _buildMessagesList() {
-    final displayMessages = _expandedMessages;
-
-    // Search produced no results
-    if (displayMessages.isEmpty) {
+    // Check for empty search results before building display items
+    if (_searchQuery.isNotEmpty && _filteredMessages.isEmpty) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       return Center(
         child: Column(
@@ -397,15 +426,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       );
     }
 
+    final displayItems = _buildDisplayItems();
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: AppSizes.s8),
-      itemCount: displayMessages.length +
+      itemCount: displayItems.length +
           (_isStreaming ? 1 : 0) +
-          (_isWelcomeState ? 1 : 0), // Extra item for starters
+          (_isWelcomeState ? 1 : 0),
       itemBuilder: (context, index) {
-        // Typing indicator at the end
-        final msgCount = displayMessages.length + (_isWelcomeState ? 1 : 0);
+        final msgCount = displayItems.length + (_isWelcomeState ? 1 : 0);
+
+        // Typing indicator at the very end
         if (index == msgCount && _isStreaming) {
           const character = AiCharacter.aristotle;
           return TypingIndicator(
@@ -415,26 +447,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           );
         }
 
-        // Phase 4: Conversation starters after greeting
-        if (_isWelcomeState && index == 1) {
+        // Conversation starters after all display items (welcome state only)
+        if (_isWelcomeState && index == displayItems.length) {
           return _buildConversationStarters();
         }
 
-        // Adjust index for messages after starters widget
-        final msgIndex = (_isWelcomeState && index > 1) ? index - 1 : index;
-        if (msgIndex >= displayMessages.length) return const SizedBox.shrink();
+        if (index >= displayItems.length) return const SizedBox.shrink();
 
-        final message = displayMessages[msgIndex];
+        final item = displayItems[index];
 
-        // Phase 4: Error card with Retry
-        if (message.isError) {
-          return _buildErrorCard(message);
+        // Date/time divider
+        if (item is DateTime) {
+          return ChatDateDivider(timestamp: item);
         }
 
-        return ChatBubble(
-          message: message,
-          showAvatar: message.characterName != null,
-        );
+        // Message bubble
+        if (item is ChatMessage) {
+          if (item.isError) return _buildErrorCard(item);
+          return ChatBubble(
+            message: item,
+            showAvatar: item.characterName != null,
+          );
+        }
+
+        return const SizedBox.shrink();
       },
     );
   }

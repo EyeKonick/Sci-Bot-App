@@ -11,6 +11,7 @@ import '../../data/repositories/chat_repository.dart';
 import '../../data/providers/character_provider.dart';
 import '../../../profile/data/providers/user_profile_provider.dart';
 import 'chat_bubble.dart';
+import 'chat_date_divider.dart';
 import 'typing_indicator.dart';
 import '../../../../shared/widgets/loading_spinner.dart';
 import '../../../../shared/widgets/neumorphic_styles.dart';
@@ -245,23 +246,53 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
       _messages.first.role == 'assistant' &&
       !_messages.first.isError;
 
-  /// Expand messages - split long assistant messages into multiple bubbles
-  List<ChatMessage> get _expandedMessages {
-    final expanded = <ChatMessage>[];
+  /// Returns true when a date/time divider should be injected before [current].
+  bool _needsDivider(ChatMessage? previous, ChatMessage current) {
+    if (previous == null) return true;
+    final prevDay = DateTime(
+        previous.timestamp.year, previous.timestamp.month, previous.timestamp.day);
+    final currDay = DateTime(
+        current.timestamp.year, current.timestamp.month, current.timestamp.day);
+    if (currDay != prevDay) return true;
+    return current.timestamp.difference(previous.timestamp).inHours >= 4;
+  }
+
+  /// Builds the flat display list: DateTime entries become date dividers,
+  /// ChatMessage entries become bubbles (long messages are split).
+  /// Dividers are only injected for general and lessonMenu scenarios.
+  List<Object> _buildDisplayItems() {
+    final showDividers =
+        _chatRepo.currentScenario?.type == ScenarioType.general ||
+        _chatRepo.currentScenario?.type == ScenarioType.lessonMenu;
+
+    final result = <Object>[];
+    ChatMessage? lastVisible;
+
     for (final msg in _messages) {
+      if (msg.role == 'system') continue;
+
+      // session_return always gets a divider regardless of time elapsed
+      final forcesDivider = msg.context == 'session_return';
+      if (showDividers && (forcesDivider || _needsDivider(lastVisible, msg))) {
+        result.add(msg.timestamp);
+      }
+
+      // Split long assistant messages into multiple bubbles
       if (msg.role == 'assistant' && !msg.isStreaming && msg.content.length > 300) {
         final chunks = ChatBubble.splitLongMessage(msg.content);
         for (int i = 0; i < chunks.length; i++) {
-          expanded.add(msg.copyWith(
+          result.add(msg.copyWith(
             content: chunks[i],
             characterName: i == 0 ? msg.characterName : null,
           ));
         }
       } else {
-        expanded.add(msg);
+        result.add(msg);
       }
+
+      lastVisible = msg;
     }
-    return expanded;
+    return result;
   }
 
   @override
@@ -347,21 +378,21 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                       )
                     : Builder(
                         builder: (context) {
-                          final displayMessages = _expandedMessages;
+                          final displayItems = _buildDisplayItems();
                           return ListView.builder(
                             controller: _scrollController,
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.s4,
                               vertical: AppSizes.s8,
                             ),
-                            itemCount: displayMessages.length +
+                            itemCount: displayItems.length +
                                 (_isStreaming ? 1 : 0) +
                                 (_isWelcomeState ? 1 : 0),
                             itemBuilder: (context, index) {
-                              final msgCount = displayMessages.length +
+                              final msgCount = displayItems.length +
                                   (_isWelcomeState ? 1 : 0);
 
-                              // Typing indicator at the end
+                              // Typing indicator at the very end
                               if (index == msgCount && _isStreaming) {
                                 final character = ref.read(activeCharacterProvider);
                                 return TypingIndicator(
@@ -371,29 +402,32 @@ class _MessengerChatWindowState extends ConsumerState<MessengerChatWindow> {
                                 );
                               }
 
-                              // Phase 4: Conversation starters after greeting
-                              if (_isWelcomeState && index == 1) {
+                              // Conversation starters after all display items
+                              if (_isWelcomeState && index == displayItems.length) {
                                 return _buildConversationStarters();
                               }
 
-                              // Adjust index past starters
-                              final msgIndex =
-                                  (_isWelcomeState && index > 1) ? index - 1 : index;
-                              if (msgIndex >= displayMessages.length) {
+                              if (index >= displayItems.length) {
                                 return const SizedBox.shrink();
                               }
 
-                              final message = displayMessages[msgIndex];
+                              final item = displayItems[index];
 
-                              // Phase 4: Error card with Retry
-                              if (message.isError) {
-                                return _buildErrorCard(message);
+                              // Date/time divider
+                              if (item is DateTime) {
+                                return ChatDateDivider(timestamp: item);
                               }
 
-                              return ChatBubble(
-                                message: message,
-                                showAvatar: message.characterName != null,
-                              );
+                              // Message bubble
+                              if (item is ChatMessage) {
+                                if (item.isError) return _buildErrorCard(item);
+                                return ChatBubble(
+                                  message: item,
+                                  showAvatar: item.characterName != null,
+                                );
+                              }
+
+                              return const SizedBox.shrink();
                             },
                           );
                         },

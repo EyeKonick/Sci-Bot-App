@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import '../../../../shared/models/chat_message_extended.dart';
 import '../../../../shared/models/ai_character_model.dart';
 import '../../../../shared/models/scenario_model.dart';
 import '../../../../services/ai/openai_service.dart';
 import '../../../../services/ai/prompts/aristotle_prompts.dart';
+import '../../../../services/storage/hive_service.dart';
 import '../services/context_service.dart';
 
 
@@ -92,6 +94,35 @@ class ChatRepository {
   /// Message histories keyed by scenario ID.
   final _scenarioHistories = <String, List<ChatMessage>>{};
 
+  /// Tracks which scenarios have already received a session-return greeting
+  /// this app launch. Cleared on restart because this is in-memory only.
+  final _sessionGreetedScenarios = <String>{};
+
+  /// Return greeting pools per character — injected on app restart when
+  /// existing history is loaded. NOT saved to Hive (ephemeral per session).
+  static const Map<String, List<String>> _returnGreetings = {
+    'aristotle': [
+      "Welcome back, scholar! Ready to pick up where we left off?",
+      "Good to have you back! What shall we explore today?",
+      "You're back! Science waits for no one — let's dive in.",
+    ],
+    'herophilus': [
+      "Welcome back! The heart never stops — and neither does learning.",
+      "Good to see you again! Ready to explore more of the body's mysteries?",
+      "You've returned! Shall we continue our journey through circulation?",
+    ],
+    'mendel': [
+      "Welcome back! Heredity holds many more secrets to discover.",
+      "Good to see you again! Ready to unravel more patterns of inheritance?",
+      "You've returned! The laws of genetics are waiting to be explored.",
+    ],
+    'odum': [
+      "Welcome back! The ecosystem kept thriving while you were away.",
+      "Good to see you again! Ready to explore more energy flow dynamics?",
+      "You've returned! Nature's web of life has much more to reveal.",
+    ],
+  };
+
   /// Currently active scenario.
   ChatScenario? _currentScenario;
 
@@ -130,6 +161,55 @@ class ChatRepository {
   int get scenarioId => _scenarioGeneration;
 
   // ---------------------------------------------------------------------------
+  // Persistence helpers
+  // ---------------------------------------------------------------------------
+
+  /// Returns true if this scenario's history should be persisted to Hive.
+  /// Only general (Aristotle) and lessonMenu (expert topic screens) qualify.
+  bool _shouldPersist(ChatScenario? scenario) {
+    return scenario?.type == ScenarioType.general ||
+        scenario?.type == ScenarioType.lessonMenu;
+  }
+
+  /// Serialize and write a scenario's history to Hive as a JSON string.
+  /// session_return greetings are ephemeral — filtered out before saving so
+  /// they are freshly regenerated on every app launch.
+  Future<void> _saveHistoryToHive(
+      String scenarioId, List<ChatMessage> messages) async {
+    try {
+      final toSave =
+          messages.where((m) => m.context != 'session_return').toList();
+      final jsonList = toSave.map((m) => m.toJson()).toList();
+      await HiveService.scenarioChatJsonBox.put(scenarioId, jsonEncode(jsonList));
+    } catch (e) {
+      print('⚠️ Failed to persist chat history for $scenarioId: $e');
+    }
+  }
+
+  /// Load and deserialize a scenario's history from Hive.
+  /// Returns an empty list if nothing is stored or on parse error.
+  Future<List<ChatMessage>> _loadHistoryFromHive(String scenarioId) async {
+    try {
+      final raw = HiveService.scenarioChatJsonBox.get(scenarioId);
+      if (raw == null) return [];
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((j) => ChatMessage.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('⚠️ Failed to load chat history for $scenarioId: $e');
+      return [];
+    }
+  }
+
+  /// Remove a scenario's persisted history from Hive.
+  Future<void> _clearHistoryFromHive(String scenarioId) async {
+    try {
+      await HiveService.scenarioChatJsonBox.delete(scenarioId);
+    } catch (_) {}
+  }
+
+  // ---------------------------------------------------------------------------
   // Scenario lifecycle
   // ---------------------------------------------------------------------------
 
@@ -157,14 +237,39 @@ class ChatRepository {
     print('🎬 Scenario switch: $previousId → ${scenario.id} '
         '(gen $_scenarioGeneration)');
 
-    // Initialise empty history if this scenario has never been seen
+    // Initialise history for this scenario if never seen this session.
+    // For qualifying scenarios, try loading persisted history from Hive first.
     if (!_scenarioHistories.containsKey(scenario.id)) {
-      _scenarioHistories[scenario.id] = [];
+      if (_shouldPersist(scenario)) {
+        _scenarioHistories[scenario.id] = await _loadHistoryFromHive(scenario.id);
+
+        // If we loaded existing history, inject a one-time session-return
+        // greeting so the app feels alive on every relaunch.
+        if (_scenarioHistories[scenario.id]!.isNotEmpty &&
+            !_sessionGreetedScenarios.contains(scenario.id)) {
+          _sessionGreetedScenarios.add(scenario.id);
+          final pool =
+              _returnGreetings[scenario.characterId] ?? _returnGreetings['aristotle']!;
+          final text = pool[DateTime.now().second % pool.length];
+          _scenarioHistories[scenario.id]!.add(ChatMessage.assistant(
+            text,
+            characterName: _currentCharacter.name,
+            context: 'session_return',
+            characterId: _currentCharacter.id,
+            scenarioId: scenario.id,
+          ));
+        }
+      } else {
+        _scenarioHistories[scenario.id] = [];
+      }
     }
 
-    // If the scenario history is empty, generate a contextual greeting
+    // If history is still empty, generate a contextual greeting and persist it.
     if (_scenarioHistories[scenario.id]!.isEmpty) {
       await _generateScenarioGreeting(scenario);
+      if (_shouldPersist(scenario)) {
+        await _saveHistoryToHive(scenario.id, _scenarioHistories[scenario.id]!);
+      }
     }
 
     _notifyListeners();
@@ -392,6 +497,11 @@ class ChatRepository {
 
         _notifyListeners();
         yield finalMsg;
+
+        // Persist history to Hive for qualifying scenarios
+        if (_shouldPersist(_currentScenario)) {
+          await _saveHistoryToHive(_currentScenario!.id, _getCurrentHistory());
+        }
       } catch (e) {
         if (capturedGeneration != _scenarioGeneration) return;
 
@@ -520,11 +630,14 @@ class ChatRepository {
   // History management
   // ---------------------------------------------------------------------------
 
-  /// Clear current scenario's chat history.
+  /// Clear current scenario's chat history (memory and Hive for qualifying scenarios).
   Future<void> clearHistory() async {
     await _acquireLock();
     try {
       _getCurrentHistory().clear();
+      if (_shouldPersist(_currentScenario)) {
+        await _clearHistoryFromHive(_currentScenario!.id);
+      }
       _notifyListeners();
     } finally {
       _releaseLock();

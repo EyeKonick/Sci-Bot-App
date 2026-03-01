@@ -99,6 +99,35 @@ class ChatMessage extends HiveObject {
     );
   }
 
+  /// Serialize to JSON for Hive storage.
+  /// Transient fields (isStreaming, isError) are intentionally omitted.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'role': role,
+        'content': content,
+        'timestamp': timestamp.toIso8601String(),
+        'characterName': characterName,
+        'context': context,
+        'characterId': characterId,
+        'scenarioId': scenarioId,
+      };
+
+  /// Deserialize from Hive JSON storage.
+  factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    return ChatMessage(
+      id: json['id'] as String,
+      role: json['role'] as String,
+      content: json['content'] as String,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      characterName: json['characterName'] as String?,
+      context: json['context'] as String?,
+      characterId: json['characterId'] as String?,
+      scenarioId: json['scenarioId'] as String?,
+      isStreaming: false,
+      isError: false,
+    );
+  }
+
   /// Convert to OpenAI API format
   Map<String, dynamic> toOpenAIFormat() {
     return {
