@@ -60,6 +60,7 @@ class UserProfileRepository {
     String? fullName,
     String? gradeSection,
     String? school,
+    String? gender,
   }) async {
     try {
       final currentProfile = await getProfile();
@@ -73,6 +74,7 @@ class UserProfileRepository {
         fullName: fullName,
         gradeSection: gradeSection,
         school: school,
+        gender: gender,
         updatedAt: DateTime.now(),
       );
 

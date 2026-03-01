@@ -97,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
 
     if (!profileState.isValid) {
-      _showError('Please enter a valid name to continue');
+      _showError(profileState.validationMessage);
       return;
     }
 

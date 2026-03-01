@@ -33,6 +33,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isSaving = false;
   File? _newImage;
   bool _imageChanged = false;
+  String? _selectedGender;
 
   @override
   void dispose() {
@@ -43,13 +44,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.dispose();
   }
 
-  void _startEditing(String currentName, {String? fullName, String? gradeSection, String? school}) {
+  void _startEditing(String currentName, {String? fullName, String? gradeSection, String? school, String? gender}) {
     setState(() {
       _isEditing = true;
       _nameController.text = currentName;
       _fullNameController.text = fullName ?? '';
       _gradeSectionController.text = gradeSection ?? '';
       _schoolController.text = school ?? '';
+      _selectedGender = gender;
     });
   }
 
@@ -62,6 +64,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _fullNameController.clear();
       _gradeSectionController.clear();
       _schoolController.clear();
+      _selectedGender = null;
     });
   }
 
@@ -88,6 +91,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             school: _schoolController.text.trim().isEmpty
                 ? null
                 : _schoolController.text.trim(),
+            gender: _selectedGender,
           );
 
       setState(() {
@@ -311,7 +315,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onTap: () => _startEditing(profile.name,
                         fullName: profile.fullName,
                         gradeSection: profile.gradeSection,
-                        school: profile.school),
+                        school: profile.school,
+                        gender: profile.gender),
                     child: Stack(
                       children: [
                         ProfileAvatar(
@@ -379,6 +384,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     maxLength: 80,
                     isDark: isDark,
                   ),
+                  const SizedBox(height: AppSizes.s12),
+                  // Gender selector
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gender',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.s8),
+                      Wrap(
+                        spacing: AppSizes.s8,
+                        children: ['Male', 'Female', 'Prefer not to say'].map((option) {
+                          final selected = _selectedGender == option;
+                          return ChoiceChip(
+                            label: Text(
+                              option,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: selected
+                                    ? AppColors.white
+                                    : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                            selected: selected,
+                            selectedColor: AppColors.primary,
+                            backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
+                            side: BorderSide(
+                              color: selected
+                                  ? AppColors.primary
+                                  : (isDark ? AppColors.darkBorder : AppColors.border),
+                            ),
+                            onSelected: (_) {
+                              setState(() {
+                                _selectedGender = selected ? null : option;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: AppSizes.s16),
                   // Save Button
                   SizedBox(
@@ -422,7 +472,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onTap: () => _startEditing(profile.name,
                         fullName: profile.fullName,
                         gradeSection: profile.gradeSection,
-                        school: profile.school),
+                        school: profile.school,
+                        gender: profile.gender),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSizes.s16,
@@ -466,7 +517,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Info rows with divider
                   if ((profile.fullName != null && profile.fullName!.isNotEmpty) ||
                       (profile.gradeSection != null && profile.gradeSection!.isNotEmpty) ||
-                      (profile.school != null && profile.school!.isNotEmpty)) ...[
+                      (profile.school != null && profile.school!.isNotEmpty) ||
+                      (profile.gender != null && profile.gender!.isNotEmpty)) ...[
                     const SizedBox(height: AppSizes.s16),
                     Divider(
                       color: isDark
@@ -492,6 +544,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildInfoRow(
                         Icons.location_on_outlined,
                         profile.school!,
+                        isDark,
+                      ),
+                    if (profile.gender != null && profile.gender!.isNotEmpty)
+                      _buildInfoRow(
+                        Icons.wc_outlined,
+                        profile.gender!,
                         isDark,
                       ),
                   ],

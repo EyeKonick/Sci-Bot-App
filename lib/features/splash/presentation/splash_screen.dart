@@ -5,6 +5,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../services/preferences/shared_prefs_service.dart';
+import '../../profile/data/repositories/user_profile_repository.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -61,10 +62,24 @@ class _SplashScreenState extends State<SplashScreen>
     if (isFirstLaunch) {
       // First time user - show onboarding
       context.go(AppRoutes.onboarding);
-    } else {
-      // Returning user - go directly to home
-      context.go(AppRoutes.home);
+      return;
     }
+
+    // SharedPrefs says "returning user", but verify Hive profile actually exists.
+    // flutter run uses adb install -r (in-place update) which preserves SharedPrefs
+    // even when the user uninstalls the app manually. If the profile is missing,
+    // reset flags and force onboarding so the user isn't stuck on a blank home screen.
+    final hasProfile = await UserProfileRepository().hasProfile();
+    if (!mounted) return;
+
+    if (!hasProfile) {
+      await SharedPrefsService.resetFirstLaunch();
+      if (mounted) context.go(AppRoutes.onboarding);
+      return;
+    }
+
+    // Returning user with valid profile - go directly to home
+    context.go(AppRoutes.home);
   }
 
   @override

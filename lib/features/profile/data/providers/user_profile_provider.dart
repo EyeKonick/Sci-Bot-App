@@ -44,6 +44,7 @@ class UserProfileNotifier extends AsyncNotifier<UserProfileModel?> {
     String? fullName,
     String? gradeSection,
     String? school,
+    String? gender,
   }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -53,6 +54,7 @@ class UserProfileNotifier extends AsyncNotifier<UserProfileModel?> {
         fullName: fullName,
         gradeSection: gradeSection,
         school: school,
+        gender: gender,
       );
       return await _repository.getProfile();
     });

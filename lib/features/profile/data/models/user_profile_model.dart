@@ -15,6 +15,7 @@ class UserProfileModel {
   final String? fullName;     // Complete name of learner
   final String? gradeSection; // e.g., "Grade 9 - Mendel"
   final String? school;       // e.g., "Roxas City National High School"
+  final String? gender;       // e.g., "Male", "Female", "Prefer not to say"
 
   const UserProfileModel({
     required this.name,
@@ -27,6 +28,7 @@ class UserProfileModel {
     this.fullName,
     this.gradeSection,
     this.school,
+    this.gender,
   });
 
   /// Validation: Check if name meets length requirements (2-20 characters)
@@ -58,6 +60,7 @@ class UserProfileModel {
       fullName: json['full_name'] as String?,
       gradeSection: json['grade_section'] as String?,
       school: json['school'] as String?,
+      gender: json['gender'] as String?,
     );
   }
 
@@ -74,6 +77,7 @@ class UserProfileModel {
       'full_name': fullName,
       'grade_section': gradeSection,
       'school': school,
+      'gender': gender,
     };
   }
 
@@ -89,6 +93,7 @@ class UserProfileModel {
     String? fullName,
     String? gradeSection,
     String? school,
+    String? gender,
   }) {
     return UserProfileModel(
       name: name ?? this.name,
@@ -101,6 +106,7 @@ class UserProfileModel {
       fullName: fullName ?? this.fullName,
       gradeSection: gradeSection ?? this.gradeSection,
       school: school ?? this.school,
+      gender: gender ?? this.gender,
     );
   }
 

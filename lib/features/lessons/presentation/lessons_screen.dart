@@ -160,7 +160,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
     final competency = _learningCompetencies[widget.topicId];
 
     return SliverAppBar(
-      expandedHeight: competency != null ? 185 : 140,
+      expandedHeight: competency != null ? 215 : 140,
       floating: false,
       pinned: true,
       backgroundColor: topicColor,
@@ -221,7 +221,7 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSizes.s12,
-                        vertical: AppSizes.s8,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.white.withValues(alpha: 0.15),
@@ -240,9 +240,9 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                             'Learning Competency',
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.white,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
-                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              fontSize: 13,
                             ),
                           ),
                           const SizedBox(height: AppSizes.s4),
@@ -250,8 +250,8 @@ class _LessonsScreenState extends ConsumerState<LessonsScreen> {
                             competency,
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.white.withValues(alpha: 0.95),
-                              height: 1.3,
-                              fontSize: 11,
+                              height: 1.45,
+                              fontSize: 12.5,
                             ),
                           ),
                         ],

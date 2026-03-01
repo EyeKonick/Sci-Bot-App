@@ -8,7 +8,7 @@ import 'name_input_field.dart';
 import 'profile_picture_selector.dart';
 
 /// Profile setup page - 5th onboarding page
-/// Collects user name (required) and profile picture (optional)
+/// All fields are required except profile picture.
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
 
@@ -23,6 +23,16 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
   final TextEditingController _schoolController = TextEditingController();
   File? _selectedImage;
   bool _isNameValid = false;
+  String? _selectedGender;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to text changes so isValid updates reactively
+    _fullNameController.addListener(() => setState(() {}));
+    _gradeSectionController.addListener(() => setState(() {}));
+    _schoolController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -33,10 +43,36 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
     super.dispose();
   }
 
-  /// Check if profile setup is valid (name is required)
-  bool get isValid => _isNameValid && _nameController.text.trim().isNotEmpty;
+  /// All fields except profile picture are required.
+  bool get isValid =>
+      _isNameValid &&
+      _nameController.text.trim().isNotEmpty &&
+      _fullNameController.text.trim().isNotEmpty &&
+      _gradeSectionController.text.trim().isNotEmpty &&
+      _schoolController.text.trim().isNotEmpty &&
+      _selectedGender != null;
 
-  /// Get profile data for saving
+  /// Returns a user-friendly message describing the first missing required field.
+  String get validationMessage {
+    if (!_isNameValid || _nameController.text.trim().isEmpty) {
+      return 'Please enter a valid display name (2–20 characters).';
+    }
+    if (_fullNameController.text.trim().isEmpty) {
+      return 'Please enter your complete name.';
+    }
+    if (_gradeSectionController.text.trim().isEmpty) {
+      return 'Please enter your grade and section.';
+    }
+    if (_schoolController.text.trim().isEmpty) {
+      return 'Please enter your school name.';
+    }
+    if (_selectedGender == null) {
+      return 'Please select your gender.';
+    }
+    return '';
+  }
+
+  /// Get profile data for saving — all required fields are guaranteed non-null.
   UserProfileModel getProfile() {
     final now = DateTime.now();
     return UserProfileModel(
@@ -44,20 +80,34 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
       profileImagePath: null, // Will be set after image is saved
       createdAt: now,
       updatedAt: now,
-      fullName: _fullNameController.text.trim().isEmpty
-          ? null
-          : _fullNameController.text.trim(),
-      gradeSection: _gradeSectionController.text.trim().isEmpty
-          ? null
-          : _gradeSectionController.text.trim(),
-      school: _schoolController.text.trim().isEmpty
-          ? null
-          : _schoolController.text.trim(),
+      fullName: _fullNameController.text.trim(),
+      gradeSection: _gradeSectionController.text.trim(),
+      school: _schoolController.text.trim(),
+      gender: _selectedGender,
     );
   }
 
   /// Get selected image file
   File? get selectedImage => _selectedImage;
+
+  /// Builds a field label with a red required asterisk.
+  Widget _requiredLabel(String text, bool isDark) {
+    return RichText(
+      text: TextSpan(
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+        children: [
+          TextSpan(text: text),
+          const TextSpan(
+            text: ' *',
+            style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +139,7 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppSizes.s40),
 
-          // Profile picture selector
+          // Profile picture selector (optional)
           ProfilePictureSelector(
             onImageSelected: (file) {
               setState(() {
@@ -97,21 +147,22 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
               });
             },
           ),
-          const SizedBox(height: AppSizes.s32),
+          const SizedBox(height: AppSizes.s8),
+          Text(
+            'Profile picture is optional',
+            style: AppTextStyles.caption.copyWith(
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: AppSizes.s24),
 
-          // Display name section (required)
+          // Display name (required)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'What should we call you?',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              _requiredLabel('What should we call you?', isDark),
               const SizedBox(height: AppSizes.s8),
-
               NameInputField(
                 controller: _nameController,
                 onValidationChanged: (isValid) {
@@ -122,19 +173,13 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.s24),
+          const SizedBox(height: AppSizes.s16),
 
-          // Complete Name section
+          // Complete Name (required)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Complete Name',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              _requiredLabel('Complete Name', isDark),
               const SizedBox(height: AppSizes.s8),
               TextField(
                 controller: _fullNameController,
@@ -158,17 +203,11 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppSizes.s16),
 
-          // Grade and Section
+          // Grade and Section (required)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Grade and Section',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              _requiredLabel('Grade and Section', isDark),
               const SizedBox(height: AppSizes.s8),
               TextField(
                 controller: _gradeSectionController,
@@ -192,17 +231,11 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppSizes.s16),
 
-          // School
+          // School (required)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'School',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              _requiredLabel('School', isDark),
               const SizedBox(height: AppSizes.s8),
               TextField(
                 controller: _schoolController,
@@ -226,11 +259,51 @@ class ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppSizes.s16),
 
-          // Hint text
+          // Gender (required)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _requiredLabel('Gender', isDark),
+              const SizedBox(height: AppSizes.s8),
+              Wrap(
+                spacing: AppSizes.s8,
+                children: ['Male', 'Female', 'Prefer not to say'].map((option) {
+                  final selected = _selectedGender == option;
+                  return ChoiceChip(
+                    label: Text(
+                      option,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: selected
+                            ? AppColors.white
+                            : (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                    selected: selected,
+                    selectedColor: AppColors.primary,
+                    backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
+                    side: BorderSide(
+                      color: selected
+                          ? AppColors.primary
+                          : (isDark ? AppColors.darkBorder : AppColors.border),
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedGender = selected ? null : option;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.s16),
+
+          // Required fields note
           Text(
-            'Your name will be used throughout the app',
+            '* All fields except profile picture are required.',
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               fontStyle: FontStyle.italic,
             ),
             textAlign: TextAlign.center,
