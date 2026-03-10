@@ -573,7 +573,7 @@ class _LessonCard extends StatelessWidget {
                             ),
                             const SizedBox(width: AppSizes.s4),
                             Text(
-                              '${lesson.modules.length} modules',
+                              '${lesson.modules.length} parts',
                               style: AppTextStyles.caption.copyWith(
                                 color: textSecondary,
                               ),
@@ -613,7 +613,7 @@ class _LessonCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'Modules:',
+                    'Parts:',
                     style: AppTextStyles.caption.copyWith(
                       color: textSecondary,
                       fontWeight: FontWeight.w500,

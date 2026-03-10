@@ -40,6 +40,8 @@ class ScriptStep {
 
   final String? imageAssetPath;
 
+  final String? videoUrl;
+
  ScriptStep({
     required this.botMessages,
     required this.channel,
@@ -49,6 +51,7 @@ class ScriptStep {
     this.pacingHint = PacingHint.normal,
     this.transitionBubble,
     this.imageAssetPath,
+    this.videoUrl,
   });
 }
 
@@ -61,6 +64,7 @@ class LessonChatMessage {
   final bool isStreaming;
   final DateTime timestamp;
   final String? imageAssetPath; // Optional image to display with message
+  final String? videoUrl; // Optional YouTube video URL to display as a card
 
   const LessonChatMessage({
     required this.id,
@@ -70,6 +74,7 @@ class LessonChatMessage {
     this.isStreaming = false,
     required this.timestamp,
     this.imageAssetPath,
+    this.videoUrl,
   });
 
   LessonChatMessage copyWith({
@@ -77,6 +82,7 @@ class LessonChatMessage {
     bool? isStreaming,
     MessageChannel? channel,
     String? imageAssetPath,
+    String? videoUrl,
   }) {
     return LessonChatMessage(
       id: id,
@@ -86,6 +92,7 @@ class LessonChatMessage {
       isStreaming: isStreaming ?? this.isStreaming,
       timestamp: timestamp,
       imageAssetPath: imageAssetPath ?? this.imageAssetPath,
+      videoUrl: videoUrl ?? this.videoUrl,
     );
   }
 }
@@ -641,6 +648,33 @@ class LessonChatNotifier extends StateNotifier<LessonChatState> {
         );
 
         await Future.delayed(const Duration(milliseconds: 2000)); // 2s to view image
+        if (requestId != _currentRequestId) return;
+      }
+
+      if (step.videoUrl != null) {
+        final lastMessage = step.botMessages.isNotEmpty ? step.botMessages.last : '';
+        final readingTime = ReadingTime.calculateTotalMs(lastMessage);
+
+        state = state.copyWith(isStreaming: true);
+
+        await Future.delayed(Duration(milliseconds: readingTime));
+        if (requestId != _currentRequestId) return; // Module changed, stop
+
+        state = state.copyWith(isStreaming: false);
+
+        final videoMessage = LessonChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          role: 'assistant',
+          content: '', // Empty content, video-only message
+          channel: MessageChannel.interaction,
+          timestamp: DateTime.now(),
+          videoUrl: step.videoUrl,
+        );
+        state = state.copyWith(
+          messages: [...state.messages, videoMessage],
+        );
+
+        await Future.delayed(const Duration(milliseconds: 3000)); // 3s to view video card
         if (requestId != _currentRequestId) return;
       }
 
@@ -1248,6 +1282,15 @@ RESPONSE RULES:
 
       ScriptStep(
         botMessages: [
+          'Watch this short video to see how exercise affects your heart rate:',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        videoUrl: 'https://www.youtube.com/watch?v=HVHQzZWupko',
+      ),
+
+      ScriptStep(
+        botMessages: [
           'Have you noticed your heart beating faster?',
         ],
         channel: MessageChannel.narration,
@@ -1505,6 +1548,15 @@ RESPONSE RULES:
 
       ScriptStep(
         botMessages: [
+          'Watch this overview video of the circulatory system before we dive deeper:',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        videoUrl: 'https://www.youtube.com/watch?v=_vZ0lefPg_0',
+      ),
+
+      ScriptStep(
+        botMessages: [
           NarrationVariations.getModuleCompletion(
             moduleType: 'presentation',
             moduleName: 'Pre-SCI-ntation',
@@ -1609,6 +1661,15 @@ RESPONSE RULES:
         imageAssetPath: 'assets/images/topic_1/lesson_1/8.webp', // Heart anatomy diagram
       ),
 
+      ScriptStep(
+        botMessages: [
+          'Watch this video for a closer look at heart anatomy:',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        videoUrl: 'https://www.youtube.com/watch?v=rnIUFrx0DjI',
+      ),
+
      ScriptStep(
         botMessages: [
           '**Quick Check:** Which chamber do you think has thicker walls—the atria or ventricles?',
@@ -1664,6 +1725,15 @@ RESPONSE RULES:
         channel: MessageChannel.interaction,
         waitForUser: false,
         imageAssetPath: 'assets/images/topic_1/lesson_1/11.webp', // Blood components diagram
+      ),
+
+      ScriptStep(
+        botMessages: [
+          'Watch this video to see blood vessels and blood cells in action:',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: false,
+        videoUrl: 'https://www.youtube.com/watch?v=-s5iCoCaofc',
       ),
 
        ScriptStep(
@@ -1731,7 +1801,7 @@ RESPONSE RULES:
       ScriptStep(
         botMessages: [
           'Wow, you\'ve learned so much about the circulatory system!',
-          'Now it\'s time to test your understanding.',
+          'Now it\'s time to check your understanding.',
           'Don\'t worry — this is to help you learn, not to stress you out.',
           NarrationVariations.getModuleWelcome('assessment'),
         ],
@@ -1740,73 +1810,139 @@ RESPONSE RULES:
         waitForUser: false,
       ),
 
-     ScriptStep(
+      ScriptStep(
         botMessages: [
-          'Ready to check your knowledge?',
+          'Ready for 5 questions? Type "yes" or "ready" to begin!',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
       ),
 
-     ScriptStep(
+      // Q1 - Open vs Closed circulatory system
+      ScriptStep(
         botMessages: [
-          '**Question 1: What system transports oxygen and nutrients in the body?**',
-        ],
-        channel: MessageChannel.interaction,
-        waitForUser: true,
-        aiEvalContext:
-            'Assessment Question 1: What system transports oxygen and nutrients?\n'
-            'Correct answer: The circulatory system (or cardiovascular system).\n'
-            'Response guidelines:\n'
-            '- If correct: "Correct! The circulatory system is your body\'s delivery network!"\n'
-            '- If wrong: "The correct answer is the circulatory system. Remember, it delivers oxygen and nutrients to every cell!"\n'
-            'Keep response to 2 sentences.',
-      ),
-
-     ScriptStep(
-        botMessages: [
-          '**Question 2: Which blood component helps fight infection?**',
+          '**Question 1 of 5:**\n\n'
+              'Two diagrams show animal circulatory systems:\n\n'
+              '**Diagram A:** Blood flows freely through open body cavities — found in an insect. No continuous closed tubes.\n'
+              '**Diagram B:** Blood flows inside enclosed vessels connected to a pump (heart) — found in a human.\n\n'
+              'Which diagram shows a **closed circulatory system**?\n\n'
+              'A. Diagram A (insect)\n'
+              'B. Diagram B (human)',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
-            'Assessment Question 2: Which blood component fights infection?\n'
-            'Correct answer: White blood cells (or leukocytes).\n'
-            'Response guidelines:\n'
-            '- If correct: "Excellent! White blood cells are your immune system warriors!"\n'
-            '- If wrong: "The correct answer is white blood cells. They defend against bacteria and viruses!"\n'
-            'Keep response to 2 sentences.',
+            'Assessment Q1 of 5: Which diagram shows a closed circulatory system?\n'
+            'Diagram A = insect = OPEN circulatory system\n'
+            'Diagram B = human = CLOSED circulatory system\n'
+            'Correct answer: B (Diagram B)\n'
+            'Hint: "A closed circulatory system keeps blood inside vessels and is found in humans and other vertebrates."\n'
+            'If correct: Start with "Correct!" or "SCI-perb!" then briefly explain.\n'
+            'If wrong: Give the hint, then say "The answer is B — in a closed system, blood stays inside vessels."\n'
+            'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      // Q2 - Heart labeling
+      ScriptStep(
         botMessages: [
-          '**Question 3: Why is a closed circulatory system efficient for humans?**',
+          '**Question 2 of 5:**\n\n'
+              'A diagram of the heart shows four labeled parts:\n\n'
+              '• **Label A** = upper chamber that receives incoming blood\n'
+              '• **Label B** = lower chamber that pumps blood out of the heart\n'
+              '• **Label C** = wall that separates left and right sides\n'
+              '• **Label D** = flap that prevents blood from flowing backwards\n\n'
+              'Match each label with the correct term.\n'
+              'Choose from: **Atrium, Ventricle, Septum, Valve**\n\n'
+              'Type your answer: "A=___, B=___, C=___, D=___"',
         ],
         channel: MessageChannel.interaction,
         waitForUser: true,
         aiEvalContext:
-            'Assessment Question 3: Why is a closed circulatory system efficient?\n'
-            'Correct concepts: Blood stays in vessels, flow is fast and directed, can deliver oxygen quickly to active muscles.\n'
-            'Response guidelines:\n'
-            '- If mentions speed/efficiency/vessels/fast delivery: "Great reasoning! Closed systems keep blood flowing fast in vessels for quick delivery!"\n'
-            '- If vague: "Think about how blood stays in vessels and flows quickly to where it\'s needed."\n'
-            '- If wrong: "A closed system is efficient because blood stays in vessels and flows quickly, delivering oxygen fast to active tissues!"\n'
-            'Keep response to 2-3 sentences.',
+            'Assessment Q2 of 5: Heart part labeling.\n'
+            'Correct answers: A=Atrium, B=Ventricle, C=Septum, D=Valve\n'
+            'Hint: "Atria receive blood. Ventricles pump blood out of the heart."\n'
+            'Accept flexible answer formats (e.g., "atrium, ventricle, septum, valve" or "A-Atrium B-Ventricle C-Septum D-Valve").\n'
+            'If all 4 correct: Say "Correct! Excellent knowledge of heart anatomy! SCI-perb!"\n'
+            'If 3 correct: Say "Partially correct! You got [X] right. [Clarify the missed one]."\n'
+            'If 2 or fewer correct: Give the hint: "Atria receive blood; ventricles pump blood out of the heart."\n'
+            'Keep to 2-3 sentences.',
       ),
 
-     ScriptStep(
+      // Q3 - Blood vessel type
+      ScriptStep(
         botMessages: [
-          'If you can answer these questions, you\'re doing SCI-mazing!',
-          'Remember: It\'s okay if you need to review. Learning takes time, and every question helps you understand better!',
+          '**Question 3 of 5:**\n\n'
+              'Which blood vessel carries blood **away** from the heart?\n\n'
+              'A. Artery\n'
+              'B. Vein\n'
+              'C. Capillary',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: true,
+        aiEvalContext:
+            'Assessment Q3 of 5: Which vessel carries blood away from the heart?\n'
+            'Correct answer: A. Artery\n'
+            'Hint: "This vessel has thick muscular walls to handle the high pressure of blood leaving the heart."\n'
+            'If correct: Say "Correct! Arteries carry blood away from the heart — they have thick muscular walls for high pressure."\n'
+            'If wrong: Give the hint, then say "The answer is Artery (A) — it carries blood away from the heart."\n'
+            'Keep to 2 sentences.',
+      ),
+
+      // Q4 - Oxygen transport
+      ScriptStep(
+        botMessages: [
+          '**Question 4 of 5:**\n\n'
+              'Which blood component **transports oxygen** throughout the body?\n\n'
+              'A. Red Blood Cells\n'
+              'B. White Blood Cells\n'
+              'C. Platelets\n'
+              'D. Plasma',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: true,
+        aiEvalContext:
+            'Assessment Q4 of 5: Which blood component transports oxygen?\n'
+            'Correct answer: A. Red Blood Cells (Erythrocytes)\n'
+            'Hint: "This blood cell contains hemoglobin, which binds oxygen."\n'
+            'If correct: Say "Correct! Red blood cells contain hemoglobin that carries oxygen from your lungs to every body cell."\n'
+            'If wrong: Give the hint, then say "The answer is Red Blood Cells — they carry oxygen through hemoglobin."\n'
+            'Keep to 2 sentences.',
+      ),
+
+      // Q5 - Blood clotting
+      ScriptStep(
+        botMessages: [
+          '**Question 5 of 5:**\n\n'
+              'Which blood component **helps stop bleeding** by forming clots?\n\n'
+              'A. Plasma\n'
+              'B. Platelets\n'
+              'C. White Blood Cells\n'
+              'D. Red Blood Cells',
+        ],
+        channel: MessageChannel.interaction,
+        waitForUser: true,
+        aiEvalContext:
+            'Assessment Q5 of 5: Which component helps stop bleeding?\n'
+            'Correct answer: B. Platelets (Thrombocytes)\n'
+            'Hint: "This component gathers at a wound to form a clot."\n'
+            'If correct: Say "Correct! Platelets rush to wounds and form clots to stop bleeding — SCI-perb work!"\n'
+            'If wrong: Give the hint, then say "The answer is Platelets (B) — they form blood clots at wound sites."\n'
+            'Keep to 2 sentences.',
+      ),
+
+      ScriptStep(
+        botMessages: [
+          'You\'ve completed all 5 questions — SCI-mazing effort!',
+          'Remember: every question you answer builds your understanding of this incredible system!',
         ],
         channel: MessageChannel.narration,
-        pacingHint: PacingHint.slow, // Encouraging reflection
+        pacingHint: PacingHint.slow,
         waitForUser: false,
       ),
 
-     ScriptStep(
+      ScriptStep(
         botMessages: [
-          'Any final questions about what we\'ve covered in this assessment?',
+          'Any final questions about what we\'ve covered?',
           'Type your question, or type "ready" to move to the bonus content!',
         ],
         channel: MessageChannel.interaction,
@@ -1814,9 +1950,9 @@ RESPONSE RULES:
         aiEvalContext:
             'CONTEXT: This is a LOOPING Q&A session. The student can ask multiple questions.\n'
             '\n'
-            'Final Q&A for assessment module.\n'
+            'Final Q&A for the Self-A-SCI-ssment module on the circulatory system.\n'
             '\n'
-            'If question: Answer thoroughly (2-4 sentences). '
+            'If question: Answer thoroughly (2-4 sentences) about circulatory system content. '
             'DO NOT say "Tap Next" and DO NOT ask "Do you have another question?" - the system handles this.\n'
             '\n'
             'If ready: Say "Excellent assessment work! Tap Next for bonus content!"\n'

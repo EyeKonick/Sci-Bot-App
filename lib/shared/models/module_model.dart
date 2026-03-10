@@ -9,6 +9,7 @@ class ModuleModel {
   final String content;
   final int order; // 1-6, order within lesson
   final int estimatedMinutes;
+  final List<String> videoUrls;
 
   const ModuleModel({
     required this.id,
@@ -17,6 +18,7 @@ class ModuleModel {
     required this.content,
     required this.order,
     this.estimatedMinutes = 5,
+    this.videoUrls = const [],
   });
 
   /// Create from JSON
@@ -28,6 +30,10 @@ class ModuleModel {
       content: json['content'] as String,
       order: json['order'] as int,
       estimatedMinutes: json['estimated_minutes'] as int? ?? 5,
+      videoUrls: (json['video_urls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 
@@ -40,6 +46,7 @@ class ModuleModel {
       'content': content,
       'order': order,
       'estimated_minutes': estimatedMinutes,
+      if (videoUrls.isNotEmpty) 'video_urls': videoUrls,
     };
   }
 
@@ -51,6 +58,7 @@ class ModuleModel {
     String? content,
     int? order,
     int? estimatedMinutes,
+    List<String>? videoUrls,
   }) {
     return ModuleModel(
       id: id ?? this.id,
@@ -59,6 +67,7 @@ class ModuleModel {
       content: content ?? this.content,
       order: order ?? this.order,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      videoUrls: videoUrls ?? this.videoUrls,
     );
   }
 

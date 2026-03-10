@@ -21,6 +21,7 @@ import '../../../shared/widgets/loading_spinner.dart';
 import '../data/providers/guided_lesson_provider.dart';
 import '../data/providers/lesson_chat_provider.dart';
 import '../presentation/widgets/chat_image_message.dart';
+import '../presentation/widgets/youtube_video_card.dart';
 import '../../../shared/widgets/image_modal.dart';
 
 /// Module Viewer Screen - AI-Guided Learning
@@ -1238,7 +1239,31 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
   /// Build a chat bubble for lesson messages
   Widget _buildLessonChatBubble(LessonChatMessage msg, AiCharacter character) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Handle image messages
+
+    // Handle video messages
+    if (msg.videoUrl != null && msg.videoUrl!.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.s12,
+          vertical: AppSizes.s4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildCharacterAvatar(character),
+            const SizedBox(width: AppSizes.s8),
+            Flexible(
+              child: YouTubeVideoCard(
+                videoUrl: msg.videoUrl!,
+                themeColor: character.themeColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // Handle image messages WITH avatar (same pattern as text messages)
     if (msg.imageAssetPath != null && msg.imageAssetPath!.isNotEmpty) {
       return Padding(
@@ -1563,41 +1588,60 @@ class _ModuleViewerScreenState extends ConsumerState<ModuleViewerScreen>
           ),
         ),
 
-        // Static markdown content
+        // Static markdown content + video cards
         Expanded(
           child: Container(
             color: isDark ? AppColors.darkBackground : AppColors.white,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.s20),
-              child: MarkdownBody(
-                data: module.content,
-                styleSheet: MarkdownStyleSheet(
-                  h1: AppTextStyles.headingLarge.copyWith(
-                    fontWeight: FontWeight.w700,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MarkdownBody(
+                    data: module.content,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: AppTextStyles.headingLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      h2: AppTextStyles.headingMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      h3: AppTextStyles.headingSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      p: AppTextStyles.bodyMedium.copyWith(height: 1.6),
+                      strong: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      em: AppTextStyles.bodyMedium.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
+                      listBullet: AppTextStyles.bodyMedium,
+                      code: AppTextStyles.bodySmall.copyWith(
+                        fontFamily: 'monospace',
+                        backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
+                      ),
+                      blockquote: AppTextStyles.bodyMedium.copyWith(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
-                  h2: AppTextStyles.headingMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  h3: AppTextStyles.headingSmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  p: AppTextStyles.bodyMedium.copyWith(height: 1.6),
-                  strong: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  em: AppTextStyles.bodyMedium.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
-                  listBullet: AppTextStyles.bodyMedium,
-                  code: AppTextStyles.bodySmall.copyWith(
-                    fontFamily: 'monospace',
-                    backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceTint,
-                  ),
-                  blockquote: AppTextStyles.bodyMedium.copyWith(
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+
+                  // Video cards for modules with associated YouTube videos
+                  if (module.videoUrls.isNotEmpty) ...[
+                    const SizedBox(height: AppSizes.s16),
+                    ...module.videoUrls.map(
+                      (url) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSizes.s12),
+                        child: YouTubeVideoCard(
+                          videoUrl: url,
+                          themeColor: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
